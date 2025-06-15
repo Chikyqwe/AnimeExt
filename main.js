@@ -82,6 +82,7 @@ app.get('/jsons/:filename', (req, res) => {
   const filename = req.params.filename;
   res.sendFile(path.join(JSON_FOLDER, filename));
 });
+
 // =================== PROXY DE IMÁGENES ===================
 app.get('/proxy-image', async (req, res) => {
   const { url } = req.query;
