@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reproductor de Anime</title>
+
+  <!-- Bootstrap + Font Awesome + Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { background: rgb(48, 47, 47); color: #ffffff; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+    .container-player { max-width: 900px; margin: auto; padding: 30px 20px; }
+    h1 { font-size: 1.75rem; text-align: center; margin-bottom: 30px; font-weight: 700; color: #f7f7f7; text-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+    .video-wrapper { position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5); }
+    video { width: 100%; height: auto; background: #000; border-radius: 16px; opacity: 0; transition: opacity 0.4s ease-in-out; }
+    .loader { position: absolute; inset: 0; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 10; }
+    .pulse-wave { position: relative; width: 80px; height: 80px; }
+    .pulse-wave::before, .pulse-wave::after { content: ""; position: absolute; inset: 0; border: 4px solid #00bcd4; border-radius: 50%; animation: pulse 2s ease-out infinite; }
+    .pulse-wave::after { animation-delay: 1s; }
+    @keyframes pulse { 0% { transform: scale(0.3); opacity: 0.7; } 70% { transform: scale(1.2); opacity: 0; } 100% { opacity: 0; } }
+    .nav-buttons { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 30px; flex-wrap: wrap; }
+    .nav-buttons button { border: none; padding: 12px 16px; font-weight: 600; border-radius: 50%; background: linear-gradient(to right, #00bcd4, #0288d1); color: white; font-size: 1.2rem; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s, background 0.3s; }
+    .nav-buttons button:hover { background: linear-gradient(to right, #0288d1, #01579b); transform: scale(1.05); }
+    @media (max-width: 576px) { .nav-buttons { gap: 12px; } }
+    .episode-btn { background-color: #cfcfcf !important; color: #121212 !important; border: none; font-weight: 600; min-width: 42px; }
+    .episode-btn:hover { background-color: #e6e6e6 !important; color: #000 !important; }
+    .episode-btn.active { background-color: #f9f9f9 !important; color: #000 !important; border: 2px solid #00bcd4; }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+
+<div class="container-player">
+  <h1 id="anime-title">Cargando...</h1>
+
+  <div class="video-wrapper">
+    <div class="loader" id="loader">
+      <div class="pulse-wave"></div>
+    </div>
+    <video id="player" controls preload="auto" playsinline></video>
+  </div>
+
+  <div id="serverButtons" class="my-3 text-center"></div>
+
+  <div class="nav-buttons" id="nav-buttons"></div>
+
+  <div class="episode-list container mt-4">
+    <h5 class="text-center mb-3">Lista de Episodios</h5>
+    <div class="d-flex flex-wrap justify-content-center gap-2" id="episode-list"></div>
+  </div>
+</div>
+
+<!-- Este script dinámico para pasar el config al player.js -->
+<script id="config" type="application/json"></script>
+
+<script>
+  async function initPlayerPage() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const url = urlParams.get('url');
+    const ep = parseInt(urlParams.get('ep'));
+
+    if (!url || isNaN(ep)) {
+      document.getElementById("anime-title").innerText = "Faltan parámetros";
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/player?url=${encodeURIComponent(url)}&ep=${ep}`);
+      const data = await res.json();
+
+      if (data.error) {
+        document.getElementById("anime-title").innerText = "Error: " + data.error;
+        return;
+      }
+
+      document.getElementById("anime-title").innerText = data.anime_title;
+
+      // Inyectar el config JSON
+      document.getElementById("config").textContent = JSON.stringify({ currentUrl: data.current_url });
+
+      // Navegación episodios
+      const navButtons = document.getElementById("nav-buttons");
+      if (ep > 1) {
+        const btnPrev = document.createElement("button");
+        btnPrev.title = "Anterior";
+        btnPrev.innerHTML = '<i class="bi bi-arrow-left"></i>';
+        btnPrev.onclick = () => { location.href = `/player?url=${encodeURIComponent(url)}&ep=${ep - 1}` };
+        navButtons.appendChild(btnPrev);
+      }
+      const btnHome = document.createElement("button");
+      btnHome.title = "Inicio";
+      btnHome.innerHTML = '<i class="bi bi-house-door-fill"></i>';
+      btnHome.onclick = () => { location.href = '/' };
+      navButtons.appendChild(btnHome);
+
+      if (ep < data.episodes_count) {
+        const btnNext = document.createElement("button");
+        btnNext.title = "Siguiente";
+        btnNext.innerHTML = '<i class="bi bi-arrow-right"></i>';
+        btnNext.onclick = () => { location.href = `/player?url=${encodeURIComponent(url)}&ep=${ep + 1}` };
+        navButtons.appendChild(btnNext);
+      }
+
+      const span = document.createElement("span");
+      span.innerText = ` Episodio ${ep} / ${data.episodes_count}`;
+      navButtons.appendChild(span);
+
+      const episodeList = document.getElementById("episode-list");
+      for (let epi = 1; epi <= data.episodes_count; epi++) {
+        const a = document.createElement("a");
+        a.href = `/player?url=${encodeURIComponent(url)}&ep=${epi}`;
+        a.className = "btn btn-outline-info" + (epi === ep ? " active" : "");
+        a.innerText = epi;
+        episodeList.appendChild(a);
+      }
+
+      // Una vez que todo esté listo, cargamos el player.js
+      const script = document.createElement("script");
+      script.src = "/static/player.js";
+      document.body.appendChild(script);
+
+    } catch (e) {
+      document.getElementById("anime-title").innerText = "Error de carga.";
+      console.error(e);
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', initPlayerPage);
+</script>
+
+</body>
+</html>

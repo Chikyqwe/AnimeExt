@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es">
+<!--Styles-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Anime EXT</title>
+  <style>
+#loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255); /* fondo blanco casi opaco */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 1s ease;
+}
+
+#loader.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dot {
+  width: 34px;
+  height: 34px;
+  background-color: rgb(2, 223, 223);
+  border-radius: 50%;
+  margin: 0 14px;
+  animation: bounce 1s infinite ease-in-out;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.dot:nth-child(4) {
+  animation-delay: 0.6s;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-24px);
+  }
+}
+
+#loader.fade-once {
+  opacity: 0;
+  display: none;
+  transition: opacity 0.6s ease;
+}
+
+#loader.fade-once.fade-in {
+  opacity: 1;
+  display: flex;
+}
+
+#loader.fade-once.fade-out {
+  opacity: 0;
+}
+
+  </style>
+  <style>
+    body {
+      background: #131313;
+      color: #222;
+      padding: 80px 20px 20px; /* padding-top para que no tape la navbar */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+    .anime-card {
+      background: #f2f2f2;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      width: 180px;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+    .anime-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    .anime-image {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      border-bottom: 3px solid #e1e1e1;
+    }
+    .anime-title {
+      background: #f2f2f2;
+      padding: 10px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-align: center;
+      color: #333;
+      user-select: text;
+    }
+    /* Modal custom claro neutro */
+    .modal-content {
+      background: #ffffff;
+      border-radius: 1rem;
+      border: 1px solid #ddd;
+      color: #222;
+    }
+    .modal-header, .modal-footer {
+      border: none;
+      padding: 1rem 2rem;
+    }
+    .modal-body {
+      display: flex;
+      gap: 30px;
+      padding: 1rem 2rem;
+      max-height: 70vh;
+      overflow-y: hidden;
+    }
+    .modal-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      max-width: 320px;
+    }
+    .modal-img {
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+      object-fit: cover;
+      max-height: 420px;
+    }
+    .download-btn {
+      margin-top: 15px;
+      width: 100%;
+      font-weight: 600;
+      background: #444;
+      border: none;
+      box-shadow: 0 3px 8px rgba(68,68,68,0.5);
+      transition: box-shadow 0.3s ease;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .download-btn:hover {
+      box-shadow: 0 6px 15px rgba(68,68,68,0.8);
+      background: #222;
+    }
+    .modal-info {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-title {
+      font-size: 2.4rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: #444;
+    }
+    .episodes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      max-height: 320px;
+      padding-right: 5px;
+      scrollbar-width: thin;
+      scrollbar-color: #888 #f0f0f0;
+    }
+    .episodes-list::-webkit-scrollbar {
+      width: 8px;
+    }
+    .episodes-list::-webkit-scrollbar-track {
+      background: #f0f0f0;
+      border-radius: 5px;
+    }
+    .episodes-list::-webkit-scrollbar-thumb {
+      background-color: #888;
+      border-radius: 5px;
+      border: 2px solid #f0f0f0;
+    }
+    .episode-item {
+      display: block;
+      margin-bottom: 20px;
+    }
+    .episode-button {
+      width: 100%;
+      padding: 10px 15px;
+      background: #666;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background-color 0.25s ease;
+      cursor: pointer;
+      text-align: left;
+      box-shadow: 0 2px 6px rgba(102,102,102,0.4);
+      user-select: none;
+    }
+    .episode-button:hover {
+      background-color: #444;
+      box-shadow: 0 4px 12px rgba(68,68,68,0.6);
+    }
+    .episode-item:not(:last-child) {
+  margin-bottom: 5px;
+}
+
+  .fade-out {
+    animation: fadeOut 0.4s forwards;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.4s forwards;
+  }
+
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; visibility: hidden; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; visibility: visible; }
+  }
+  </style>
+  <style>
+    .topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: #333;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 20px;
+  z-index: 1050;
+}
+
+.topbar img {
+  height: 65px;
+  user-select: none;
+  margin-right: auto;
+  flex-shrink: 0;
+}
+
+/* Contenedor del formulario para posición relativa */
+.search-form {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Cuando el modo búsqueda móvil esté activo */
+.search-form.mobile-search-active {
+  position: absolute;
+  left: 20px; /* igual que padding de .topbar */
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #444;
+  padding: 5px 10px;
+  border-radius: 8px;
+  z-index: 1100;
+  gap: 10px;
+  transition: all 0.3s ease;
+}
+
+/* Input desplegado ocupa todo el ancho y crece hacia la izquierda */
+.search-form.mobile-search-active input {
+  display: block !important;
+  flex-grow: 1;
+  width: 100%;
+  animation: slideInLeft 0.4s forwards;
+  color: white;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #00dfdf;
+  outline: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Ocultamos el botón lupa cuando está activo el modo búsqueda */
+.search-form.mobile-search-active #search-toggle-btn {
+  display: none;
+}
+
+/* Botón cerrar búsqueda */
+#search-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: none;
+}
+
+/* Mostrar botón cerrar cuando está activo */
+.search-form.mobile-search-active #search-close-btn {
+  display: inline-block;
+}
+@keyframes slideInLeft {
+  from {
+    max-width: 0;
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    max-width: 500px; /* o un ancho máximo esperado */
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    max-width: 500px;
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    max-width: 0;
+    opacity: 0;
+    transform: translateX(50px);
+  }
+}
+
+.search-form.mobile-search-active input.showing {
+  animation: slideInLeft 0.4s forwards;
+  max-width: 500px;
+}
+
+.search-form.mobile-search-active input.hiding {
+  animation: slideOutRight 0.3s forwards;
+  max-width: 0;
+}
+
+.search-form.mobile-search-active.hiding {
+  animation: fadeOut 0.3s forwards;
+}
+
+/* Animación fadeOut para todo el form */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Delius+Swash+Caps&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+</head>
+<body>
+<div id="loader">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</div>
+  <script>
+window.addEventListener('load', async () => {
+  const loader = document.getElementById('loader');
+  const MIN_LOADING_TIME = 3000;
+  const startTime = performance.now();
+
+  try {
+    await fetchJsonList(); // Carga las tarjetas visibles
+
+    // Esperar a que se carguen todas las imágenes visibles
+    const images = Array.from(document.querySelectorAll('.anime-card img'));
+    await Promise.all(images.map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise(resolve => img.onload = img.onerror = resolve);
+    }));
+
+  } catch (e) {
+    console.error("Error al cargar los datos:", e);
+  } finally {
+    const elapsed = performance.now() - startTime;
+    const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+    setTimeout(() => {
+      loader.classList.add('fade-out');
+      setTimeout(() => loader.style.display = 'none', 600);
+    }, remainingTime);
+  }
+});
+  </script>
+
+<div class="topbar d-flex align-items-center">
+  <img src="/static/Anime EX_B.png" alt="AnimeFLV Logo" />
+  
+  <form class="search-form d-flex ms-auto align-items-center" role="search" onsubmit="searchAnime(event)">
+    <!-- Botón solo visible en móvil -->
+    <button type="button" id="search-toggle-btn" class="btn btn-outline-light d-md-none">
+      <i class="fa fa-search"></i>
+    </button>
+
+    <!-- Campo y botón visibles solo en pantallas medianas o mayores -->
+    <input id="searchInput" class="form-control me-2 d-none d-md-block" type="search" placeholder="Buscar anime..." aria-label="Buscar" />
+    <button class="btn btn-outline-light d-none d-md-block" type="submit"><i class="fa fa-search"></i></button>
+  </form>
+</div>
+
+  <h1 id="page-title" class="text-center my-4 text-secondary fw-bold"
+    style="font-family: 'Delius Swash Caps', cursive; font-size: 3.5rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.2);">
+   Anime Directory
+  </h1>
+  <!-- Contenedor donde se muestran las tarjetas o el formulario -->
+  <div class="main" id="main-content">
+    <div class="card-container" id="card-container"></div>
+  </div>
+  <!-- Modal -->
+<div class="modal fade" id="animeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="btn-close btn-close-black" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-left">
+            <img id="modalImage" class="modal-img" src="" alt="Anime Image" />
+            <button id="downloadImageBtn" class="download-btn">Descargar imagen</button>
+          </div>
+          <div class="modal-info">
+            <h2 id="modalTitle" class="modal-title"></h2>
+            <div id="episodes-list" class="episodes-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const searchForm = document.querySelector('.search-form');
+  const searchToggleBtn = document.getElementById('search-toggle-btn');
+  const searchInput = document.getElementById('searchInput');
+
+  const closeBtn = document.createElement('button');
+  closeBtn.id = 'search-close-btn';
+  closeBtn.type = 'button';
+  closeBtn.innerHTML = '<i class="fa fa-times"></i>';
+  searchForm.appendChild(closeBtn);
+
+  function openMobileSearch() {
+    searchForm.classList.add('mobile-search-active');
+    searchInput.classList.remove('hiding');
+    searchInput.classList.add('showing');
+    searchInput.style.display = 'block';
+    searchInput.focus();
+    document.querySelector('.topbar img').style.display = 'none';
+  }
+
+  function closeMobileSearch() {
+    // Animar input para ocultar
+    searchInput.classList.remove('showing');
+    searchInput.classList.add('hiding');
+
+    // Animar formulario para ocultar
+    searchForm.classList.add('hiding');
+
+    // Después de la animación, limpiar clases y ocultar
+    setTimeout(() => {
+      searchForm.classList.remove('mobile-search-active', 'hiding');
+      searchInput.classList.remove('hiding');
+      searchInput.style.display = 'none';
+      document.querySelector('.topbar img').style.display = '';
+    }, 300);
+  }
+
+  searchToggleBtn.addEventListener('click', () => {
+    openMobileSearch();
+  });
+
+  closeBtn.addEventListener('click', () => {
+    closeMobileSearch();
+  });
+
+  searchForm.addEventListener('submit', e => {
+    if (searchForm.classList.contains('mobile-search-active')) {
+      e.preventDefault();
+
+      closeMobileSearch();
+    }
+  });
+
+  document.addEventListener('click', e => {
+    if (
+      searchForm.classList.contains('mobile-search-active') &&
+      !searchForm.contains(e.target) &&
+      e.target !== searchToggleBtn
+    ) {
+      closeMobileSearch();
+    }
+  });
+});
+</script>
+<script>
+const container = document.getElementById('card-container');
+const mainContent = document.getElementById('main-content');
+const recolectForm = document.getElementById('recolect-form');
+const pageTitle = document.getElementById('page-title');
+let currentAnime = null;
+const loadedCards = new Map();
+let fullAnimeList = [];
+
+function cleanTitle(title) {
+  return title.trim();
+}
+
+function getPageParam() {
+  const params = new URLSearchParams(window.location.search);
+  const page = parseInt(params.get('page')) || 1;
+  return page;
+}
+
+function paginate(items, page, perPage = 24) {
+  const start = (page - 1) * perPage;
+  return items.slice(start, start + perPage);
+}
+
+function clearCards() {
+  container.innerHTML = '';
+  loadedCards.clear();
+}
+
+async function fetchJsonList() {
+  try {
+    const resp = await fetch('/jsons/anime_list.json', { cache: 'no-store' });
+    if (!resp.ok) return;
+
+    fullAnimeList = await resp.json();
+    const page = getPageParam();
+    const paginated = paginate(fullAnimeList, page);
+
+    clearCards();
+    for (const anime of paginated) {
+      createCard(anime, anime.title);
+    }
+
+    createPagination(fullAnimeList.length, page);
+  } catch (err) {
+    console.error("Error cargando lista:", err);
+  }
+}
+
+function createCard(data, animeTitle) {
+  const card = document.createElement('div');
+  card.className = 'anime-card';
+  card.tabIndex = 0;
+  card.setAttribute('role', 'button');
+
+  const proxyUrl = `/proxy-image?url=${encodeURIComponent(data.image)}`;
+
+  card.innerHTML = `
+    <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(animeTitle)}" class="anime-image" loading="lazy" />
+    <div class="anime-title">${cleanTitle(animeTitle)}</div>
+  `;
+
+  card.addEventListener('click', () => openModal(data, animeTitle));
+  container.appendChild(card);
+  loadedCards.set(animeTitle, card);
+}
+
+async function waitForVisibleImages(selector = '.anime-card img') {
+  const images = Array.from(document.querySelectorAll(selector));
+  await Promise.all(images.map(img => {
+    if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+    return new Promise(resolve => img.onload = img.onerror = resolve);
+  }));
+}
+
+
+
+window.addEventListener('popstate', (event) => {
+  const page = getPageParam();
+  const paginated = paginate(fullAnimeList, page);
+  clearCards();
+  for (const anime of paginated) {
+    createCard(anime, anime.title);
+  }
+  createPagination(fullAnimeList.length, page);
+});
+
+
+async function changePage(page) {
+  showLoader();
+
+  const params = new URLSearchParams(window.location.search);
+  params.set('page', page);
+  const newUrl = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ page }, '', newUrl);
+
+  const paginated = paginate(fullAnimeList, page);
+  clearCards();
+  for (const anime of paginated) {
+    createCard(anime, anime.title);
+  }
+  createPagination(fullAnimeList.length, page);
+
+  await waitForVisibleImages(); // ← espera a que se carguen todas las imágenes
+
+  hideLoader();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+
+
+
+function createPagination(totalItems, currentPage) {
+  const pagination = document.getElementById('pagination') || document.createElement('div');
+  pagination.id = 'pagination';
+  pagination.innerHTML = '';
+  pagination.className = 'pagination mt-4 justify-content-center flex-wrap';
+
+  const totalPages = Math.ceil(totalItems / 24);
+  const groupSize = 10;
+  const currentGroupStart = Math.floor((currentPage - 1) / groupSize) * groupSize + 1;
+  const currentGroupEnd = Math.min(currentGroupStart + groupSize - 1, totalPages);
+
+  function createPageButton(page, label = null, customClass = '') {
+    const btn = document.createElement('button');
+    btn.textContent = label || page;
+    btn.className = `btn btn-sm mx-1 ${page === currentPage ? 'btn-primary' : 'btn-outline-primary'} ${customClass}`;
+    btn.addEventListener('click', () => {
+      changePage(page);
+    });
+    return btn;
+  }
+
+  if (currentGroupStart > 1) {
+    pagination.appendChild(createPageButton(currentPage - 1, '«', 'btn-outline-secondary'));
+  }
+
+  for (let i = currentGroupStart; i <= currentGroupEnd; i++) {
+    pagination.appendChild(createPageButton(i));
+  }
+
+  if (currentGroupEnd < totalPages) {
+    pagination.appendChild(createPageButton(currentPage + 1, '»', 'btn-outline-secondary'));
+  }
+
+  if (!document.getElementById('pagination')) {
+    container.parentNode.appendChild(pagination);
+  }
+}
+
+
+function searchAnime(event) {
+  event.preventDefault();
+  const input = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  if (!input) {
+    const page = getPageParam();
+    const paginated = paginate(fullAnimeList, page);
+
+    clearCards();
+    for (const anime of paginated) {
+      createCard(anime, anime.title);
+    }
+
+    createPagination(fullAnimeList.length, page);
+    return;
+  }
+
+  const filtered = fullAnimeList.filter(anime =>
+    anime.title.toLowerCase().includes(input)
+  );
+
+  clearCards();
+  filtered.forEach(anime => createCard(anime, anime.title));
+
+  const pagination = document.getElementById('pagination');
+  if (pagination) pagination.innerHTML = '';
+}
+
+function toJsonFilename(animeTitle) {
+  return animeTitle
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-') + '.json';
+}
+
+
+function openModal(data, animeTitle) {
+  currentAnime = data;
+
+  const modalImage = document.getElementById('modalImage');
+  const modalTitle = document.getElementById('modalTitle');
+  const episodesList = document.getElementById('episodes-list');
+  const downloadBtn = document.getElementById('downloadImageBtn');
+
+  const proxyUrl = `/proxy-image?url=${encodeURIComponent(data.image)}`;
+
+  modalImage.src = proxyUrl;
+  modalTitle.textContent = cleanTitle(animeTitle);
+  episodesList.innerHTML = '';
+
+  for (let i = 1; i <= data.episodes_count; i++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'episode-button';
+    btn.textContent = `Episodio ${i}`;
+    btn.addEventListener('click', () => {
+      const url = `/player?url=${encodeURIComponent(data.url)}&ep=${i}`;
+      window.location.href = url;
+    });
+    episodesList.appendChild(btn);
+  }
+
+  downloadBtn.onclick = () => {
+    const a = document.createElement('a');
+    a.href = proxyUrl;
+    a.download = `${cleanTitle(animeTitle)}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const animeModalEl = document.getElementById('animeModal');
+  const modal = new bootstrap.Modal(animeModalEl);
+  modal.show();
+}
+
+document.getElementById('searchInput').addEventListener('submit', searchAnime);
+
+window.addEventListener('load', async () => {
+  const loader = document.getElementById('loader');
+  const MIN_LOADING_TIME = 3000;
+  const startTime = performance.now();
+
+  try {
+    await fetchJsonList();
+  } catch (e) {
+    console.error("Error al cargar los datos:", e);
+  } finally {
+    const elapsed = performance.now() - startTime;
+    const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
+    setTimeout(() => {
+      loader.classList.add('fade-out');
+      setTimeout(() => loader.style.display = 'none', 600);
+    }, remainingTime);
+  }
+});
+
+function showLoader() {
+  const loader = document.getElementById('loader');
+  loader.classList.add('fade-once');
+  loader.classList.remove('fade-out');
+  loader.style.display = 'flex';
+  void loader.offsetWidth;
+  loader.classList.add('fade-in');
+}
+
+function hideLoader() {
+  const loader = document.getElementById('loader');
+  loader.classList.remove('fade-in');
+  loader.classList.add('fade-out');
+  setTimeout(() => {
+    loader.style.display = 'none';
+    loader.classList.remove('fade-once');
+  }, 1000);
+}
+
+</script>
+</body>
+</html>

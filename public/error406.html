@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Error 406 - Episodio inválido</title>
+    <meta http-equiv="refresh" content="2;URL={{ redirect_url }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            text-align: center;
+            padding: 50px;
+        }
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Error 406</h1>
+        <p>{{ mensaje }}</p>
+        <p>Redirigiendo en 2 segundos...</p>
+    </div>
+</body>
+</html>
