@@ -74,15 +74,14 @@ app.get('/api/player', (req, res) => {
 
 // =================== API JSONS ===================
 app.get('/json-list', (req, res) => {
-  const files = fs.readdirSync("/").filter(f => f.endsWith('.json'));
+  const files = fs.readdirSync(JSON_FOLDER).filter(f => f.endsWith('.json'));
   res.json(files);
 });
 
 app.get('/jsons/:filename', (req, res) => {
   const filename = req.params.filename;
-  res.sendFile(path.join(filename));
+  res.sendFile(path.join(JSON_FOLDER, filename));
 });
-
 // =================== PROXY DE IMÁGENES ===================
 app.get('/proxy-image', async (req, res) => {
   const { url } = req.query;
