@@ -19,7 +19,9 @@ const JSON_PATH_TIO = path.join(JSON_FOLDER, 'anime_list.json');
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')), express.json());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
 
 // =================== RUTAS DE VISTAS ===================
 app.get('/', (req, res) => {
