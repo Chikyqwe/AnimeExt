@@ -80,8 +80,11 @@
 
       document.getElementById("anime-title").innerText = data.anime_title;
 
-      // Inyectar el config JSON
-      document.getElementById("config").textContent = JSON.stringify({ currentUrl: data.current_url });
+      // Inyectar el config JSON con nextUrl
+      document.getElementById("config").textContent = JSON.stringify({
+        currentUrl: data.current_url,
+        nextUrl: (ep < data.episodes_count) ? `/player?url=${encodeURIComponent(url)}&ep=${ep + 1}` : null
+      });
 
       // Navegación episodios
       const navButtons = document.getElementById("nav-buttons");
@@ -119,10 +122,55 @@
         episodeList.appendChild(a);
       }
 
-      // Una vez que todo esté listo, cargamos el player.js
+      // Cargamos player.js
       const script = document.createElement("script");
       script.src = "/static/player.js";
       document.body.appendChild(script);
+
+      script.onload = () => {
+        const config = JSON.parse(document.getElementById("config").textContent);
+        const video = document.getElementById("player");
+        let autoNextTriggered = false;
+
+        video.addEventListener('timeupdate', () => {
+          if (!video.duration) return;
+          const remaining = video.duration - video.currentTime;
+
+          if (remaining <= 5 && !autoNextTriggered) {
+            autoNextTriggered = true;
+            console.log("Cambiando al siguiente episodio...");
+
+            // Verificamos si estaba en pantalla completa
+            const isFullscreen = !!(
+              document.fullscreenElement ||
+              document.webkitFullscreenElement ||
+              document.mozFullScreenElement ||
+              document.msFullscreenElement
+            );
+
+            if (config.nextUrl) {
+              // Guardamos flag en localStorage
+              if (isFullscreen) {
+                localStorage.setItem("keepFullscreen", "1");
+              }
+              window.location.href = config.nextUrl;
+            }
+          }
+        });
+
+        // Si al cargar venimos de fullscreen
+        if (localStorage.getItem("keepFullscreen") === "1") {
+          localStorage.removeItem("keepFullscreen");
+
+          video.addEventListener('loadedmetadata', () => {
+            const videoWrapper = video.parentElement;
+            if (videoWrapper.requestFullscreen) videoWrapper.requestFullscreen();
+            else if (videoWrapper.webkitRequestFullscreen) videoWrapper.webkitRequestFullscreen();
+            else if (videoWrapper.mozRequestFullScreen) videoWrapper.mozRequestFullScreen();
+            else if (videoWrapper.msRequestFullscreen) videoWrapper.msRequestFullscreen();
+          }, { once: true });
+        }
+      };
 
     } catch (e) {
       document.getElementById("anime-title").innerText = "Error de carga.";
@@ -132,6 +180,7 @@
 
   window.addEventListener('DOMContentLoaded', initPlayerPage);
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script><script>eruda.init();</script>
 </body>
 </html>
