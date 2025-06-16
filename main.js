@@ -198,6 +198,105 @@ function getExtractor(name) {
   return extractors[name.toLowerCase()];
 }
 
+// ========== Anime list ==========
+
+// Para hacer scraping básico del listado de animes con axios + cheerio
+async function fetchAnimeList() {
+  const url = 'https://animeflv.net/anime?page=1'; // ajustar si quieres paginar
+  const { data } = await axios.get(url);
+  const $ = cheerio.load(data);
+
+  const animeBlocks = $('.ListAnimes li');
+  let animeList = [];
+
+  animeBlocks.each((i, el) => {
+    const anchor = $(el).find('a');
+    const animeUrl = anchor.attr('href'); // ej. /anime/xxx
+    const title = anchor.attr('title') || anchor.text().trim();
+    const fullUrl = 'https://animeflv.net' + animeUrl;
+
+    const img = $(el).find('img').attr('src') || '';
+    const episodesText = $(el).find('.AnEpisodios').text().trim();
+    let episodes_count = 1;
+    const m = episodesText.match(/\d+/);
+    if (m) episodes_count = parseInt(m[0]);
+
+    animeList.push({
+      url: fullUrl,
+      title,
+      episodes_count,
+      image: img.startsWith('http') ? img : 'https://animeflv.net' + img,
+    });
+  });
+
+  return animeList;
+}
+
+const fsExtra = require('fs-extra'); // para writeJson con carpeta auto
+
+// Endpoint para iniciar extracción y enviar progreso con SSE
+app.get('/generate-anime-list', async (req, res) => {
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+  res.flushHeaders();
+
+  const sendMsg = (msg) => {
+    res.write(`data: ${msg}\n\n`);
+  };
+
+  try {
+    sendMsg('🚀 Iniciando extracción de lista de animes...');
+    const animeList = await fetchAnimeList();
+    sendMsg(`📋 Se encontraron ${animeList.length} animes.`);
+    await fsExtra.ensureDir(JSON_FOLDER);
+    await fsExtra.writeJson(JSON_PATH_TIO, animeList, { spaces: 2 });
+    sendMsg('✅ Archivo anime_list.json guardado exitosamente.');
+  } catch (e) {
+    sendMsg(`❌ Error: ${e.message}`);
+  } finally {
+    sendMsg('FIN');
+    res.end();
+  }
+});
+
+// Ruta para la interfaz sencilla que inicia extracción con botón
+app.get('/generate', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="es">
+    <head><meta charset="UTF-8"><title>Generar lista de Animes</title></head>
+    <body>
+      <h1>Generar lista de animes desde animeflv.net</h1>
+      <button id="start">Iniciar generación</button>
+      <pre id="log" style="white-space: pre-wrap; border:1px solid #ccc; padding:10px; height: 300px; overflow-y: scroll;"></pre>
+      <script>
+        const log = document.getElementById('log');
+        document.getElementById('start').onclick = () => {
+          log.textContent = '';
+          const evtSource = new EventSource('/generate-anime-list');
+          evtSource.onmessage = e => {
+            if (e.data === 'FIN') {
+              log.textContent += '\\n-- Proceso finalizado --';
+              evtSource.close();
+              return;
+            }
+            log.textContent += e.data + '\\n';
+            log.scrollTop = log.scrollHeight;
+          };
+          evtSource.onerror = () => {
+            log.textContent += '\\n-- Error o conexión cerrada --';
+            evtSource.close();
+          };
+        };
+      </script>
+    </body>
+    </html>
+  `);
+});
+
 // =================== NUEVAS RUTAS API EXTRACTOR ===================
 
 app.get('/api/servers', async (req, res) => {
