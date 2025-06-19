@@ -1,6 +1,6 @@
 {
-  "name": "fusion-server",
-  "version": "1.0.0",
+  "name": "Anime Ext",
+  "version": "6.1.7",
   "description": "Servidor Node.js con extracción de videos, proxy de imágenes y APIs para player",
   "main": "main.js",
   "scripts": {
