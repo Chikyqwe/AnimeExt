@@ -222,16 +222,6 @@ function highlightActiveButton(activeIndex) {
   });
 }
 
-function renderServerButtons() {
-  serverButtonsContainer.innerHTML = "";
-  serverList.forEach((srv, index) => {
-    const btn = document.createElement("button");
-    btn.textContent = srv.servidor;
-    btn.onclick = () => loadServerByIndex(index);
-    serverButtonsContainer.appendChild(btn);
-  });
-}
-
 // ▶️ Inicio
 async function start() {
   restaurarPrecargado();
@@ -261,7 +251,6 @@ async function start() {
       return;
     }
 
-    renderServerButtons();
     loadServerByIndex(0);
 
     setTimeout(() => {
