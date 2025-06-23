@@ -5,14 +5,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Anime EXT</title>
-  <style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Delius+Swash+Caps&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>/* Loader */
 #loader {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(255, 255, 255); /* fondo blanco casi opaco */
+  background: rgba(20, 20, 20, 0.95); /* fondo oscuro casi opaco */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -25,10 +34,25 @@
   pointer-events: none;
 }
 
+#loader.fade-once {
+  opacity: 0;
+  display: none;
+  transition: opacity 0.6s ease;
+}
+
+#loader.fade-once.fade-in {
+  opacity: 1;
+  display: flex;
+}
+
+#loader.fade-once.fade-out {
+  opacity: 0;
+}
+
 .dot {
   width: 34px;
   height: 34px;
-  background-color: rgb(2, 223, 223);
+  background-color: #00bfa5; /* verde agua */
   border-radius: 50%;
   margin: 0 14px;
   animation: bounce 1s infinite ease-in-out;
@@ -55,203 +79,213 @@
   }
 }
 
-#loader.fade-once {
-  opacity: 0;
-  display: none;
-  transition: opacity 0.6s ease;
+/* Fade animations */
+.fade-out {
+  animation: fadeOut 0.4s forwards;
 }
 
-#loader.fade-once.fade-in {
-  opacity: 1;
+.fade-in {
+  animation: fadeIn 0.4s forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; visibility: hidden; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; visibility: visible; }
+}
+
+/* Body general */
+body {
+  background-color: #121212; /* Gris muy oscuro */
+  color: #e0e0e0; /* Texto claro */
+  padding: 80px 20px 20px; /* Para no tapar la navbar */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Contenedor tarjetas */
+.card-container {
   display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
 }
 
-#loader.fade-once.fade-out {
-  opacity: 0;
+/* Tarjetas anime */
+.anime-card {
+  background-color: #1f1f1f; /* Gris oscuro */
+  border: 1px solid #333; /* Borde sutil */
+  border-radius: 12px;
+  width: 180px;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  color: #e0e0e0;
 }
 
-  </style>
-  <style>
-    body {
-      background: #131313;
-      color: #222;
-      padding: 80px 20px 20px; /* padding-top para que no tape la navbar */
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .card-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      justify-content: center;
-    }
-    .anime-card {
-      background: #f2f2f2;
-      border: 1px solid #ccc;
-      border-radius: 12px;
-      width: 180px;
-      cursor: pointer;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      user-select: none;
-    }
-    .anime-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    }
-    .anime-image {
-      width: 100%;
-      height: 260px;
-      object-fit: cover;
-      border-bottom: 3px solid #e1e1e1;
-    }
-    .anime-title {
-      background: #f2f2f2;
-      padding: 10px;
-      font-weight: 600;
-      font-size: 1.1rem;
-      text-align: center;
-      color: #333;
-      user-select: text;
-    }
-    /* Modal custom claro neutro */
-    .modal-content {
-      background: #ffffff;
-      border-radius: 1rem;
-      border: 1px solid #ddd;
-      color: #222;
-    }
-    .modal-header, .modal-footer {
-      border: none;
-      padding: 1rem 2rem;
-    }
-    .modal-body {
-      display: flex;
-      gap: 30px;
-      padding: 1rem 2rem;
-      max-height: 70vh;
-      overflow-y: hidden;
-    }
-    .modal-left {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      flex: 1;
-      max-width: 320px;
-    }
-    .modal-img {
-      width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
-      object-fit: cover;
-      max-height: 420px;
-    }
-    .download-btn {
-      margin-top: 15px;
-      width: 100%;
-      font-weight: 600;
-      background: #444;
-      border: none;
-      box-shadow: 0 3px 8px rgba(68,68,68,0.5);
-      transition: box-shadow 0.3s ease;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-      user-select: none;
-    }
-    .download-btn:hover {
-      box-shadow: 0 6px 15px rgba(68,68,68,0.8);
-      background: #222;
-    }
-    .modal-info {
-      flex: 2;
-      display: flex;
-      flex-direction: column;
-    }
-    .modal-title {
-      font-size: 2.4rem;
-      font-weight: 700;
-      margin-bottom: 1.5rem;
-      color: #444;
-    }
-    .episodes-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      overflow-y: auto;
-      max-height: 320px;
-      padding-right: 5px;
-      scrollbar-width: thin;
-      scrollbar-color: #888 #f0f0f0;
-    }
-    .episodes-list::-webkit-scrollbar {
-      width: 8px;
-    }
-    .episodes-list::-webkit-scrollbar-track {
-      background: #f0f0f0;
-      border-radius: 5px;
-    }
-    .episodes-list::-webkit-scrollbar-thumb {
-      background-color: #888;
-      border-radius: 5px;
-      border: 2px solid #f0f0f0;
-    }
-    .episode-item {
-      display: block;
-      margin-bottom: 20px;
-    }
-    .episode-button {
-      width: 100%;
-      padding: 10px 15px;
-      background: #666;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 1rem;
-      transition: background-color 0.25s ease;
-      cursor: pointer;
-      text-align: left;
-      box-shadow: 0 2px 6px rgba(102,102,102,0.4);
-      user-select: none;
-    }
-    .episode-button:hover {
-      background-color: #444;
-      box-shadow: 0 4px 12px rgba(68,68,68,0.6);
-    }
-    .episode-item:not(:last-child) {
-  margin-bottom: 5px;
+.anime-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
 }
 
-  .fade-out {
-    animation: fadeOut 0.4s forwards;
-  }
+/* Imagen de anime */
+.anime-image {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  border-bottom: 3px solid #444;
+}
 
-  .fade-in {
-    animation: fadeIn 0.4s forwards;
-  }
+/* Título anime */
+.anime-title {
+  background-color: #1f1f1f;
+  padding: 10px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-align: center;
+  color: #e0e0e0;
+  user-select: text;
+}
 
-  @keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; visibility: hidden; }
-  }
+/* Modal */
+.modal-content {
+  background-color: #212121;
+  border-radius: 1rem;
+  border: 1px solid #444;
+  color: #ddd;
+}
 
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; visibility: visible; }
-  }
-  </style>
-  <style>
-    .topbar {
+.modal-header,
+.modal-footer {
+  padding: 1rem 2rem;
+  border: none;
+}
+
+.modal-body {
+  display: flex;
+  gap: 30px;
+  padding: 1rem 2rem;
+  max-height: 70vh;
+  overflow-y: hidden;
+  background-color: #181818;
+}
+
+.modal-left {
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.modal-img {
+  width: 100%;
+  max-height: 420px;
+  border-radius: 12px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
+  object-fit: cover;
+}
+
+.download-btn {
+  margin-top: 15px;
+  width: 100%;
+  background-color: #00bfa5; /* verde agua */
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 191, 165, 0.5);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+}
+
+.download-btn:hover {
+  background-color: #009e87;
+  box-shadow: 0 6px 20px rgba(0, 158, 135, 0.7);
+}
+
+/* Info modal */
+.modal-info {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #00bfa5;
+}
+
+/* Lista de episodios */
+.episodes-list {
+  background-color: #292929;
+  border-radius: 8px;
+  padding: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #00bfa5 #292929;
+}
+
+.episodes-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.episodes-list::-webkit-scrollbar-track {
+  background: #292929;
+  border-radius: 5px;
+}
+
+.episodes-list::-webkit-scrollbar-thumb {
+  background-color: #00bfa5;
+  border-radius: 5px;
+}
+
+/* Episodios */
+.episode-item:not(:last-child) {
+  margin-bottom: 8px;
+}
+
+.episode-button {
+  width: 100%;
+  padding: 10px 15px;
+  background-color: #00bfa5;
+  color: #121212;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 191, 165, 0.5);
+  text-align: left;
+  transition: background-color 0.25s ease;
+  user-select: none;
+}
+
+.episode-button:hover {
+  background-color: #009e87;
+  box-shadow: 0 5px 15px rgba(0, 158, 135, 0.7);
+}
+
+/* Topbar */
+.topbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   height: 70px;
-  background: #333;
+  background-color: #181818;
+  border-bottom: 1px solid #333;
   display: flex;
   align-items: center;
   padding: 0 20px;
@@ -264,9 +298,22 @@
   user-select: none;
   margin-right: auto;
   flex-shrink: 0;
+  filter: none;
 }
 
-/* Contenedor del formulario para posición relativa */
+/* Botones de búsqueda */
+.btn-outline-light {
+  border-color: #00bfa5 !important;
+  color: #00bfa5 !important;
+}
+
+.btn-outline-light:hover {
+  background-color: #00bfa5 !important;
+  color: #121212 !important;
+  border-color: #00bfa5 !important;
+}
+
+/* Formulario de búsqueda móvil */
 .search-form {
   position: relative;
   display: flex;
@@ -274,14 +321,13 @@
   gap: 10px;
 }
 
-/* Cuando el modo búsqueda móvil esté activo */
 .search-form.mobile-search-active {
   position: absolute;
-  left: 20px; /* igual que padding de .topbar */
+  left: 20px;
   right: 20px;
   top: 50%;
   transform: translateY(-50%);
-  background: #444;
+  background-color: #222;
   padding: 5px 10px;
   border-radius: 8px;
   z-index: 1100;
@@ -289,16 +335,15 @@
   transition: all 0.3s ease;
 }
 
-/* Input desplegado ocupa todo el ancho y crece hacia la izquierda */
 .search-form.mobile-search-active input {
   display: block !important;
   flex-grow: 1;
   width: 100%;
   animation: slideInLeft 0.4s forwards;
-  color: white;
+  color: #eee;
   background: transparent;
   border: none;
-  border-bottom: 2px solid #00dfdf;
+  border-bottom: 2px solid #00bfa5;
   outline: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -306,12 +351,10 @@
   transform: translateZ(0);
 }
 
-/* Ocultamos el botón lupa cuando está activo el modo búsqueda */
 .search-form.mobile-search-active #search-toggle-btn {
   display: none;
 }
 
-/* Botón cerrar búsqueda */
 #search-close-btn {
   background: none;
   border: none;
@@ -321,10 +364,11 @@
   display: none;
 }
 
-/* Mostrar botón cerrar cuando está activo */
 .search-form.mobile-search-active #search-close-btn {
   display: inline-block;
 }
+
+/* Animaciones input búsqueda móvil */
 @keyframes slideInLeft {
   from {
     max-width: 0;
@@ -332,7 +376,7 @@
     transform: translateX(50px);
   }
   to {
-    max-width: 500px; /* o un ancho máximo esperado */
+    max-width: 500px;
     opacity: 1;
     transform: translateX(0);
   }
@@ -365,22 +409,285 @@
   animation: fadeOut 0.3s forwards;
 }
 
-/* Animación fadeOut para todo el form */
 @keyframes fadeOut {
   from { opacity: 1; }
   to { opacity: 0; }
 }
+
+/* Input búsqueda */
+#searchInput {
+  background: transparent;
+  color: #eee;
+  border: none;
+  border-bottom: 1px solid #555;
+}
+
+#searchInput::placeholder {
+  color: #888;
+}
+
+
+
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: #222;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    transform: translateY(100%); /* Oculta hacia abajo */
+    transition: transform 0.3s ease;
+  }
+
+  .bottom-bar.visible {
+    transform: translateY(0); /* Se muestra */
+  }
+
+  .main {
+    padding-bottom: 80px; /* Deja espacio cuando esté visible */
+  }
+
+  .bottom-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.4rem;
+    cursor: pointer;
+    margin: 0 1rem;
+  }
+
+.bottom-btn {
+  background: none;
+  border: none;
+  color: #00bfa5;
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.3s;
+}
+
+.bottom-btn:hover {
+  color: #00fff0;
+  transform: scale(1.2);
+}
+
+/* ==========================
+   MODO CLARO BONITO Y LIMPIO
+   ========================== */
+
+body.light-theme {
+  background-color: #f9f9fb;
+  color: #1a1a1a;
+}
+
+/* Tarjetas */
+body.light-theme .anime-card {
+  background-color: #ffffff;
+  color: #1a1a1a;
+  border-color: #e0e0e0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+body.light-theme .anime-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .anime-image {
+  border-bottom: 3px solid #eaeaea !important;
+}
+
+/* Títulos */
+body.light-theme .anime-title {
+  background-color: #fff !important;
+  color: #1a1a1a !important;
+}
+
+/* Topbar */
+body.light-theme .topbar {
+  background-color: #ffffff !important;
+  color: #1a1a1a !important;
+  border-bottom: 1px solid #ddd !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Modal */
+body.light-theme .modal-content {
+  background-color: #ffffff !important;
+  color: #1a1a1a !important;
+  border: 1px solid #e0e0e0 !important;
+}
+
+body.light-theme .modal-body {
+  background-color: #f8f8f8 !important;
+}
+
+body.light-theme .modal-img {
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .modal-title {
+  color: #00bfa5;
+}
+
+/* Botones */
+body.light-theme .download-btn,
+body.light-theme .episode-button {
+  background-color: #00bfa5;
+  color: white;
+}
+
+body.light-theme .download-btn:hover,
+body.light-theme .episode-button:hover {
+  background-color: #009e87;
+  box-shadow: 0 4px 12px rgba(0, 191, 165, 0.4);
+}
+
+body.light-theme .btn-outline-light {
+  color: #00bfa5 !important;
+  border-color: #00bfa5 !important;
+}
+
+body.light-theme .btn-outline-light:hover {
+  background-color: #00bfa5 !important;
+  color: #fff !important;
+}
+
+/* Lista de episodios */
+body.light-theme .episodes-list {
+  background-color: #fefefe !important;
+  border: 1px solid #e0e0e0 !important;
+  scrollbar-color: #00bfa5 #f1f1f1;
+}
+
+body.light-theme .episodes-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+body.light-theme .episodes-list::-webkit-scrollbar-thumb {
+  background-color: #00bfa5;
+}
+
+/* Bottom bar */
+body.light-theme .bottom-bar {
+  background: linear-gradient(90deg, #ffffff, #f3f3f3);
+  border-top: 1px solid #dcdcdc;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.06);
+}
+
+body.light-theme .bottom-btn {
+  color: #00bfa5;
+}
+
+body.light-theme .bottom-btn:hover {
+  color: #009e87;
+  transform: scale(1.2);
+}
+
+/* Página actual */
+body.light-theme .page-btn {
+  background-color: #00bfa5;
+  color: white;
+}
+
+body.light-theme .page-btn:hover {
+  background-color: #009e87;
+}
+
+body.light-theme #pageIndicator {
+  color: #222;
+}
+
+/* Buscador */
+body.light-theme .search-form.mobile-search-active {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+}
+
+body.light-theme .search-form.mobile-search-active input {
+  color: #111;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #00bfa5;
+}
+
+body.light-theme #searchInput {
+  background: transparent;
+  color: #111;
+  border: none;
+  border-bottom: 1px solid #aaa;
+}
+
+body.light-theme #searchInput::placeholder {
+  color: #888;
+}
+
+
+/* MODO CLARO */
+body.light-theme .bottom-bar {
+  background: linear-gradient(90deg, #f9f9f9, #eaeaea);
+  border-top: 1px solid #ccc;
+}
+
+body.light-theme .bottom-btn {
+  color: #222;
+}
+
+body.light-theme .bottom-btn:hover {
+  color: #000;
+}
+
+body.light-theme .page-btn {
+  background-color: #222;
+  color: #fff;
+}
+
+body.light-theme .page-btn:hover {
+  background-color: #000;
+}
+
+body.light-theme #pageIndicator {
+  color: #222;
+}
+
+
+.logo-svg text {
+  transition: fill 0.3s ease;
+}
+
+.logo-svg {
+  height: 80px;  /* altura fija acorde a la barra */
+  flex-shrink: 0;
+  flex-grow: 0;
+  width: auto;
+}
+
+
+
+
+.logo-svg .main-text,
+.logo-svg .subtext {
+  fill: white;
+}
+
+.logo-svg .ext-text {
+  fill: #00bfff; /* celeste */
+}
+
+/* Modo claro */
+body.light-theme .logo-svg .main-text,
+body.light-theme .logo-svg .subtext {
+  fill: #111;
+}
+
+body.light-theme .logo-svg .ext-text {
+  fill: #2e94dc; /* tono celeste más fuerte para fondo claro */
+}
+
 </style>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Delius+Swash+Caps&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-  <script>eruda.init();</script>
 </head>
 <body>
 <div id="loader">
@@ -389,39 +696,22 @@
   <div class="dot"></div>
   <div class="dot"></div>
 </div>
-  <script>
-window.addEventListener('load', async () => {
-  const loader = document.getElementById('loader');
-  const MIN_LOADING_TIME = 3000;
-  const startTime = performance.now();
-
-  try {
-    await fetchJsonList(); // Carga las tarjetas visibles
-
-    // Esperar a que se carguen todas las imágenes visibles
-    const images = Array.from(document.querySelectorAll('.anime-card img'));
-    await Promise.all(images.map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise(resolve => img.onload = img.onerror = resolve);
-    }));
-
-  } catch (e) {
-    console.error("Error al cargar los datos:", e);
-  } finally {
-    const elapsed = performance.now() - startTime;
-    const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
-
-    setTimeout(() => {
-      loader.classList.add('fade-out');
-      setTimeout(() => loader.style.display = 'none', 600);
-    }, remainingTime);
-  }
-});
-  </script>
-
 <div class="topbar d-flex align-items-center">
-  <img src="/static/Anime EX_B.png" alt="AnimeFLV Logo" />
-  
+<svg viewBox="0 0 300 120" class="logo-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <!-- Texto principal -->
+  <text x="10" y="60" font-family="Alice, serif" font-size="36" font-weight="bold">
+    <tspan class="main-text">Anime </tspan>
+    <tspan class="ext-text">EXT</tspan>
+  </text>
+
+  <!-- Texto japonés centrado debajo -->
+  <text x="100" y="90" text-anchor="middle" font-family="sans-serif" font-size="14" class="subtext">
+    アニメが好きな私たち
+  </text>
+</svg>
+
+
+
   <form class="search-form d-flex ms-auto align-items-center" role="search" onsubmit="searchAnime(event)">
     <!-- Botón solo visible en móvil -->
     <button type="button" id="search-toggle-btn" class="btn btn-outline-light d-md-none">
@@ -433,7 +723,6 @@ window.addEventListener('load', async () => {
     <button class="btn btn-outline-light d-none d-md-block" type="submit"><i class="fa fa-search"></i></button>
   </form>
 </div>
-
   <h1 id="page-title" class="text-center my-4 text-secondary fw-bold"
     style="font-family: 'Delius Swash Caps', cursive; font-size: 3.5rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.2);">
    Anime Directory
@@ -442,6 +731,19 @@ window.addEventListener('load', async () => {
   <div class="main" id="main-content">
     <div class="card-container" id="card-container"></div>
   </div>
+<div class="bottom-bar">
+  <button class="bottom-btn" onclick="scrollToTop()">
+    <i class="fa fa-arrow-up"></i>
+  </button>
+
+  <div id="pagination-controls" class="pagination-controls">
+  </div>
+
+  <button class="bottom-btn" onclick="toggleTheme()">
+    <i class="fa fa-moon" id="bottomThemeIcon"></i>
+  </button>
+</div>
+
   <!-- Modal -->
 <div class="modal fade" id="animeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
@@ -462,338 +764,49 @@ window.addEventListener('load', async () => {
       </div>
     </div>
 </div>
+
+<script src="/static/index.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const searchForm = document.querySelector('.search-form');
-  const searchToggleBtn = document.getElementById('search-toggle-btn');
-  const searchInput = document.getElementById('searchInput');
-
-  const closeBtn = document.createElement('button');
-  closeBtn.id = 'search-close-btn';
-  closeBtn.type = 'button';
-  closeBtn.innerHTML = '<i class="fa fa-times"></i>';
-  searchForm.appendChild(closeBtn);
-
-  function openMobileSearch() {
-    searchForm.classList.add('mobile-search-active');
-    searchInput.classList.remove('hiding');
-    searchInput.classList.add('showing');
-    searchInput.style.display = 'block';
-    searchInput.focus();
-    document.querySelector('.topbar img').style.display = 'none';
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function closeMobileSearch() {
-    // Animar input para ocultar
-    searchInput.classList.remove('showing');
-    searchInput.classList.add('hiding');
-
-    // Animar formulario para ocultar
-    searchForm.classList.add('hiding');
-
-    // Después de la animación, limpiar clases y ocultar
-    setTimeout(() => {
-      searchForm.classList.remove('mobile-search-active', 'hiding');
-      searchInput.classList.remove('hiding');
-      searchInput.style.display = 'none';
-      document.querySelector('.topbar img').style.display = '';
-    }, 300);
+  function scrollToBottom() {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 
-  searchToggleBtn.addEventListener('click', () => {
-    openMobileSearch();
-  });
+  function toggleTheme() {
+    document.body.classList.toggle('light-theme');
+    const icon = document.getElementById('bottomThemeIcon');
+    icon.classList.toggle('fa-moon');
+    icon.classList.toggle('fa-sun');
+    // Guardar preferencia
+    localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+  }
 
-  closeBtn.addEventListener('click', () => {
-    closeMobileSearch();
-  });
-
-  searchForm.addEventListener('submit', e => {
-    if (searchForm.classList.contains('mobile-search-active')) {
-      e.preventDefault();
-
-      closeMobileSearch();
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      document.body.classList.add('light-theme');
+      document.getElementById('bottomThemeIcon').classList.remove('fa-moon');
+      document.getElementById('bottomThemeIcon').classList.add('fa-sun');
     }
   });
 
-  document.addEventListener('click', e => {
-    if (
-      searchForm.classList.contains('mobile-search-active') &&
-      !searchForm.contains(e.target) &&
-      e.target !== searchToggleBtn
-    ) {
-      closeMobileSearch();
+  const bottomBar = document.querySelector('.bottom-bar');
+
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const fullHeight = document.documentElement.scrollHeight;
+
+    // Si estamos a menos de 20px del fondo, mostrar barra
+    if (scrollTop + windowHeight >= fullHeight - 20) {
+      bottomBar.classList.add('visible');
+    } else {
+      bottomBar.classList.remove('visible');
     }
   });
-});
-</script>
-<script>
-const container = document.getElementById('card-container');
-const mainContent = document.getElementById('main-content');
-const recolectForm = document.getElementById('recolect-form');
-const pageTitle = document.getElementById('page-title');
-let currentAnime = null;
-const loadedCards = new Map();
-let fullAnimeList = [];
-
-function cleanTitle(title) {
-  return title.trim();
-}
-
-function getPageParam() {
-  const params = new URLSearchParams(window.location.search);
-  const page = parseInt(params.get('page')) || 1;
-  return page;
-}
-
-function paginate(items, page, perPage = 24) {
-  const start = (page - 1) * perPage;
-  return items.slice(start, start + perPage);
-}
-
-function clearCards() {
-  container.innerHTML = '';
-  loadedCards.clear();
-}
-
-async function fetchJsonList() {
-  try {
-    const resp = await fetch('/jsons/anime_list.json', { cache: 'no-store' });
-    if (!resp.ok) return;
-
-    fullAnimeList = await resp.json();
-    const page = getPageParam();
-    const paginated = paginate(fullAnimeList, page);
-
-    clearCards();
-    for (const anime of paginated) {
-      createCard(anime, anime.title);
-    }
-
-    createPagination(fullAnimeList.length, page);
-  } catch (err) {
-    console.error("Error cargando lista:", err);
-  }
-}
-
-function createCard(data, animeTitle) {
-  const card = document.createElement('div');
-  card.className = 'anime-card';
-  card.tabIndex = 0;
-  card.setAttribute('role', 'button');
-
-  const proxyUrl = `/proxy-image?url=${encodeURIComponent(data.image)}`;
-
-  card.innerHTML = `
-    <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(animeTitle)}" class="anime-image" loading="lazy" />
-    <div class="anime-title">${cleanTitle(animeTitle)}</div>
-  `;
-
-  card.addEventListener('click', () => openModal(data, animeTitle));
-  container.appendChild(card);
-  loadedCards.set(animeTitle, card);
-}
-
-async function waitForVisibleImages(selector = '.anime-card img') {
-  const images = Array.from(document.querySelectorAll(selector));
-  await Promise.all(images.map(img => {
-    if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
-    return new Promise(resolve => img.onload = img.onerror = resolve);
-  }));
-}
-
-
-
-window.addEventListener('popstate', (event) => {
-  const page = getPageParam();
-  const paginated = paginate(fullAnimeList, page);
-  clearCards();
-  for (const anime of paginated) {
-    createCard(anime, anime.title);
-  }
-  createPagination(fullAnimeList.length, page);
-});
-
-
-async function changePage(page) {
-  showLoader();
-
-  const params = new URLSearchParams(window.location.search);
-  params.set('page', page);
-  const newUrl = `${window.location.pathname}?${params.toString()}`;
-  window.history.pushState({ page }, '', newUrl);
-
-  const paginated = paginate(fullAnimeList, page);
-  clearCards();
-  for (const anime of paginated) {
-    createCard(anime, anime.title);
-  }
-  createPagination(fullAnimeList.length, page);
-
-  await waitForVisibleImages(); // ← espera a que se carguen todas las imágenes
-
-  hideLoader();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-
-
-
-function createPagination(totalItems, currentPage) {
-  const pagination = document.getElementById('pagination') || document.createElement('div');
-  pagination.id = 'pagination';
-  pagination.innerHTML = '';
-  pagination.className = 'pagination mt-4 justify-content-center flex-wrap';
-
-  const totalPages = Math.ceil(totalItems / 24);
-  const groupSize = 10;
-  const currentGroupStart = Math.floor((currentPage - 1) / groupSize) * groupSize + 1;
-  const currentGroupEnd = Math.min(currentGroupStart + groupSize - 1, totalPages);
-
-  function createPageButton(page, label = null, customClass = '') {
-    const btn = document.createElement('button');
-    btn.textContent = label || page;
-    btn.className = `btn btn-sm mx-1 ${page === currentPage ? 'btn-primary' : 'btn-outline-primary'} ${customClass}`;
-    btn.addEventListener('click', () => {
-      changePage(page);
-    });
-    return btn;
-  }
-
-  if (currentGroupStart > 1) {
-    pagination.appendChild(createPageButton(currentPage - 1, '«', 'btn-outline-secondary'));
-  }
-
-  for (let i = currentGroupStart; i <= currentGroupEnd; i++) {
-    pagination.appendChild(createPageButton(i));
-  }
-
-  if (currentGroupEnd < totalPages) {
-    pagination.appendChild(createPageButton(currentPage + 1, '»', 'btn-outline-secondary'));
-  }
-
-  if (!document.getElementById('pagination')) {
-    container.parentNode.appendChild(pagination);
-  }
-}
-
-
-function searchAnime(event) {
-  event.preventDefault();
-  const input = document.getElementById('searchInput').value.trim().toLowerCase();
-
-  if (!input) {
-    const page = getPageParam();
-    const paginated = paginate(fullAnimeList, page);
-
-    clearCards();
-    for (const anime of paginated) {
-      createCard(anime, anime.title);
-    }
-
-    createPagination(fullAnimeList.length, page);
-    return;
-  }
-
-  const filtered = fullAnimeList.filter(anime =>
-    anime.title.toLowerCase().includes(input)
-  );
-
-  clearCards();
-  filtered.forEach(anime => createCard(anime, anime.title));
-
-  const pagination = document.getElementById('pagination');
-  if (pagination) pagination.innerHTML = '';
-}
-
-function toJsonFilename(animeTitle) {
-  return animeTitle
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-') + '.json';
-}
-
-
-function openModal(data, animeTitle) {
-  currentAnime = data;
-
-  const modalImage = document.getElementById('modalImage');
-  const modalTitle = document.getElementById('modalTitle');
-  const episodesList = document.getElementById('episodes-list');
-  const downloadBtn = document.getElementById('downloadImageBtn');
-
-  const proxyUrl = `/proxy-image?url=${encodeURIComponent(data.image)}`;
-
-  modalImage.src = proxyUrl;
-  modalTitle.textContent = cleanTitle(animeTitle);
-  episodesList.innerHTML = '';
-
-  for (let i = 1; i <= data.episodes_count; i++) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'episode-button';
-    btn.textContent = `Episodio ${i}`;
-    btn.addEventListener('click', () => {
-      const url = `/player?url=${encodeURIComponent(data.url)}&ep=${i}`;
-      window.location.href = url;
-    });
-    episodesList.appendChild(btn);
-  }
-
-  downloadBtn.onclick = () => {
-    const a = document.createElement('a');
-    a.href = proxyUrl;
-    a.download = `${cleanTitle(animeTitle)}.jpg`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
-
-  const animeModalEl = document.getElementById('animeModal');
-  const modal = new bootstrap.Modal(animeModalEl);
-  modal.show();
-}
-
-document.getElementById('searchInput').addEventListener('submit', searchAnime);
-
-window.addEventListener('load', async () => {
-  const loader = document.getElementById('loader');
-  const MIN_LOADING_TIME = 3000;
-  const startTime = performance.now();
-
-  try {
-    await fetchJsonList();
-  } catch (e) {
-    console.error("Error al cargar los datos:", e);
-  } finally {
-    const elapsed = performance.now() - startTime;
-    const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
-    setTimeout(() => {
-      loader.classList.add('fade-out');
-      setTimeout(() => loader.style.display = 'none', 600);
-    }, remainingTime);
-  }
-});
-
-function showLoader() {
-  const loader = document.getElementById('loader');
-  loader.classList.add('fade-once');
-  loader.classList.remove('fade-out');
-  loader.style.display = 'flex';
-  void loader.offsetWidth;
-  loader.classList.add('fade-in');
-}
-
-function hideLoader() {
-  const loader = document.getElementById('loader');
-  loader.classList.remove('fade-in');
-  loader.classList.add('fade-out');
-  setTimeout(() => {
-    loader.style.display = 'none';
-    loader.classList.remove('fade-once');
-  }, 1000);
-}
-
 </script>
 </body>
 </html>
