@@ -16,7 +16,7 @@ const { main } = require('./anim');
 
 // =================== VARIABLES GLOBALES ===================
 const app = express();
-const PORT = process.env.PORT || 2012;
+const PORT = 2021;
 const BROWSERLESS_ENDPOINT = 'wss://production-sfo.browserless.io?token=2SV8d19pqX3Rqww615a28370a099593392e6e89e6395e4e63';
 const JSON_FOLDER = path.join(__dirname, 'jsons');
 const JSON_PATH_TIO = path.join(JSON_FOLDER, 'anime_list.json');
