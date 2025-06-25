@@ -127,14 +127,21 @@ async function procesarTioanime(anime, log) {
   }
 }
 
-async function unirJsonSinRepetirTitulos(datos1, datos2, salida, log) {
+async function unirJsonSinRepetirTitulos(datos1, datos2, nombreArchivo, log) {
   const combinados = {};
+  
   [...datos1, ...datos2].forEach(anime => {
     const titulo = anime.title;
     if (!combinados[titulo] || anime.episodes_count > combinados[titulo].episodes_count) {
       combinados[titulo] = anime;
     }
   });
+
+  // Ruta de salida en el directorio ./jsons
+  const salida = path.join(__dirname, "jsons", nombreArchivo);
+
+  // Asegurarse que el directorio ./jsons exista
+  fs.mkdirSync(path.dirname(salida), { recursive: true });
 
   fs.writeFileSync(salida, JSON.stringify(Object.values(combinados), null, 2), "utf-8");
   log(`[Union] Archivo combinado: ${salida}`);
@@ -181,7 +188,7 @@ async function main({ log }) {
   fs.writeFileSync("anime_list_tio.json", JSON.stringify(tioData, null, 2));
 
   // Combinar y limpiar
-  await unirJsonSinRepetirTitulos(animeflvData, tioData, "anime_list_total.json", log);
+  await unirJsonSinRepetirTitulos(animeflvData, tioData, "anime_list.json", log);
   eliminarArchivo("anime_list_flv.json", log);
   eliminarArchivo("anime_list_tio.json", log);
 

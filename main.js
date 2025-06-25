@@ -12,15 +12,29 @@ const playwright = require('playwright-core');
 const cookieParser = require('cookie-parser');
 const { http, https } = require('follow-redirects');
 const { firefox } = require('playwright-core');
+const { Worker } = require('worker_threads');
 const { main } = require('./anim');
 
 // =================== VARIABLES GLOBALES ===================
 const app = express();
-const PORT = 2012;
+const PORT = 2015;
 const BROWSERLESS_ENDPOINT = 'wss://production-sfo.browserless.io?token=2SV8d19pqX3Rqww615a28370a099593392e6e89e6395e4e63';
 const JSON_FOLDER = path.join(__dirname, 'jsons');
 const JSON_PATH_TIO = path.join(JSON_FOLDER, 'anime_list.json');
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+
+let isUpdating = false;
+const maintenancePassword = Math.random().toString(36).slice(-8);
+console.log(`🔐 Contraseña para mantenimiento (/up): ${maintenancePassword}`);
+
+// =================== MIDDLEWARE BLOQUEO ===================
+app.use((req, res, next) => {
+  if (isUpdating && req.path !== '/maintenance') {
+    console.log(`[BLOQUEADO] Acceso denegado temporalmente a ${req.path}`);
+    return res.redirect('/maintenance');
+  }
+  next();
+});
 
 app.use(cors());
 app.use(cookieParser());
@@ -43,9 +57,59 @@ app.get('/player', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'player.html'));
 });
 
-app.get('/scrap', (req, res) => {
-  console.log(`[GET /scrap] Scraper solicitado`);
-  res.sendFile(path.join(__dirname, 'public', 'scrap.html'));
+app.get('/maintenance', (req, res) => {
+  if (!isUpdating) return res.redirect('/');
+  res.send(`
+    <html><head><title>Mantenimiento</title></head>
+    <body style="background:#111; color:#eee; text-align:center; padding-top:10%;">
+      <h1>Lo sentimos</h1>
+      <p>Nos encontramos actualizando la lista de animes. Inténtelo en unos minutos...</p>
+    </body></html>
+  `);
+});
+
+// =================== MANTENIMIENTO EN HILO ===================
+async function iniciarMantenimiento() {
+  if (isUpdating) return;
+  isUpdating = true;
+  console.log(`[MANTENIMIENTO] Iniciando (en hilo separado)...`);
+
+  const worker = new Worker(path.join(__dirname, 'worker-mantenimiento.js'));
+
+  worker.on('message', (msg) => {
+    if (msg.type === 'log') {
+      console.log(`[MANTENIMIENTO] ${msg.msg}`);
+    } else if (msg.type === 'done') {
+      console.log(`[MANTENIMIENTO] Finalizado`);
+      isUpdating = false;
+    } else if (msg.type === 'error') {
+      console.error(`[MANTENIMIENTO] Error en worker:`, msg.err);
+      isUpdating = false;
+    }
+  });
+
+  worker.on('error', (err) => {
+    console.error(`[MANTENIMIENTO] Worker error:`, err);
+    isUpdating = false;
+  });
+
+  worker.on('exit', (code) => {
+    if (code !== 0) {
+      console.error(`[MANTENIMIENTO] Worker terminó con código ${code}`);
+    }
+    isUpdating = false;
+  });
+}
+
+app.get('/up', async (req, res) => {
+  const { pass } = req.query;
+  if (pass !== maintenancePassword) {
+    console.warn(`[UP] Contraseña incorrecta o ausente`);
+    return res.status(401).send('⛔ Acceso no autorizado. Parámetro "pass" requerido.');
+  }
+
+  res.send('⏳ Iniciando mantenimiento. Intenta nuevamente en unos minutos...');
+  iniciarMantenimiento();
 });
 
 // =================== API PLAYER ===================
@@ -55,23 +119,18 @@ app.get('/api/player', (req, res) => {
   console.log(`[API PLAYER] Params: url=${url_original}, ep=${ep}`);
 
   if (!url_original || isNaN(ep)) {
-    console.warn(`[API PLAYER] Parámetros inválidos`);
     return res.status(400).json({ error: "Faltan parámetros url o ep" });
   }
 
   try {
     const anime_list = JSON.parse(fs.readFileSync(JSON_PATH_TIO, 'utf8'));
-    console.log(`[API PLAYER] Lista cargada`);
-
     const anime_data = anime_list.find(a => a.url === url_original);
     if (!anime_data) {
-      console.warn(`[API PLAYER] Anime no encontrado: ${url_original}`);
-      return res.status(404).json({ error: "Anime no encontrado en la lista" });
+      return res.status(404).json({ error: "Anime no encontrado" });
     }
 
     const episodes_count = anime_data.episodes_count || 1;
     if (ep <= 0 || ep > episodes_count) {
-      console.warn(`[API PLAYER] Episodio fuera de rango: ${ep}`);
       return res.status(406).json({
         error: "Episodio inválido",
         redirect_url: `/player?url=${url_original}&ep=${Math.min(Math.max(ep, 1), episodes_count)}`,
@@ -84,49 +143,39 @@ app.get('/api/player', (req, res) => {
     const prev_ep = ep > 1 ? ep - 1 : 1;
     const next_ep = ep < episodes_count ? ep + 1 : episodes_count;
 
-    console.log(`[API PLAYER] Episodio actual: ${current_url}`);
     res.json({ current_url, url_original, ep_actual: ep, prev_ep, next_ep, episodes_count, anime_title: anime_data.title || '' });
   } catch (err) {
-    console.error('[API PLAYER] Error:', err);
     res.status(500).json({ error: 'Error interno' });
   }
 });
 
 // =================== API JSONS ===================
 app.get('/json-list', (req, res) => {
-  console.log(`[GET /json-list] Solicitando lista de JSON`);
   const files = fs.readdirSync(JSON_FOLDER).filter(f => f.endsWith('.json'));
   res.json(files);
 });
 
 app.get('/jsons/:filename', (req, res) => {
   const filename = req.params.filename;
-  console.log(`[GET /jsons/${filename}] Archivo solicitado`);
   res.sendFile(path.join(JSON_FOLDER, filename));
 });
 
 // =================== PROXY DE IMÁGENES ===================
 app.get('/proxy-image', async (req, res) => {
   const { url } = req.query;
-  console.log(`[GET /proxy-image] Imagen solicitada: ${url}`);
   if (!url) return res.status(400).send('URL faltante');
   try {
     const response = await axios.get(url, { responseType: 'stream', timeout: 10000 });
-    console.log(`[GET /proxy-image] Imagen recibida correctamente`);
     res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
     res.setHeader('Cache-Control', 'no-store');
     response.data.pipe(res);
   } catch (err) {
-    console.error(`[GET /proxy-image] Error:`, err.message);
     res.status(500).send(`Error al obtener imagen: ${err.message}`);
   }
 });
 
-// =================== INTEGRACIÓN BROWSERLESS ===================
-
-// Extraer todos los enlaces de video desde la página
+// =================== BROWSERLESS Y EXTRACTORS ===================
 async function extractAllVideoLinks(pageUrl) {
-  console.log(`[EXTRACT] Extrayendo videos de: ${pageUrl}`);
   const { data: html } = await axios.get(pageUrl);
   const $ = cheerio.load(html);
   let videos = [];
@@ -144,98 +193,47 @@ async function extractAllVideoLinks(pageUrl) {
             url: v.url || v.code || v[1]
           }));
         }
-        return false; // salir del each
-      } catch (err) {
-        console.warn(`[EXTRACT] Error parseando SUB:`, err);
-      }
+        return false;
+      } catch {}
     }
   });
 
-  console.log(`[EXTRACT] Total videos extraídos: ${videos.length}`);
   return videos;
 }
 
 async function extractFromSW(swiftUrl) {
-  console.log(`[SW] Extrayendo y descargando .m3u8 desde: ${swiftUrl}`);
   const browser = await firefox.connect({
     wsEndpoint: 'wss://production-sfo.browserless.io/firefox/playwright?token=2SV8d19pqX3Rqww615a28370a099593392e6e89e6395e4e63'
   });
   const context = await browser.newContext();
   const page = await context.newPage();
-
   const m3u8Urls = new Set();
 
   page.on('requestfinished', request => {
     const url = request.url();
-    if (url.includes('.m3u8')) {
-      console.log('[SW] Detectado .m3u8:', url);
-      m3u8Urls.add(url);
-    }
+    if (url.includes('.m3u8')) m3u8Urls.add(url);
   });
 
-  try {
-    await page.goto(swiftUrl, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(7000);
-  } catch (err) {
-    console.error('[SW] Error navegando:', err.message);
-    await browser.close();
-    throw err;
-  }
+  await page.goto(swiftUrl, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(7000);
 
-  if (m3u8Urls.size === 0) {
-    await browser.close();
-    throw new Error('No se encontraron URLs m3u8');
-  }
-
-  // Descargar contenido de todos los .m3u8 detectados dentro de Playwright
   const m3u8Contents = [];
 
   for (const url of m3u8Urls) {
     try {
       const content = await page.evaluate(async (m3u8url) => {
         const resp = await fetch(m3u8url);
-        if (!resp.ok) throw new Error(`Error HTTP ${resp.status}`);
         return await resp.text();
       }, url);
       m3u8Contents.push({ url, content });
-      console.log(`[SW] Contenido descargado de ${url}, ${content.length} caracteres`);
-    } catch (error) {
-      console.warn(`[SW] Error descargando contenido de ${url}:`, error.message);
-    }
+    } catch {}
   }
 
   await browser.close();
-
-  if (m3u8Contents.length === 0) {
-    throw new Error('No se pudo descargar el contenido de ninguna URL m3u8');
-  }
-
-  return m3u8Contents; // Devuelve array de objetos con url + texto
+  return m3u8Contents;
 }
 
-
-// Extractors mapeo
-const extractors = {
-  'yourupload': url => interceptPuppeteer(url, /\.mp4$/, 'yourupload.com'),
-  'yu': url => interceptPuppeteer(url, /\.mp4$/, 'yourupload.com'),
-  'stape': url => interceptPuppeteer(url, /\.mp4$/, 'stape'),
-  'streamtape': url => interceptPuppeteer(url, /\.mp4$/, 'streamtape'),
-  'voe': url => interceptPuppeteer(url, /\.mp4$/, 'voe'),
-  'ok.ru': url => interceptPuppeteer(url, /\.mp4$/, 'ok.ru'),
-  'okru': url => interceptPuppeteer(url, /\.mp4$/, 'ok.ru'),
-  'streamwish': extractFromSW,
-  'swiftplayers': extractFromSW,
-  'sw': extractFromSW
-};
-
-function getExtractor(name) {
-  console.log(`[GET EXTRACTOR] Solicitado: ${name}`);
-  return extractors[name.toLowerCase()];
-}
-
-// Puppeteer intercept para mp4 (igual que antes)
 async function interceptPuppeteer(pageUrl, fileRegex, refererMatch) {
-  console.log(`[PUPPETEER] Interceptando: ${pageUrl}`);
   const browser = await puppeteer.connect({
     browserWSEndpoint: BROWSERLESS_ENDPOINT,
     timeout: 60000
@@ -249,14 +247,12 @@ async function interceptPuppeteer(pageUrl, fileRegex, refererMatch) {
         resolved = true;
         await page.close();
         await browser.close();
-        console.warn(`[PUPPETEER] Timeout alcanzado para ${refererMatch}`);
         reject(new Error(`❌ No se detectó archivo válido para ${refererMatch}`));
       }
     }, 15000);
 
     page.on('request', async (req) => {
       const reqUrl = req.url();
-      console.log(`[PUPPETEER] ➤ Request: ${reqUrl}`);
       if (fileRegex.test(reqUrl) && !resolved) {
         resolved = true;
         clearTimeout(timeout);
@@ -265,7 +261,6 @@ async function interceptPuppeteer(pageUrl, fileRegex, refererMatch) {
         if (reqUrl.includes('novideo.mp4')) {
           return reject(new Error(`⚠ El servidor "${refererMatch}" devolvió novideo.mp4`));
         }
-        console.log(`[PUPPETEER] ✅ Archivo encontrado: ${reqUrl}`);
         resolve({ url: reqUrl });
       }
     });
@@ -285,19 +280,33 @@ async function interceptPuppeteer(pageUrl, fileRegex, refererMatch) {
   });
 }
 
-// =================== NUEVAS RUTAS API ===================
+const extractors = {
+  'yourupload': url => interceptPuppeteer(url, /\.mp4$/, 'yourupload.com'),
+  'yu': url => interceptPuppeteer(url, /\.mp4$/, 'yourupload.com'),
+  'stape': url => interceptPuppeteer(url, /\.mp4$/, 'stape'),
+  'streamtape': url => interceptPuppeteer(url, /\.mp4$/, 'streamtape'),
+  'voe': url => interceptPuppeteer(url, /\.mp4$/, 'voe'),
+  'ok.ru': url => interceptPuppeteer(url, /\.mp4$/, 'ok.ru'),
+  'okru': url => interceptPuppeteer(url, /\.mp4$/, 'ok.ru'),
+  'streamwish': extractFromSW,
+  'swiftplayers': extractFromSW,
+  'sw': extractFromSW
+};
+
+function getExtractor(name) {
+  return extractors[name.toLowerCase()];
+}
+
+// =================== API STREAMING ===================
 app.get('/api/servers', async (req, res) => {
   const pageUrl = req.query.url;
-  console.log(`[API SERVERS] URL: ${pageUrl}`);
   if (!pageUrl) return res.status(400).json({ error: 'Falta parámetro url' });
 
   try {
     const videos = await extractAllVideoLinks(pageUrl);
     const valid = videos.filter(v => getExtractor(v.servidor));
-    console.log(`[API SERVERS] Servidores válidos:`, valid);
     res.json(valid);
   } catch (e) {
-    console.error(`[API SERVERS] Error:`, e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -305,7 +314,6 @@ app.get('/api/servers', async (req, res) => {
 app.get('/api', async (req, res) => {
   const pageUrl = req.query.url;
   const serverRequested = req.query.server;
-  console.log(`[API] URL: ${pageUrl}, Servidor: ${serverRequested}`);
 
   if (!pageUrl) return res.status(400).send('Falta parámetro url');
 
@@ -324,26 +332,16 @@ app.get('/api', async (req, res) => {
     const extractor = getExtractor(selected.servidor);
     const result = await extractor(selected.url);
 
-    // --- Si es array de objetos con content (.m3u8) ---
     if (Array.isArray(result) && result[0]?.content) {
-      console.log(`[API] Retornando JSON con ${result.length} archivos .m3u8`);
-      return res.json({
-        count: result.length,
-        files: result,
-        firstUrl: result[0].url
-      });
+      return res.json({ count: result.length, files: result, firstUrl: result[0].url });
     }
 
-    // --- Si es un solo objeto con url (.mp4) ---
     if (result?.url) {
-      console.log(`[API] Redirigiendo a stream: ${result.url}`);
       return res.redirect(`/api/stream?videoUrl=${encodeURIComponent(result.url)}`);
     }
 
     throw new Error('Formato de extractor no reconocido');
-
   } catch (e) {
-    console.error(`[API] Error:`, e);
     res.status(500).send('Error interno del servidor: ' + e.message);
   }
 });
@@ -356,22 +354,19 @@ app.get('/api/m3u8', async (req, res) => {
     const swRes = await axios.get(apiUrl);
     const files = swRes.data.files || [];
     const best = files.find(f => f.url.includes('index-f2')) || files[0];
-
     if (!best || !best.content) {
       return res.status(404).send('#EXTM3U\n#EXT-X-ENDLIST\n');
     }
 
     res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
     res.send(best.content);
-  } catch (err) {
-    console.error('[API /m3u8] Error:', err.message);
+  } catch {
     res.status(500).send('#EXTM3U\n#EXT-X-ENDLIST\n');
   }
 });
 
 app.get('/api/stream', (req, res) => {
   const videoUrl = req.query.videoUrl;
-  console.log(`[API STREAM] Video URL: ${videoUrl}`);
   if (!videoUrl) return res.status(400).send('Falta parámetro videoUrl');
 
   const parsedUrl = urlLib.parse(videoUrl);
@@ -397,14 +392,11 @@ app.get('/api/stream', (req, res) => {
   const proxyReq = protocol.request(options, (proxyRes) => {
     proxyRes.headers['Content-Disposition'] = 'inline; filename="video.mp4"';
     proxyRes.headers['Content-Type'] = 'video/mp4';
-
-    console.log(`[API STREAM] StatusCode: ${proxyRes.statusCode}`);
     res.writeHead(proxyRes.statusCode, proxyRes.headers);
     proxyRes.pipe(res);
   });
 
   proxyReq.on('error', err => {
-    console.error(`[API STREAM] Proxy error:`, err.message);
     if (!res.headersSent) {
       res.status(500).send('Error al obtener el video: ' + err.message);
     } else {
@@ -415,32 +407,10 @@ app.get('/api/stream', (req, res) => {
   proxyReq.end();
 });
 
-app.get("/api/scrap/logs", async (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  res.flushHeaders();
+// =================== AUTO MANTENIMIENTO ===================
+setInterval(iniciarMantenimiento, 24 * 60 * 60 * 1000);
 
-  const send = (msg) => {
-    res.write(`data: ${msg}\n\n`);
-  };
-
-  req.on("close", () => {
-    console.log("Cliente desconectado, cerrando conexión SSE.");
-    res.end();
-  });
-
-  try {
-    await main({ log: send });
-    res.write(`event: end\ndata: done\n\n`);
-    res.end();
-  } catch (err) {
-    res.write(`event: error\ndata: ${err.message}\n\n`);
-    res.end();
-  }
-});
-
-// =================== SERVIDOR LISTO ===================
+// =================== SERVIDOR INICIADO ===================
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
