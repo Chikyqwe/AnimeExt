@@ -75,7 +75,11 @@ function highlightActiveButton(activeIndex) {
   });
 }
 
-async function precacheNextEpisode(url) {
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function precacheNextEpisode(url, retry = true) {
   const nextUrl = getNextEpisodeUrl(url);
   if (!nextUrl) return;
 
@@ -86,7 +90,13 @@ async function precacheNextEpisode(url) {
   }
 
   try {
+    console.log(`⏳ Waiting 10 seconds before precaching next episode: ${nextUrl}`);
+    await delay(10000); // espera inicial
+
+    console.log(`🔍 Fetching servers for ${nextUrl}`);
     const res = await fetch(`${API_BASE}/servers?url=${encodeURIComponent(nextUrl)}`);
+    if (!res.ok) throw new Error(`Error fetching servers: ${res.status}`);
+
     const servers = await res.json();
     const preferred = servers.find(s => s.servidor.toLowerCase() === "sw") ||
                       servers.find(s => s.servidor.toLowerCase() === "stape") ||
@@ -96,11 +106,13 @@ async function precacheNextEpisode(url) {
     let streamUrl = "", m3u8Content = null;
 
     if (preferred.servidor.toLowerCase() === "sw") {
+      console.log("📥 Fetching m3u8 content from SW server");
       const resM3u8 = await fetch(`/api/m3u8?url=${encodeURIComponent(nextUrl)}`);
       if (!resM3u8.ok) throw new Error(`SW error: ${resM3u8.status}`);
       m3u8Content = await resM3u8.text();
       streamUrl = nextUrl;
     } else {
+      console.log(`📥 Fetching stream URL from server ${preferred.servidor}`);
       const resAlt = await fetch(`${API_BASE}?url=${encodeURIComponent(nextUrl)}&server=${preferred.servidor}`);
       if (!resAlt.ok) throw new Error(`Alt error: ${resAlt.status}`);
       streamUrl = (await resAlt.text()).trim();
@@ -119,11 +131,20 @@ async function precacheNextEpisode(url) {
 
   } catch (err) {
     console.warn("❌ Failed to precache:", err);
+    if (retry) {
+      console.log("🔄 Retrying precache in 5 seconds...");
+      await delay(5000);
+      await precacheNextEpisode(url, false); // solo un reintento
+    }
   }
 }
 
 // --- FUNCIÓN MODIFICADA ---
-function loadStreamDirect(url, m3u8Content = null) {
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function loadStreamDirect(url, m3u8Content = null) {
   if (hlsInstance) {
     try {
       hlsInstance.destroy();
@@ -156,7 +177,8 @@ function loadStreamDirect(url, m3u8Content = null) {
         console.warn("Play() error:", err);
       }
 
-      // Precargar siguiente episodio
+      // Esperar 10 segundos antes de precargar siguiente episodio
+      await delay(10000);
       precacheNextEpisode(currentUrl);
       video.muted = false;
     });
@@ -181,7 +203,9 @@ function loadStreamDirect(url, m3u8Content = null) {
       } catch (err) {
         console.warn("Play() error:", err);
       }
-
+      
+      // Esperar 10 segundos antes de precargar siguiente episodio
+      await delay(10000);
       precacheNextEpisode(currentUrl);
       video.muted = false;
     }, { once: true });
