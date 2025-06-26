@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Delius+Swash+Caps&display=swap" rel="stylesheet">
@@ -732,8 +731,8 @@ body.light-theme .logo-svg .ext-text {
     <div class="card-container" id="card-container"></div>
   </div>
 <div class="bottom-bar">
-  <button class="bottom-btn" onclick="scrollToTop()">
-    <i class="fa fa-arrow-up"></i>
+  <button class="bottom-btn" onclick="mostrarFavoritosEnModal()">
+    <i class="fa fa-heart"></i>
   </button>
 
   <div id="pagination-controls" class="pagination-controls">
@@ -767,10 +766,6 @@ body.light-theme .logo-svg .ext-text {
 
 <script src="/static/index.js"></script>
 <script>
-  function scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   function scrollToBottom() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }

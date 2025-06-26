@@ -29,6 +29,44 @@ let isUpdating = false;
 const maintenancePassword = Math.random().toString(36).slice(-8);
 console.log(`🔐 Contraseña para mantenimiento (/up): ${maintenancePassword}`);
 
+// ===================== Queue ================================
+class RequestQueue {
+  constructor() {
+    this.queue = [];
+    this.processing = false;
+  }
+
+  add(task) {
+    return new Promise((resolve, reject) => {
+      this.queue.push({ task, resolve, reject });
+      this.processNext();
+    });
+  }
+
+  async processNext() {
+    if (this.processing || this.queue.length === 0) return;
+    this.processing = true;
+
+    const { task, resolve, reject } = this.queue.shift();
+    try {
+      const result = await task();
+      resolve(result);
+    } catch (e) {
+      reject(e);
+    } finally {
+      this.processing = false;
+      this.processNext();
+    }
+  }
+
+  getPendingCount() {
+    return this.queue.length + (this.processing ? 1 : 0);
+  }
+}
+
+const apiQueue = new RequestQueue();
+
+
 // =================== MIDDLEWARE BLOQUEO ===================
 app.use((req, res, next) => {
   console.log(`[MIDDLEWARE] Request a: ${req.path} - isUpdating: ${isUpdating}`);
@@ -250,44 +288,97 @@ async function extractAllVideoLinks(pageUrl) {
 
 async function extractFromSW(swiftUrl) {
   console.log(`[EXTRACTOR SW] Iniciando extracción SW para URL: ${swiftUrl}`);
+
   const browser = await firefox.connect({
     wsEndpoint: 'wss://production-sfo.browserless.io/firefox/playwright?token=2SV8d19pqX3Rqww615a28370a099593392e6e89e6395e4e63'
   });
   const context = await browser.newContext();
   const page = await context.newPage();
-  const m3u8Urls = new Set();
+
+  let masterM3u8Url = null;
 
   page.on('requestfinished', request => {
     const url = request.url();
-    if (url.includes('.m3u8')) {
-      console.log(`[EXTRACTOR SW] Detectado archivo .m3u8: ${url}`);
-      m3u8Urls.add(url);
+    if (url.endsWith('master.m3u8')) {
+      console.log(`[EXTRACTOR SW] Detectado master.m3u8: ${url}`);
+      masterM3u8Url = url;
     }
   });
 
   console.log(`[EXTRACTOR SW] Navegando a ${swiftUrl}`);
   await page.goto(swiftUrl, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(7000);
-  console.log(`[EXTRACTOR SW] Espera finalizada, extrayendo contenidos m3u8...`);
+  await page.waitForTimeout(1500);
 
-  const m3u8Contents = [];
+  if (!masterM3u8Url) {
+    console.warn('[EXTRACTOR SW] No se detectó master.m3u8 en la navegación');
+    await page.close();
+    await context.close();
+    await browser.close();
+    return [];
+  }
 
-  for (const url of m3u8Urls) {
+  // Función para descargar texto dentro del navegador con fetch
+  async function fetchTextFromPage(url) {
     try {
-      const content = await page.evaluate(async (m3u8url) => {
-        const resp = await fetch(m3u8url);
-        return await resp.text();
+      return await page.evaluate(async (u) => {
+        const r = await fetch(u);
+        if (!r.ok) throw new Error(`Status ${r.status}`);
+        return await r.text();
       }, url);
-      console.log(`[EXTRACTOR SW] Contenido extraído de ${url} (longitud: ${content.length})`);
-      m3u8Contents.push({ url, content });
-    } catch (err) {
-      console.error(`[EXTRACTOR SW] Error obteniendo contenido de ${url}:`, err);
+    } catch (e) {
+      console.error(`[EXTRACTOR SW] Error fetch en página para ${url}:`, e);
+      return null;
     }
   }
 
+  // Descargar master.m3u8
+  const masterContent = await fetchTextFromPage(masterM3u8Url);
+
+  if (!masterContent) {
+    console.warn('[EXTRACTOR SW] No se pudo descargar master.m3u8');
+    await page.close();
+    await context.close();
+    await browser.close();
+    return [];
+  }
+
+  const baseUrl = new URL(masterM3u8Url);
+
+  // Extraer URLs secundarias del master
+  const lines = masterContent
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith('#'));
+
+  const urls = lines.map(line => {
+    try {
+      new URL(line);
+      return line;
+    } catch {
+      return new URL(line, baseUrl).href;
+    }
+  });
+
+  console.log(`[EXTRACTOR SW] URLs secundarios detectados:`, urls);
+
+  // Descargar secundarios en paralelo con fetch dentro del navegador
+  const m3u8Contents = await Promise.all(
+    urls.map(async url => {
+      const content = await fetchTextFromPage(url);
+      if (content) {
+        console.log(`[EXTRACTOR SW] Descargado ${url} (longitud: ${content.length})`);
+        return { url, content };
+      } else {
+        return null;
+      }
+    })
+  );
+
+  await page.close();
+  await context.close();
   await browser.close();
-  console.log(`[EXTRACTOR SW] Navegador cerrado, extracción SW terminada`);
-  return m3u8Contents;
+
+  return [{ url: masterM3u8Url, content: masterContent }, ...m3u8Contents.filter(Boolean)];
 }
 
 async function interceptPuppeteer(pageUrl, fileRegex, refererMatch) {
@@ -417,78 +508,103 @@ app.get('/api/servers', async (req, res) => {
 app.get('/api', async (req, res) => {
   const pageUrl = req.query.url;
   const serverRequested = req.query.server;
-  console.log(`[API] Solicitud con url=${pageUrl}, server=${serverRequested}`);
+  console.log(`[API] (EN COLA) url=${pageUrl}, server=${serverRequested}`);
 
-  if (!pageUrl) {
-    console.warn(`[API] Falta parámetro url`);
-    return res.status(400).send('Falta parámetro url');
-  }
-
-  try {
-    const videos = await extractAllVideoLinks(pageUrl);
-    console.log(`[API] Videos extraídos:`, videos);
-    const valid = videos.filter(v => getExtractor(v.servidor));
-    if (!valid.length) {
-      console.warn(`[API] No hay servidores válidos`);
-      return res.status(404).send('No hay servidores válidos');
+  apiQueue.add(async () => {
+    if (!pageUrl) {
+      console.warn(`[API] Falta parámetro url`);
+      return res.status(400).send('Falta parámetro url');
     }
 
-    let selected = valid[0];
-    if (serverRequested) {
-      const found = valid.find(v => v.servidor.toLowerCase() === serverRequested.toLowerCase());
-      if (!found) {
-        console.warn(`[API] Servidor solicitado no soportado: ${serverRequested}`);
-        return res.status(404).send(`Servidor '${serverRequested}' no soportado`);
+    try {
+      const videos = await extractAllVideoLinks(pageUrl);
+      console.log(`[API] Videos extraídos:`, videos);
+      const valid = videos.filter(v => getExtractor(v.servidor));
+      if (!valid.length) {
+        console.warn(`[API] No hay servidores válidos`);
+        return res.status(404).send('No hay servidores válidos');
       }
-      selected = found;
+
+      let selected = valid[0];
+      if (serverRequested) {
+        const found = valid.find(v => v.servidor.toLowerCase() === serverRequested.toLowerCase());
+        if (!found) {
+          console.warn(`[API] Servidor solicitado no soportado: ${serverRequested}`);
+          return res.status(404).send(`Servidor '${serverRequested}' no soportado`);
+        }
+        selected = found;
+      }
+
+      console.log(`[API] Servidor seleccionado: ${selected.servidor}`);
+      const extractor = getExtractor(selected.servidor);
+      const result = await extractor(selected.url);
+
+      console.log(`[API] Resultado del extractor:`, result);
+
+      if (Array.isArray(result) && result[0]?.content) {
+        console.log(`[API] Respondiendo con lista de archivos m3u8`);
+        return res.json({ count: result.length, files: result, firstUrl: result[0].url });
+      }
+
+      if (result?.url) {
+        console.log(`[API] Redireccionando a url de video: ${result.url}`);
+        return res.redirect(`/api/stream?videoUrl=${encodeURIComponent(result.url)}`);
+      }
+
+      throw new Error('Formato de extractor no reconocido');
+    } catch (e) {
+      console.error(`[API] Error interno (en cola):`, e);
+      res.status(500).send('Error interno del servidor: ' + e.message);
     }
-    console.log(`[API] Servidor seleccionado: ${selected.servidor}`);
-
-    const extractor = getExtractor(selected.servidor);
-    const result = await extractor(selected.url);
-
-    console.log(`[API] Resultado del extractor:`, result);
-
-    if (Array.isArray(result) && result[0]?.content) {
-      console.log(`[API] Respondiendo con lista de archivos m3u8`);
-      return res.json({ count: result.length, files: result, firstUrl: result[0].url });
-    }
-
-    if (result?.url) {
-      console.log(`[API] Redireccionando a url de video: ${result.url}`);
-      return res.redirect(`/api/stream?videoUrl=${encodeURIComponent(result.url)}`);
-    }
-
-    throw new Error('Formato de extractor no reconocido');
-  } catch (e) {
-    console.error(`[API] Error interno:`, e);
-    res.status(500).send('Error interno del servidor: ' + e.message);
-  }
+  });
 });
 
 app.get('/api/m3u8', async (req, res) => {
   const { url } = req.query;
-  console.log(`[API M3U8] Solicitud para url: ${url}`);
-  const apiUrl = `${req.protocol}://${req.get('host')}/api?url=${encodeURIComponent(url)}&server=sw`;
+  console.log(`[API M3U8] (EN COLA) url=${url}`);
 
-  try {
-    const swRes = await axios.get(apiUrl);
-    const files = swRes.data.files || [];
-    console.log(`[API M3U8] Archivos recibidos: ${files.length}`);
-    const best = files.find(f => f.url.includes('index-f2')) || files[0];
-    if (!best || !best.content) {
-      console.warn(`[API M3U8] No se encontró contenido válido, respondiendo lista vacía`);
-      return res.status(404).send('#EXTM3U\n#EXT-X-ENDLIST\n');
+  apiQueue.add(async () => {
+    if (!url) {
+      console.warn(`[API M3U8] Falta parámetro url`);
+      res.status(400).send('#EXTM3U\n#EXT-X-ENDLIST\n');
+      return;
     }
 
-    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
-    console.log(`[API M3U8] Enviando contenido m3u8 (longitud: ${best.content.length})`);
-    res.send(best.content);
-  } catch (e) {
-    console.error(`[API M3U8] Error:`, e);
-    res.status(500).send('#EXTM3U\n#EXT-X-ENDLIST\n');
-  }
+    try {
+      const videos = await extractAllVideoLinks(url);
+      const valid = videos.filter(v => getExtractor(v.servidor));
+      const swVideo = valid.find(v => v.servidor.toLowerCase() === 'sw' || v.servidor.toLowerCase().includes('swift'));
+
+      if (!swVideo) {
+        console.warn(`[API M3U8] No se encontró servidor SW en los videos`);
+        res.status(404).send('#EXTM3U\n#EXT-X-ENDLIST\n');
+        return;
+      }
+
+      const extractor = getExtractor(swVideo.servidor);
+      const swResult = await extractor(swVideo.url);
+
+      const files = Array.isArray(swResult) ? swResult : [];
+
+      console.log(`[API M3U8] Archivos SW extraídos: ${files.length}`);
+      const best = files.find(f => f.url.includes('index-f2')) || files[0];
+
+      if (!best || !best.content) {
+        console.warn(`[API M3U8] No se encontró contenido m3u8 válido`);
+        res.status(404).send('#EXTM3U\n#EXT-X-ENDLIST\n');
+        return;
+      }
+
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+      console.log(`[API M3U8] Enviando contenido m3u8`);
+      res.send(best.content);
+    } catch (e) {
+      console.error(`[API M3U8] Error interno:`, e);
+      res.status(500).send('#EXTM3U\n#EXT-X-ENDLIST\n');
+    }
+  });
 });
+
 
 app.get('/api/stream', (req, res) => {
   const videoUrl = req.query.videoUrl;
@@ -544,6 +660,10 @@ app.get('/api/stream', (req, res) => {
   });
 
   proxyReq.end();
+});
+
+app.get('/queue-status', (req, res) => {
+  res.json({ pending: apiQueue.getPendingCount() });
 });
 
 // =================== AUTO MANTENIMIENTO ===================

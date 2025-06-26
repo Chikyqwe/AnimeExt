@@ -127,29 +127,45 @@ async function procesarTioanime(anime, log) {
   }
 }
 
+// Función para normalizar los títulos
+function normalizarTitulo(titulo) {
+  return titulo
+    .toLowerCase()
+    .normalize('NFD')              // Descomponer tildes
+    .replace(/[\u0300-\u036f]/g, '') // Eliminar tildes
+    .replace(/[^a-z0-9]+/g, ' ')   // Eliminar símbolos raros
+    .replace(/\s+/g, ' ')          // Reemplazar espacios múltiples por uno
+    .trim();
+}
+
 async function unirJsonSinRepetirTitulos(datos1, datos2, nombreArchivo, log) {
-  const combinados = {};
-  
-  [...datos1, ...datos2].forEach(anime => {
-    const titulo = anime.title;
-    if (!combinados[titulo] || anime.episodes_count > combinados[titulo].episodes_count) {
-      combinados[titulo] = anime;
+  const combinados = new Map();
+
+  const todos = [...datos1, ...datos2];
+
+  for (const anime of todos) {
+    const clave = normalizarTitulo(anime.title);
+
+    if (!combinados.has(clave)) {
+      combinados.set(clave, anime);
+    } else {
+      const actual = combinados.get(clave);
+      // Preferimos el que tiene más episodios
+      if (anime.episodes_count > actual.episodes_count) {
+        combinados.set(clave, anime);
+      }
     }
-  });
+  }
 
-  // Ruta de salida en el directorio ./jsons
   const salida = path.join(__dirname, "jsons", nombreArchivo);
-
-  // Asegurarse que el directorio ./jsons exista
   fs.mkdirSync(path.dirname(salida), { recursive: true });
-
-  fs.writeFileSync(salida, JSON.stringify(Object.values(combinados), null, 2), "utf-8");
+  fs.writeFileSync(salida, JSON.stringify([...combinados.values()], null, 2), "utf-8");
   log(`[Union] Archivo combinado: ${salida}`);
 }
 
+
 function eliminarArchivo(archivo, log) {
   try {
-    fs.unlinkSync(archivo);
     log(`[Delete] Eliminado: ${archivo}`);
   } catch (err) {
     log(`[Warning] No se pudo eliminar ${archivo}: ${err.message}`);

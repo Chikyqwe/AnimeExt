@@ -10,6 +10,54 @@ let serverList = [];
 let currentBlobUrl = null;
 let wakeLock = null;
 
+// --- IndexedDB setup ---
+const DB_NAME = 'AnimeCacheDB';
+const STORE_NAME = 'precached';
+
+let dbPromise = null;
+
+function openDB() {
+  if (dbPromise) return dbPromise;
+
+  dbPromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'url' });
+      }
+    };
+  });
+
+  return dbPromise;
+}
+
+async function idbPut(entry) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.put(entry);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbGet(url) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.get(url);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// --- Helpers y funciones previas ---
+
 function getStorageKey(url) {
   const match = url.match(/ver\/([^\/?#]+)/);
   return match ? `precached-${match[1]}` : 'precached-unknown';
@@ -20,19 +68,22 @@ function isCacheValid(entry) {
   return Date.now() - entry.timestamp < 12 * 60 * 60 * 1000;
 }
 
-function savePrecached(url, data) {
-  const key = getStorageKey(url);
-  localStorage.setItem(key, JSON.stringify(data));
+async function savePrecached(url, data) {
+  const entry = { ...data, url };
+  try {
+    await idbPut(entry);
+  } catch (e) {
+    console.error('Error guardando en IndexedDB:', e);
+  }
 }
 
-function loadPrecached(url) {
-  const key = getStorageKey(url);
-  const data = localStorage.getItem(key);
-  if (!data) return null;
+async function loadPrecached(url) {
   try {
-    const parsed = JSON.parse(data);
-    return isCacheValid(parsed) ? parsed : null;
-  } catch {
+    const entry = await idbGet(url);
+    if (!entry) return null;
+    return isCacheValid(entry) ? entry : null;
+  } catch (e) {
+    console.error('Error leyendo de IndexedDB:', e);
     return null;
   }
 }
@@ -54,20 +105,6 @@ function getNextEpisodeUrl(url) {
   return url.replace(/-\d+$/, `-${currentEp + 1}`);
 }
 
-function playNextEpisode() {
-  const nextUrl = getNextEpisodeUrl(currentUrl);
-  if (!nextUrl) return;
-
-  const cached = loadPrecached(nextUrl);
-  if (cached && cached.url === nextUrl) {
-    console.log("▶ Playing cached episode:", cached);
-    currentUrl = cached.url;
-    loadStreamDirect(cached.stream, cached.m3u8Content || null);
-  } else {
-    window.location.href = `/player?url=${encodeURIComponent(nextUrl)}`;
-  }
-}
-
 function highlightActiveButton(activeIndex) {
   const buttons = serverButtonsContainer.querySelectorAll("button");
   buttons.forEach((btn, i) => {
@@ -79,11 +116,13 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// --- Funciones principales ---
+
 async function precacheNextEpisode(url, retry = true) {
   const nextUrl = getNextEpisodeUrl(url);
   if (!nextUrl) return;
 
-  const cached = loadPrecached(nextUrl);
+  const cached = await loadPrecached(nextUrl);
   if (cached && cached.url === nextUrl) {
     console.log("🟡 Next episode already cached, skipping precache.");
     return;
@@ -91,7 +130,7 @@ async function precacheNextEpisode(url, retry = true) {
 
   try {
     console.log(`⏳ Waiting 10 seconds before precaching next episode: ${nextUrl}`);
-    await delay(10000); // espera inicial
+    await delay(10000);
 
     console.log(`🔍 Fetching servers for ${nextUrl}`);
     const res = await fetch(`${API_BASE}/servers?url=${encodeURIComponent(nextUrl)}`);
@@ -126,7 +165,7 @@ async function precacheNextEpisode(url, retry = true) {
       timestamp: Date.now()
     };
 
-    savePrecached(nextUrl, entry);
+    await savePrecached(nextUrl, entry);
     console.log("✅ Next episode precached:", entry);
 
   } catch (err) {
@@ -134,14 +173,9 @@ async function precacheNextEpisode(url, retry = true) {
     if (retry) {
       console.log("🔄 Retrying precache in 5 seconds...");
       await delay(5000);
-      await precacheNextEpisode(url, false); // solo un reintento
+      await precacheNextEpisode(url, false);
     }
   }
-}
-
-// --- FUNCIÓN MODIFICADA ---
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function loadStreamDirect(url, m3u8Content = null) {
@@ -172,12 +206,11 @@ async function loadStreamDirect(url, m3u8Content = null) {
       video.muted = true;
       try {
         await video.play();
-        await requestWakeLock(); // 🔒 Aquí se solicita el Wake Lock
+        await requestWakeLock();
       } catch (err) {
         console.warn("Play() error:", err);
       }
 
-      // Esperar 10 segundos antes de precargar siguiente episodio
       await delay(10000);
       precacheNextEpisode(currentUrl);
       video.muted = false;
@@ -199,12 +232,11 @@ async function loadStreamDirect(url, m3u8Content = null) {
       video.muted = true;
       try {
         await video.play();
-        await requestWakeLock(); // 🔒 Aquí también
+        await requestWakeLock();
       } catch (err) {
         console.warn("Play() error:", err);
       }
-      
-      // Esperar 10 segundos antes de precargar siguiente episodio
+
       await delay(10000);
       precacheNextEpisode(currentUrl);
       video.muted = false;
@@ -226,13 +258,11 @@ async function requestWakeLock() {
   }
 }
 
-// Reintentar si el wake lock se pierde (por ejemplo, al minimizar)
 document.addEventListener('visibilitychange', () => {
   if (wakeLock !== null && document.visibilityState === 'visible') {
     requestWakeLock();
   }
 });
-
 
 async function loadServerByIndex(index) {
   if (index >= serverList.length) {
@@ -272,7 +302,7 @@ async function loadServerByIndex(index) {
         m3u8Content: m3u8Text,
         timestamp: Date.now()
       };
-      savePrecached(currentUrl, entry);
+      await savePrecached(currentUrl, entry);
       return;
     }
 
@@ -293,7 +323,7 @@ async function loadServerByIndex(index) {
       m3u8Content: null,
       timestamp: Date.now()
     };
-    savePrecached(currentUrl, entry);
+    await savePrecached(currentUrl, entry);
 
   } catch (err) {
     console.warn("Server failed:", err);
@@ -302,7 +332,7 @@ async function loadServerByIndex(index) {
 }
 
 async function start() {
-  const cached = loadPrecached(currentUrl);
+  const cached = await loadPrecached(currentUrl);
   if (cached && cached.url === currentUrl) {
     console.log("▶️ Using cached stream:", cached);
     loadStreamDirect(cached.stream, cached.m3u8Content || null);
