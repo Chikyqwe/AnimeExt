@@ -16,6 +16,7 @@ const STORE_NAME = 'precached';
 
 let dbPromise = null;
 
+
 function openDB() {
   if (dbPromise) return dbPromise;
 
@@ -138,7 +139,7 @@ async function precacheNextEpisode(url, retry = true) {
 
     const servers = await res.json();
     const preferred = servers.find(s => s.servidor.toLowerCase() === "sw") ||
-                      servers.find(s => s.servidor.toLowerCase() === "stape") ||
+                      servers.find(s => s.servidor.toLowerCase() === "yu") ||
                       servers[0];
     if (!preferred) return;
 

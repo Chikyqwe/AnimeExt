@@ -1,0 +1,87 @@
+// src/utils/helpers.js
+const axios = require('axios');
+const urlLib = require('url');
+const { http, https } = require('follow-redirects');
+
+// Función para el proxy de imágenes, si decides mantenerlo
+async function proxyImage(url, res) {
+  console.log(`[PROXY IMAGE] Solicitud de imagen: `);
+
+  if (!url) {
+    console.warn('[PROXY IMAGE] Parámetro url faltante');
+    return res.status(400).send('URL faltante');
+  }
+
+  try {
+    console.log(`[PROXY IMAGE] Haciendo petición GET a imagen...`);
+    const response = await axios.get(url, { responseType: 'stream', timeout: 10000 });
+    res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
+    res.setHeader('Cache-Control', 'no-store');
+    console.log(`[PROXY IMAGE] Encabezados seteados, transmitiendo imagen...`);
+    response.data.pipe(res);
+  } catch (err) {
+    console.error(`[PROXY IMAGE] Error al obtener imagen: `);
+    res.status(500).send(`Error al obtener imagen: `);
+  }
+}
+
+// Función para el stream de video
+function streamVideo(videoUrl, req, res) {
+  console.log(`[API STREAM] Solicitud para videoUrl: `);
+
+  if (!videoUrl) {
+    console.warn(`[API STREAM] Falta parámetro videoUrl`);
+    return res.status(400).send('Falta parámetro videoUrl');
+  }
+
+  const parsedUrl = urlLib.parse(videoUrl);
+  const isHttps = parsedUrl.protocol === 'https:';
+  const protocol = isHttps ? https : http;
+
+  const headers = {
+    'Referer': 'https://www.yourupload.com/',
+    'Origin': 'https://www.yourupload.com',
+    'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0'
+  };
+  if (req.headers.range) headers['Range'] = req.headers.range;
+
+  console.log(`[API STREAM] Opciones de petición:`, {
+    hostname: parsedUrl.hostname,
+    port: parsedUrl.port || (isHttps ? 443 : 80),
+    path: parsedUrl.path + (parsedUrl.search || ''),
+    headers
+  });
+
+  const options = {
+    hostname: parsedUrl.hostname,
+    port: parsedUrl.port || (isHttps ? 443 : 80),
+    path: parsedUrl.path + (parsedUrl.search || ''),
+    method: 'GET',
+    headers,
+    rejectUnauthorized: false,
+  };
+
+  const proxyReq = protocol.request(options, (proxyRes) => {
+    console.log(`[API STREAM] Respuesta recibida con status: `);
+    proxyRes.headers['Content-Disposition'] = 'inline; filename="video.mp4"';
+    proxyRes.headers['Content-Type'] = 'video/mp4';
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+
+  proxyReq.on('error', err => {
+    console.error(`[API STREAM] Error en proxy:`, err);
+    if (!res.headersSent) {
+      res.status(500).send('Error al obtener el video: ' + err.message);
+    } else {
+      res.end();
+    }
+  });
+
+  proxyReq.end();
+}
+
+module.exports = {
+  proxyImage,
+  streamVideo
+};

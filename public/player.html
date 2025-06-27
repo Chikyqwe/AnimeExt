@@ -232,6 +232,7 @@
   async function initPlayerPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const url = urlParams.get('url');
+    console.log(url)
     const ep = parseInt(urlParams.get('ep'));
 
     if (!url || isNaN(ep)) {
@@ -249,11 +250,22 @@
       }
 
       document.getElementById("anime-title").innerText = data.anime_title;
+// Extraemos la base URL sin el '-N' al final (por si ya lo tuviera)
+function baseWithoutEpisode(url) {
+  return url.replace(/-\d+$/, '');
+}
 
-      document.getElementById("config").textContent = JSON.stringify({
-        currentUrl: data.current_url,
-        nextUrl: (ep < data.episodes_count) ? `/player?url=${encodeURIComponent(url)}&ep=${ep + 1}` : null
-      });
+const baseUrl = typeof data.current_url === 'object' && data.current_url.base_url
+  ? data.current_url.base_url
+  : data.current_url;
+
+const currentUrlWithEp = `${baseWithoutEpisode(baseUrl)}-${ep}`;
+
+document.getElementById("config").textContent = JSON.stringify({
+  currentUrl: currentUrlWithEp,
+  nextUrl: (ep < data.episodes_count) ? `/player?url=${encodeURIComponent(baseWithoutEpisode(baseUrl))}&ep=${ep + 1}` : null
+});
+
 
       const navButtons = document.getElementById("nav-buttons");
       if (ep > 1) {

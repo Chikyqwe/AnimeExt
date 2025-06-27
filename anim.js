@@ -164,12 +164,18 @@ async function unirJsonSinRepetirTitulos(datos1, datos2, nombreArchivo, log) {
 }
 
 
-function eliminarArchivo(archivo, log) {
-  try {
-    log(`[Delete] Eliminado: ${archivo}`);
-  } catch (err) {
-    log(`[Warning] No se pudo eliminar ${archivo}: ${err.message}`);
-  }
+function eliminarArchivoSync(archivo, log) {
+    try {
+        fs.unlinkSync(archivo); // Synchronously delete the file
+        log(`[Delete] Eliminado: ${archivo}`);
+    } catch (err) {
+        // Handle common errors like file not found gracefully
+        if (err.code === 'ENOENT') {
+            log(`[Warning] El archivo ${archivo} no existe, no se pudo eliminar.`);
+        } else {
+            log(`[Warning] No se pudo eliminar ${archivo}: ${err.message}`);
+        }
+    }
 }
 
 async function main({ log }) {
