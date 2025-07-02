@@ -16,7 +16,6 @@ const STORE_NAME = 'precached';
 
 let dbPromise = null;
 
-
 function openDB() {
   if (dbPromise) return dbPromise;
 
@@ -189,7 +188,34 @@ async function loadStreamDirect(url, m3u8Content = null) {
     currentBlobUrl = null;
   }
 
-  if (Hls.isSupported()) {
+  const isM3U8 = url.endsWith(".m3u8") || m3u8Content;
+  const isMP4 = url.endsWith(".mp4");
+
+  // 👉 Si es .mp4, usar <video> directo
+  if (isMP4) {
+    console.log("🎞️ Cargando MP4 directo:", url);
+    video.src = url;
+    video.load();
+    video.addEventListener('loadedmetadata', async () => {
+      loader.style.display = 'none';
+      video.style.opacity = 1;
+      video.muted = true;
+      try {
+        await video.play();
+        await requestWakeLock();
+      } catch (err) {
+        console.warn("Play() error:", err);
+      }
+
+      await delay(10000);
+      precacheNextEpisode(currentUrl);
+      video.muted = false;
+    }, { once: true });
+    return;
+  }
+
+  // 👉 Si es m3u8 y está soportado, usar Hls.js
+  if (Hls.isSupported() && isM3U8) {
     hlsInstance = new Hls();
     if (m3u8Content) {
       const fixed = fixM3u8(m3u8Content, url);
@@ -223,27 +249,30 @@ async function loadStreamDirect(url, m3u8Content = null) {
         hlsInstance.destroy();
       }
     });
-
-  } else {
-    video.src = url;
-    video.load();
-    video.addEventListener('loadedmetadata', async () => {
-      loader.style.display = 'none';
-      video.style.opacity = 1;
-      video.muted = true;
-      try {
-        await video.play();
-        await requestWakeLock();
-      } catch (err) {
-        console.warn("Play() error:", err);
-      }
-
-      await delay(10000);
-      precacheNextEpisode(currentUrl);
-      video.muted = false;
-    }, { once: true });
+    return;
   }
+
+  // 👉 Fallback genérico (no es m3u8, ni mp4, ni soportado por HLS)
+  console.log("⚠️ Reproducción directa sin HLS ni .mp4:", url);
+  video.src = url;
+  video.load();
+  video.addEventListener('loadedmetadata', async () => {
+    loader.style.display = 'none';
+    video.style.opacity = 1;
+    video.muted = true;
+    try {
+      await video.play();
+      await requestWakeLock();
+    } catch (err) {
+      console.warn("Play() error:", err);
+    }
+
+    await delay(10000);
+    precacheNextEpisode(currentUrl);
+    video.muted = false;
+  }, { once: true });
 }
+
 
 // Solicitar Wake Lock
 async function requestWakeLock() {
@@ -306,6 +335,28 @@ async function loadServerByIndex(index) {
       await savePrecached(currentUrl, entry);
       return;
     }
+    
+if (serverName === "yu") {
+  const res = await fetch(serverUrl);
+  if (!res.ok) throw new Error(`YU server error: ${res.status}`);
+  const json = await res.json();
+  const redirectUrl = json.url;
+  if (!redirectUrl) throw new Error("YU no devolvió URL directa");
+
+  const finalUrl = `/api/stream?videoUrl=${encodeURIComponent(redirectUrl)}`;
+  loadStreamDirect(finalUrl);
+
+  const entry = {
+    url: finalUrl,
+    server,
+    stream: finalUrl,
+    m3u8Content: null,
+    timestamp: Date.now()
+  };
+  await savePrecached(currentUrl, entry);
+  return;
+}
+
 
     const res = await fetch(serverUrl);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

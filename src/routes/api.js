@@ -92,8 +92,8 @@ router.get('/api', async (req, res) => {
         console.log(`[API] Respondiendo con lista de archivos m3u8`);
         res.json({ count: result.length, files: result, firstUrl: result[0].url });
       } else if (result?.url) {
-        console.log(`[API] Redireccionando a url de video: ${result.url}`);
-        res.redirect(`/api/stream?videoUrl=${encodeURIComponent(result.url)}`);
+        console.log(`[API] Devolviendo URL directa: ${result.url}`);
+        res.json({ url: result.url }); // 👈 ya no redirige
       } else {
         throw new Error('Formato de extractor no reconocido');
       }

@@ -164,7 +164,7 @@ async function unirJsonSinRepetirTitulos(datos1, datos2, nombreArchivo, log) {
 }
 
 
-function eliminarArchivoSync(archivo, log) {
+function eliminarArchivo(archivo, log) {
     try {
         fs.unlinkSync(archivo); // Synchronously delete the file
         log(`[Delete] Eliminado: ${archivo}`);
