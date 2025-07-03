@@ -1,75 +1,63 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
-const PQueue = require("p-queue").default;
 const path = require("path");
+const PQueue = require("p-queue").default;
 
-// Configs
-const FLV_BASE_URL = "https://www3.animeflv.net/browse?page={page}";
-const FLV_API_BASE = "https://animeflv.ahmedrangel.com/api/anime/";
-const FLV_MAX_PAGES = 173;
-const FLV_HEADERS = { "User-Agent": "Mozilla/5.0" };
 
+const FLV_BASE_URL = "https://www3.animeflv.net";
 const TIO_BASE_URL = "https://tioanime.com";
+const FLV_MAX_PAGES = 173; // ajusta si hay más
 const TIO_TOTAL_PAGES = 209;
-
 const CONCURRENT_REQUESTS = 150;
 
-async function fetchAnimeflvData(page, log) {
-  try {
-    log(`[FLV][Página ${page}] Descargando...`);
-    const url = FLV_BASE_URL.replace("{page}", page);
-    const resp = await axios.get(url, { headers: FLV_HEADERS, timeout: 10000 });
-    const $ = cheerio.load(resp.data);
-    const animeList = $("ul.ListAnimes.AX.Rows.A03.C02.D02");
-    const results = [];
+function eliminarArchivos(filePaths) {
+  for (const filePath of filePaths) {
+    const fullPath = path.resolve(filePath);
 
-    animeList.find("li").each((_, li) => {
-      const aTag = $(li).find("a[href]");
-      const imgTag = $(li).find("figure img");
-      if (aTag.length && imgTag.length) {
-        const animeUrl = "https://animeflv.net" + aTag.attr("href");
-        const imageUrl = imgTag.attr("src") || "";
-        const title = imgTag.attr("alt") || "";
-        results.push({ url: animeUrl, image: imageUrl, title });
+    try {
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+        console.log(`🗑️ Eliminado: ${fullPath}`);
+      } else {
+        console.warn(`⚠️ Archivo no encontrado: ${fullPath}`);
       }
-    });
-    log(`[FLV][Página ${page}] ${results.length} animes.`);
-    return results;
-  } catch (error) {
-    log(`[FLV][Página ${page}] Error: ${error.message}`);
-    return [];
+    } catch (error) {
+      console.error(`❌ Error al eliminar ${fullPath}: ${error.message}`);
+    }
   }
 }
 
-async function fetchFlvEpisodes(anime, log) {
+// Json combinados
+function combinarJSONPorTitulo(file1Path, file2Path, outputPath) {
   try {
-    const slug = anime.url.replace(/\/$/, "").split("/").pop();
-    const apiUrl = FLV_API_BASE + slug;
-    log(`[FLV][${anime.title}] Consultando episodios...`);
-    const resp = await axios.get(apiUrl, { timeout: 10000 });
-    const data = resp.data;
-    const episodesCount = data?.data?.episodes?.length || 0;
-    log(`[FLV][${anime.title}] ${episodesCount} episodios.`);
-    return { ...anime, episodes_count: episodesCount };
+    const data1 = JSON.parse(fs.readFileSync(file1Path, 'utf8'));
+    const data2 = JSON.parse(fs.readFileSync(file2Path, 'utf8'));
+
+    const combinado = [...data1, ...data2];
+
+    const sinDuplicados = [];
+    const titulosVistos = new Set();
+
+    for (const anime of combinado) {
+      const tituloNormalizado = anime.title.trim().toLowerCase();
+      if (!titulosVistos.has(tituloNormalizado)) {
+        titulosVistos.add(tituloNormalizado);
+        sinDuplicados.push(anime);
+      }
+    }
+
+    fs.writeFileSync(outputPath, JSON.stringify(sinDuplicados, null, 2), 'utf8');
+    console.log(`✅ Combinación sin duplicados por título completada. Guardado en ${outputPath}`);
+    eliminarArchivos(['anime_list_flv.json','anime_list_tio.json']);
+
   } catch (error) {
-    log(`[FLV][${anime.title}] Error: ${error.message}`);
-    return { ...anime, episodes_count: 0 };
+    console.error('❌ Error al combinar archivos JSON:', error.message);
   }
 }
 
-async function fetchAllFlvEpisodes(animeflvRaw, log) {
-  log("[FLV] Descargando episodios...");
-  const queue = new PQueue({ concurrency: CONCURRENT_REQUESTS });
-
-  const results = await Promise.all(animeflvRaw.map((anime, idx) =>
-    queue.add(() => fetchFlvEpisodes(anime, log))
-  ));
-  log("[FLV] Episodios descargados.");
-  return results;
-}
-
-async function extraerTioanimesDePagina(pagina, log) {
+// Extrae lista de animes de una página del directorio de TioAnime
+async function extraerTioanimesDePagina(pagina, log = console.log) {
   try {
     log(`[Tio][Página ${pagina}] Descargando...`);
     const url = `${TIO_BASE_URL}/directorio?p=${pagina}`;
@@ -96,7 +84,8 @@ async function extraerTioanimesDePagina(pagina, log) {
   }
 }
 
-async function procesarTioanime(anime, log) {
+// Procesa un anime para obtener url, título, imagen y cantidad de episodios
+async function procesarTioanime(anime, log = console.log) {
   try {
     const url = `${TIO_BASE_URL}/anime/${anime.slug}`;
     log(`[Tio][${anime.titulo}] Consultando...`);
@@ -127,94 +116,132 @@ async function procesarTioanime(anime, log) {
   }
 }
 
-// Función para normalizar los títulos
-function normalizarTitulo(titulo) {
-  return titulo
-    .toLowerCase()
-    .normalize('NFD')              // Descomponer tildes
-    .replace(/[\u0300-\u036f]/g, '') // Eliminar tildes
-    .replace(/[^a-z0-9]+/g, ' ')   // Eliminar símbolos raros
-    .replace(/\s+/g, ' ')          // Reemplazar espacios múltiples por uno
-    .trim();
-}
+async function extraerFlvDePagina(pagina, log = console.log) {
+  try {
+    log(`[FLV][Página ${pagina}] Descargando...`);
+    const url = `${FLV_BASE_URL}/browse?page=${pagina}`;
+    const resp = await axios.get(url, { timeout: 10000 });
+    const $ = cheerio.load(resp.data);
+    const lista = $("ul.ListAnimes.AX.Rows.A03.C02.D02");
+    const animes = [];
 
-async function unirJsonSinRepetirTitulos(datos1, datos2, nombreArchivo, log) {
-  const combinados = new Map();
+    lista.find("li").each((_, li) => {
+      const a = $(li).find("a[href]").first();
+      const img = $(li).find("figure img");
+      const href = a.attr("href") || "";
+      const imgUrl = img.attr("src") || "";
+      const titulo = img.attr("alt") || "";
 
-  const todos = [...datos1, ...datos2];
-
-  for (const anime of todos) {
-    const clave = normalizarTitulo(anime.title);
-
-    if (!combinados.has(clave)) {
-      combinados.set(clave, anime);
-    } else {
-      const actual = combinados.get(clave);
-      // Preferimos el que tiene más episodios
-      if (anime.episodes_count > actual.episodes_count) {
-        combinados.set(clave, anime);
+      if (href.includes("/anime/")) {
+        const slug = href.replace("/anime/", "").replace(/\/$/, "");
+        const urlAnime = FLV_BASE_URL + href;
+        animes.push({ slug, titulo, url: urlAnime, img: imgUrl });
       }
-    }
+    });
+
+    log(`[FLV][Página ${pagina}] ${animes.length} animes.`);
+    return animes;
+  } catch (err) {
+    log(`[FLV][Página ${pagina}] Error: ${err.message}`);
+    return [];
   }
-
-  const salida = path.join(__dirname, "jsons", nombreArchivo);
-  fs.mkdirSync(path.dirname(salida), { recursive: true });
-  fs.writeFileSync(salida, JSON.stringify([...combinados.values()], null, 2), "utf-8");
-  log(`[Union] Archivo combinado: ${salida}`);
 }
 
+async function procesarAnimeflv(anime, log = console.log) {
+  try {
+    const resp = await axios.get(anime.url, { timeout: 10000 });
+    const html = resp.data;
 
-function eliminarArchivo(archivo, log) {
-    try {
-        fs.unlinkSync(archivo); // Synchronously delete the file
-        log(`[Delete] Eliminado: ${archivo}`);
-    } catch (err) {
-        // Handle common errors like file not found gracefully
-        if (err.code === 'ENOENT') {
-            log(`[Warning] El archivo ${archivo} no existe, no se pudo eliminar.`);
-        } else {
-            log(`[Warning] No se pudo eliminar ${archivo}: ${err.message}`);
-        }
+    // Buscar var episodes = [...]
+    const match = html.match(/var episodes\s*=\s*(\[\[.*?\]\])/s);
+    let episodes_count = 0;
+    if (match) {
+      const array = JSON.parse(match[1]);
+      episodes_count = array.length;
     }
+
+    log(`[FLV][${anime.titulo}] ${episodes_count} episodios.`);
+    return {
+      title: anime.titulo,
+      slug: anime.slug,
+      url: anime.url,
+      image: anime.img,
+      episodes_count,
+    };
+  } catch (err) {
+    log(`[FLV][${anime.titulo}] Error al procesar: ${err.message}`);
+    return null;
+  }
 }
 
-async function main({ log }) {
-  log("🔎 Iniciando scraping AnimeFLV...");
-  const flvQueue = new PQueue({ concurrency: CONCURRENT_REQUESTS });
-  const flvPages = await Promise.all(
+async function fetchAnimeflvDesdeBrowse(log = console.log) {
+  const queuePages = new PQueue({ concurrency: 100 });
+  const queueAnimes = new PQueue({ concurrency: 100 });
+
+  log("[FLV] Iniciando extracción de páginas...");
+
+  const paginas = await Promise.all(
     Array.from({ length: FLV_MAX_PAGES }, (_, i) =>
-      flvQueue.add(() => fetchAnimeflvData(i + 1, log))
+      queuePages.add(() => extraerFlvDePagina(i + 1, log))
     )
   );
 
-  const animeflvRaw = flvPages.flat();
-  log(`[FLV] Total animes: ${animeflvRaw.length}`);
-  const animeflvData = await fetchAllFlvEpisodes(animeflvRaw, log);
-  fs.writeFileSync("anime_list_flv.json", JSON.stringify(animeflvData, null, 2));
+  const animes = paginas.flat();
+  log(`[FLV] Total animes encontrados: ${animes.length}`);
 
-  log("📡 Iniciando scraping TioAnime...");
-  const tioQueue = new PQueue({ concurrency: CONCURRENT_REQUESTS });
-  const tioPages = await Promise.all(
-    Array.from({ length: TIO_TOTAL_PAGES }, (_, i) =>
-      tioQueue.add(() => extraerTioanimesDePagina(i + 1, log))
+  log("[FLV] Procesando episodios...");
+
+  const detalles = await Promise.all(
+    animes.map(anime =>
+      queueAnimes.add(() => procesarAnimeflv(anime, log))
     )
   );
 
-  const tioRaw = tioPages.flat();
-  log(`[Tio] Total animes: ${tioRaw.length}`);
-  const tioEpisodes = await Promise.all(
-    tioRaw.map(anime => procesarTioanime(anime, log))
-  );
-
-  const tioData = tioEpisodes.filter(Boolean);
-  fs.writeFileSync("anime_list_tio.json", JSON.stringify(tioData, null, 2));
-
-  // Combinar y limpiar
-  await unirJsonSinRepetirTitulos(animeflvData, tioData, "anime_list.json", log);
-  eliminarArchivo("anime_list_flv.json", log);
-  eliminarArchivo("anime_list_tio.json", log);
-
-  log("[Sucess] Scraping completado.");
+  const filtrados = detalles.filter(Boolean);
+  const outputPath = path.join(__dirname, "anime_list_flv.json");
+  fs.writeFileSync(outputPath, JSON.stringify(filtrados, null, 2), "utf-8");
+  log(`[FLV] Datos guardados en ${outputPath}`);
 }
 
-module.exports = { main };
+
+async function main() {
+  const log = console.log;
+  const queuePages = new PQueue({ concurrency: CONCURRENT_REQUESTS });
+  const queueAnimes = new PQueue({ concurrency: CONCURRENT_REQUESTS });
+
+  // Descargar todas las páginas en paralelo con límite de concurrencia
+  const promPages = Array.from({ length: TIO_TOTAL_PAGES }, (_, i) =>
+    queuePages.add(() => extraerTioanimesDePagina(i + 1, log))
+  );
+
+  const paginas = await Promise.all(promPages);
+  const todosAnimes = paginas.flat();
+
+  log(`[Tio] Total animes extraídos: ${todosAnimes.length}`);
+
+  // Procesar animes en paralelo con límite de concurrencia
+  const promAnimes = todosAnimes.map(anime =>
+    queueAnimes.add(() => procesarTioanime(anime, log))
+  );
+
+  const detalles = (await Promise.all(promAnimes)).filter(Boolean);
+
+  // Guardar resultado en JSON
+  const outputPath = path.join(__dirname, "anime_list_tio.json");
+  fs.writeFileSync(outputPath, JSON.stringify(detalles, null, 2), "utf-8");
+  log(`[Tio] Datos guardados en ${outputPath}`);
+  await fetchAnimeflvDesdeBrowse(log);
+  combinarJSONPorTitulo(
+    path.join(__dirname, 'anime_list_flv.json'),
+    path.join(__dirname, 'anime_list_tio.json'),
+    path.join('./jsons/', 'anime_list.json')
+  );
+
+}
+
+if (require.main === module) {
+  main().catch(e => {
+    console.error("Error en ejecución:", e);
+    process.exit(1);
+  });
+}
