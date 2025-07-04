@@ -259,11 +259,15 @@ const baseUrl = typeof data.current_url === 'object' && data.current_url.base_ur
   ? data.current_url.base_url
   : data.current_url;
 
+const nextbaseurl = (typeof data.current_url === 'object' && data.current_url.base_url
+  ? data.current_url.base_url
+  : data.current_url).replace('/ver/', '/anime/');
+
 const currentUrlWithEp = `${baseWithoutEpisode(baseUrl)}-${ep}`;
 
 document.getElementById("config").textContent = JSON.stringify({
   currentUrl: currentUrlWithEp,
-  nextUrl: (ep < data.episodes_count) ? `/player?url=${encodeURIComponent(baseWithoutEpisode(baseUrl))}&ep=${ep + 1}` : null
+  nextUrl: (ep < data.episodes_count) ? `/player?url=${encodeURIComponent(baseWithoutEpisode(nextbaseurl))}&ep=${ep + 1}` : null
 });
 
 

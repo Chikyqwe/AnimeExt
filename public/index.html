@@ -167,17 +167,63 @@ body {
   border: none;
 }
 
+/* ---------- AJUSTES GENERALES que conservamos ---------- */
 .modal-body {
   display: flex;
+  flex-direction: row;
   gap: 30px;
   padding: 1rem 2rem;
-  max-height: 70vh;
-  overflow-y: hidden;
+  overflow-y: auto;
   background-color: #181818;
 }
 
+/* ---------- OPTIMIZACIÓN ESPECÍFICA PARA MÓVIL ---------- */
+@media (max-width: 576px) {                /* Bootstrap “xs” */
+  /* El contenedor de toda la tarjeta del modal */
+  .modal-content {
+    height: 100vh;                         /* ocupar 100% */
+    display: flex;                         /* permitir que body crezca */
+    flex-direction: column;
+  }
+
+  /* Cabecera sin margen arriba */
+  .modal-header {
+    padding: .5rem 1rem;
+  }
+
+  /* El body ahora se expande y hace scroll si hace falta */
+  .modal-body {
+    flex: 1 1 auto;                        /* que llene lo que sobra */
+    flex-direction: column;                /* imagen arriba, lista abajo */
+    padding: 1rem;
+    gap: 20px;
+  }
+
+  .modal-left {
+    width: 100%;
+    max-width: 100%;
+    align-items: center;
+  }
+
+  .modal-img {
+    width: 100%;
+    max-height: 300px;
+  }
+
+  .modal-info {
+    width: 100%;
+  }
+
+  .episodes-list {
+    max-height: none;                      /* se controla con flex y scroll */
+    flex: 1 1 auto;
+  }
+}
+
+
 .modal-left {
   max-width: 320px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -191,6 +237,14 @@ body {
   box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
   object-fit: cover;
 }
+
+.modal-info {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 
 .download-btn {
   margin-top: 15px;
@@ -209,13 +263,6 @@ body {
 .download-btn:hover {
   background-color: #009e87;
   box-shadow: 0 6px 20px rgba(0, 158, 135, 0.7);
-}
-
-/* Info modal */
-.modal-info {
-  flex: 2;
-  display: flex;
-  flex-direction: column;
 }
 
 .modal-title {
@@ -686,6 +733,73 @@ body.light-theme .logo-svg .ext-text {
   fill: #2e94dc; /* tono celeste más fuerte para fondo claro */
 }
 
+/* ---------- OVERLAY GENERAL ---------- */
+.policy-overlay {
+  position: fixed;
+  inset: 0;                         /* top:0; right:0; bottom:0; left:0 */
+  background: rgba(0, 0, 0, 0.8);   /* oscurece el fondo */
+  z-index: 2000;                    /* por encima de todo tu sitio */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(2px);
+}
+
+/* ---------- CONTENEDOR DEL MODAL ---------- */
+.policy-modal {
+  width: 92vw;
+  max-width: 800px;
+  height: 88vh;                     /* “casi” pantalla completa */
+  background: #1f1f1f;
+  color: #e0e0e0;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- CABECERA ---------- */
+.policy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #121212;
+  border-bottom: 1px solid #333;
+}
+
+.policy-header h5 {
+  font-weight: 600;
+}
+
+/* ---------- IFRAME ---------- */
+.policy-iframe {
+  flex: 1 1 auto;   /* ocupa todo el espacio disponible */
+  border: none;
+  width: 100%;
+}
+
+/* ---------- PIE ---------- */
+.policy-footer {
+  padding: 0.75rem 1rem;
+  background: #121212;
+  border-top: 1px solid #333;
+}
+
+/* ---------- MODO CLARO ---------- */
+body.light-theme .policy-modal {
+  background: #ffffff;
+  color: #1a1a1a;
+}
+
+body.light-theme .policy-header,
+body.light-theme .policy-footer {
+  background: #f8f8f8;
+  border-color: #ddd;
+}
+
+
 </style>
 </head>
 <body>
@@ -695,6 +809,27 @@ body.light-theme .logo-svg .ext-text {
   <div class="dot"></div>
   <div class="dot"></div>
 </div>
+<!-- Modal de Política de Privacidad -->
+<div id="policyOverlay" class="policy-overlay d-none">
+  <div class="policy-modal">
+    <div class="policy-header">
+      <h5 class="m-0">Política de Privacidad</h5>
+    </div>
+<iframe
+  id="policyIframe"
+  class="policy-iframe"
+  loading="lazy"
+  title="Política de privacidad">
+</iframe>
+
+    <div class="policy-footer text-end">
+      <button id="policyAcceptBtn" class="btn btn-success fw-semibold px-4">
+        Aceptar
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="topbar d-flex align-items-center">
 <svg viewBox="0 0 300 120" class="logo-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
   <!-- Texto principal -->
@@ -802,6 +937,33 @@ body.light-theme .logo-svg .ext-text {
       bottomBar.classList.remove('visible');
     }
   });
+  // ---------- MODAL POLÍTICA DE PRIVACIDAD ----------
+function initPolicyModal() {
+  const overlay   = document.getElementById('policyOverlay');
+  const acceptBtn = document.getElementById('policyAcceptBtn');
+  const iframe    = document.getElementById('policyIframe');
+
+  // Establecer URL dinámica
+  iframe.src = `${window.location.origin}/privacy-policy.html`;
+
+  // Mostrar modal
+  overlay.classList.remove('d-none');
+
+  // Al aceptar
+  function closePolicyModal() {
+    localStorage.setItem('policyAccepted', 'true');
+    overlay.classList.add('d-none');
+  }
+
+  acceptBtn.addEventListener('click', closePolicyModal);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (!localStorage.getItem('policyAccepted')) {
+    initPolicyModal();      // solo la primera visita
+  }
+});
+
 </script>
 </body>
 </html>

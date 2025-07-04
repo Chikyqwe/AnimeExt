@@ -92,9 +92,14 @@ function cleanTitle(title) {
 
 function getPageParam() {
   const params = new URLSearchParams(window.location.search);
-  const page = parseInt(params.get('page')) || 1;
-  return page;
+  const raw     = params.get('page');
+
+  // Solo dígitos: 1, 2, 3, ...
+  if (!/^[1-9]\d*$/.test(raw)) return 1;
+
+  return parseInt(raw, 10);     // base 10 siempre
 }
+
 
 function paginate(items, page, perPage = 24) {
   const start = (page - 1) * perPage;
@@ -112,7 +117,21 @@ async function fetchJsonList() {
     if (!resp.ok) return;
 
     fullAnimeList = await resp.json();
-    const page = getPageParam();
+
+    // Cálculo de páginas
+    const totalPages = Math.ceil(fullAnimeList.length / 24);
+
+    let page = getPageParam();
+
+    // Limitar el rango de páginas válidas
+    if (page > totalPages) {
+      page = totalPages;
+      // Limpiar la URL con pushState si la página era inválida
+      const params = new URLSearchParams(window.location.search);
+      params.set('page', page);
+      window.history.replaceState({ page }, '', `${window.location.pathname}?${params.toString()}`);
+    }
+
     const paginated = paginate(fullAnimeList, page);
 
     clearCards();
@@ -125,6 +144,7 @@ async function fetchJsonList() {
     console.error("Error cargando lista:", err);
   }
 }
+
 
 function createCard(data, animeTitle) {
   const card = document.createElement('div');
@@ -164,6 +184,7 @@ window.addEventListener('popstate', (event) => {
 
 async function changePage(page) {
   showLoader();
+  window.scrollTo({ top: 0, behavior: 'auto' }); 
   const params = new URLSearchParams(window.location.search);
   params.set('page', page);
   const newUrl = `${window.location.pathname}?${params.toString()}`;
@@ -176,8 +197,7 @@ async function changePage(page) {
   }
   createPagination(fullAnimeList.length, page);
   await waitForVisibleImages();
-  hideLoader();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  hideLoader()
 }
 
 function createPagination(totalItems, currentPage) {

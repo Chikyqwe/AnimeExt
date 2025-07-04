@@ -3,17 +3,17 @@ const axios = require('axios');
 const urlLib = require('url');
 const { http, https } = require('follow-redirects');
 
-// Función para el proxy de imágenes, si decides mantenerlo
+// Funciï¿½n para el proxy de imï¿½genes, si decides mantenerlo
 async function proxyImage(url, res) {
   console.log(`[PROXY IMAGE] Solicitud de imagen: `);
 
   if (!url) {
-    console.warn('[PROXY IMAGE] Parámetro url faltante');
+    console.warn('[PROXY IMAGE] Parï¿½metro url faltante');
     return res.status(400).send('URL faltante');
   }
 
   try {
-    console.log(`[PROXY IMAGE] Haciendo petición GET a imagen...`);
+    console.log(`[PROXY IMAGE] Haciendo peticiï¿½n GET a imagen...${url}`);
     const response = await axios.get(url, { responseType: 'stream', timeout: 10000 });
     res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
     res.setHeader('Cache-Control', 'no-store');
@@ -25,13 +25,13 @@ async function proxyImage(url, res) {
   }
 }
 
-// Función para el stream de video
+// Funciï¿½n para el stream de video
 function streamVideo(videoUrl, req, res) {
-  console.log(`[API STREAM] Solicitud para videoUrl: `);
+  console.log(`[API STREAM] Solicitud para videoUrl${videoUrl}`);
 
   if (!videoUrl) {
-    console.warn(`[API STREAM] Falta parámetro videoUrl`);
-    return res.status(400).send('Falta parámetro videoUrl');
+    console.warn(`[API STREAM] Falta parï¿½metro videoUrl`);
+    return res.status(400).send('Falta parï¿½metro videoUrl');
   }
 
   const parsedUrl = urlLib.parse(videoUrl);
@@ -45,7 +45,7 @@ function streamVideo(videoUrl, req, res) {
   };
   if (req.headers.range) headers['Range'] = req.headers.range;
 
-  console.log(`[API STREAM] Opciones de petición:`, {
+  console.log(`[API STREAM] Opciones de peticiï¿½n:`, {
     hostname: parsedUrl.hostname,
     port: parsedUrl.port || (isHttps ? 443 : 80),
     path: parsedUrl.path + (parsedUrl.search || ''),

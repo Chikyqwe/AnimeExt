@@ -409,4 +409,48 @@ async function start() {
   }
 }
 
+// Funciones para manejar cookies simples
+function getCookie(name) {
+  const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return v ? v.pop() : null;
+}
+
+function setCookie(name, value, days=1) {
+  const d = new Date();
+  d.setTime(d.getTime() + (days*24*60*60*1000));
+  document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()}`;
+}
+
+// Guardar estado fullscreen al cambiar fullscreen
+document.addEventListener('fullscreenchange', () => {
+  const isFs = !!document.fullscreenElement;
+  setCookie('playerFullscreen', isFs ? '1' : '0', 7);
+});
+document.addEventListener('webkitfullscreenchange', () => {
+  const isFs = !!document.webkitFullscreenElement;
+  setCookie('playerFullscreen', isFs ? '1' : '0', 7);
+});
+
+// Restaurar fullscreen SOLO en el primer gesto del usuario, si la cookie indica fullscreen
+if (getCookie('playerFullscreen') === '1') {
+  const tryFullscreen = () => {
+    if (!document.fullscreenElement) {
+      const p = video.requestFullscreen
+        ? video.requestFullscreen()
+        : video.webkitRequestFullscreen && video.webkitRequestFullscreen();
+      if (p && p.catch) p.catch(() => {});
+    }
+    removeListeners();
+  };
+
+  const removeListeners = () => {
+    ['click','keydown','touchstart'].forEach(evt =>
+      document.removeEventListener(evt, tryFullscreen, true));
+  };
+
+  ['click','keydown','touchstart'].forEach(evt =>
+    document.addEventListener(evt, tryFullscreen, true));
+}
+
+
 start();
