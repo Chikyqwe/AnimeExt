@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const favicon = require('serve-favicon');
 
 const { maintenanceBlock } = require('./middleware/maintenanceBlock');
 const viewsRoutes = require('./routes/views');
@@ -12,14 +13,16 @@ const apiRoutes = require('./routes/api');
 
 const app = express();
 
-console.log('?? Inicio del servidor y carga de módulos completada');
+console.log('?? Inicio del servidor y carga de mï¿½dulos completada');
 
 // =================== MIDDLEWARE ===================
 app.use(maintenanceBlock); // Primero el middleware de bloqueo
+// Ruta al favicon
+app.use(favicon(path.join('./public', 'static', 'logo.png')));
 app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
-// Servir archivos estáticos desde la carpeta 'public'
+// Servir archivos estï¿½ticos desde la carpeta 'public'
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 console.log('?? Middlewares aplicados: CORS, cookieParser, JSON, Static Files');
