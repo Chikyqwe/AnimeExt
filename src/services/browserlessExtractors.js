@@ -4,12 +4,38 @@ const cheerio = require('cheerio');
 const puppeteer = require('puppeteer-core');
 const { firefox } = require('playwright-core');
 const { URL } = require('url');
-const { BROWSERLESS_ENDPOINT } = require('../config');
-const { BROWSERLESS_ENDPOINT_FIREFOX_PLAYWRIGHT } = require('../config')
+const {
+  BROWSERLESS_ENDPOINT,
+  BROWSERLESS_ENDPOINT_FIREFOX_PLAYWRIGHT
+} = require('../config');
+
+let playwrightBrowser = null;
+let puppeteerBrowser = null;
+
+async function getPlaywrightBrowser() {
+  if (!playwrightBrowser) {
+    playwrightBrowser = await firefox.connect({ wsEndpoint: BROWSERLESS_ENDPOINT_FIREFOX_PLAYWRIGHT });
+  }
+  return playwrightBrowser;
+}
+
+async function getPuppeteerBrowser() {
+  if (!puppeteerBrowser) {
+    puppeteerBrowser = await puppeteer.connect({ browserWSEndpoint: BROWSERLESS_ENDPOINT, timeout: 20000 });
+  }
+  return puppeteerBrowser;
+}
+
 // Extrae lista de videos (de AnimeFLV, TioAnime, etc.)
 async function extractAllVideoLinks(pageUrl) {
   console.log(`[EXTRACTOR] Extrayendo videos desde: ${pageUrl}`);
-  const { data: html } = await axios.get(pageUrl);
+  const { data: html } = await axios.get(pageUrl, {
+    headers: {
+      'Accept-Encoding': 'gzip,deflate,br',
+      'User-Agent': 'Mozilla/5.0'
+    },
+    decompress: true
+  });
   const $ = cheerio.load(html);
   let videos = [];
 
@@ -49,10 +75,7 @@ async function extractAllVideoLinks(pageUrl) {
 // Extrae desde servidores SW con Playwright
 async function extractFromSW(swiftUrl) {
   console.log(`[EXTRACTOR SW] Iniciando extracción SW para URL: ${swiftUrl}`);
-
-  const browser = await firefox.connect({
-    wsEndpoint: BROWSERLESS_ENDPOINT_FIREFOX_PLAYWRIGHT
-  });
+  const browser = await getPlaywrightBrowser();
   const context = await browser.newContext();
   const page = await context.newPage();
 
@@ -68,13 +91,19 @@ async function extractFromSW(swiftUrl) {
 
   console.log(`[EXTRACTOR SW] Navegando a ${swiftUrl}`);
   await page.goto(swiftUrl, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1500);
+
+  try {
+    await page.waitForResponse(
+      response => response.url().endsWith('master.m3u8'),
+      { timeout: 3000 }
+    );
+  } catch (e) {
+    console.warn('[EXTRACTOR SW] No se detectó master.m3u8 en la navegación');
+  }
 
   if (!masterM3u8Url) {
-    console.warn('[EXTRACTOR SW] No se detectó master.m3u8 en la navegación');
     await page.close();
     await context.close();
-    await browser.close();
     return [];
   }
 
@@ -92,17 +121,14 @@ async function extractFromSW(swiftUrl) {
   }
 
   const masterContent = await fetchTextFromPage(masterM3u8Url);
-
   if (!masterContent) {
     console.warn('[EXTRACTOR SW] No se pudo descargar master.m3u8');
     await page.close();
     await context.close();
-    await browser.close();
     return [];
   }
 
   const baseUrl = new URL(masterM3u8Url);
-
   const lines = masterContent
     .split('\n')
     .map(l => l.trim())
@@ -119,34 +145,30 @@ async function extractFromSW(swiftUrl) {
 
   console.log(`[EXTRACTOR SW] URLs secundarios detectados:`, urls);
 
-  const m3u8Contents = await Promise.all(
+  const m3u8Contents = await Promise.allSettled(
     urls.map(async url => {
       const content = await fetchTextFromPage(url);
       if (content) {
         console.log(`[EXTRACTOR SW] Descargado ${url} (longitud: ${content.length})`);
         return { url, content };
-      } else {
-        return null;
       }
+      return null;
     })
   );
 
   await page.close();
   await context.close();
-  await browser.close();
 
-  return [{ url: masterM3u8Url, content: masterContent }, ...m3u8Contents.filter(Boolean)];
+  return [{ url: masterM3u8Url, content: masterContent }, ...m3u8Contents
+    .filter(r => r.status === 'fulfilled' && r.value)
+    .map(r => r.value)];
 }
 
 // Intercepta archivos (como .mp4) con Puppeteer
 async function interceptPuppeteer(pageUrl, fileRegex, refererMatch) {
   console.log(`[INTERCEPT] Iniciando Puppeteer para ${pageUrl}, buscando patrón: ${fileRegex} (referer: ${refererMatch})`);
 
-  const browser = await puppeteer.connect({
-    browserWSEndpoint: BROWSERLESS_ENDPOINT,
-    timeout: 60000
-  });
-
+  const browser = await getPuppeteerBrowser();
   const page = await browser.newPage();
   let resolved = false;
 
@@ -156,7 +178,6 @@ async function interceptPuppeteer(pageUrl, fileRegex, refererMatch) {
         resolved = true;
         console.error(`[INTERCEPT] Timeout: No se detectó archivo válido para ${pageUrl}`);
         await page.close();
-        await browser.close();
         reject(new Error(`Timeout: No se detectó archivo válido para ${pageUrl}`));
       }
     }, 15000);
@@ -168,7 +189,6 @@ async function interceptPuppeteer(pageUrl, fileRegex, refererMatch) {
         clearTimeout(timeout);
         console.log(`[INTERCEPT] Archivo válido detectado: ${reqUrl}`);
         await page.close();
-        await browser.close();
 
         if (reqUrl.includes('novideo.mp4')) {
           console.warn(`[INTERCEPT] El servidor devolvió novideo.mp4`);
@@ -180,7 +200,7 @@ async function interceptPuppeteer(pageUrl, fileRegex, refererMatch) {
     });
 
     try {
-      await page.setUserAgent('Mozilla/5.0');
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117.0.0.0 Safari/537.36');
       console.log(`[INTERCEPT] Navegando a la URL: ${pageUrl}`);
       await page.goto(pageUrl, { waitUntil: 'networkidle2' });
       console.log(`[INTERCEPT] Página cargada correctamente`);
@@ -190,7 +210,6 @@ async function interceptPuppeteer(pageUrl, fileRegex, refererMatch) {
         resolved = true;
         console.error(`[INTERCEPT] Error navegando la página:`, e);
         await page.close();
-        await browser.close();
         reject(e);
       }
     }
@@ -201,11 +220,6 @@ async function interceptPuppeteer(pageUrl, fileRegex, refererMatch) {
 const extractors = {
   'yourupload': url => interceptPuppeteer(url, /\.mp4$/, 'yourupload.com'),
   'yu': url => interceptPuppeteer(url, /\.mp4$/, 'yourupload.com'),
-  'stape': url => interceptPuppeteer(url, /\.mp4$/, 'stape'),
-  'streamtape': url => interceptPuppeteer(url, /\.mp4$/, 'streamtape'),
-  'voe': url => interceptPuppeteer(url, /\.mp4$/, 'voe'),
-  'ok.ru': url => interceptPuppeteer(url, /\.mp4$/, 'ok.ru'),
-  'okru': url => interceptPuppeteer(url, /\.mp4$/, 'ok.ru'),
   'streamwish': url => extractFromSW(url),
   'swiftplayers': url => extractFromSW(url),
   'sw': url => extractFromSW(url)
@@ -216,6 +230,12 @@ function getExtractor(name) {
   console.log(`[EXTRACTOR] Buscando extractor para: ${name}`);
   return extractors[name.toLowerCase()];
 }
+
+// Cerrar browsers al salir
+process.on('exit', async () => {
+  if (playwrightBrowser) await playwrightBrowser.close();
+  if (puppeteerBrowser) await puppeteerBrowser.close();
+});
 
 module.exports = {
   extractAllVideoLinks,

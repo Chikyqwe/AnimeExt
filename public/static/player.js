@@ -118,7 +118,7 @@ function delay(ms) {
 
 // --- Funciones principales ---
 
-async function precacheNextEpisode(url, retry = true) {
+async function precacheNextEpisode(url, triedYU = false) {
   const nextUrl = getNextEpisodeUrl(url);
   if (!nextUrl) return;
 
@@ -144,16 +144,17 @@ async function precacheNextEpisode(url, retry = true) {
 
     let streamUrl = "", m3u8Content = null;
 
-    if (preferred.servidor.toLowerCase() === "sw") {
+    if (preferred.servidor.toLowerCase() === "sw" && !triedYU) {
       console.log("📥 Fetching m3u8 content from SW server");
       const resM3u8 = await fetch(`/api/m3u8?url=${encodeURIComponent(nextUrl)}`);
       if (!resM3u8.ok) throw new Error(`SW error: ${resM3u8.status}`);
       m3u8Content = await resM3u8.text();
       streamUrl = nextUrl;
+
     } else {
       console.log(`📥 Fetching stream URL from server ${preferred.servidor}`);
       const resAlt = await fetch(`${API_BASE}?url=${encodeURIComponent(nextUrl)}&server=${preferred.servidor}`);
-      if (!resAlt.ok) throw new Error(`Alt error: ${resAlt.status}`);
+      if (!resAlt.ok) throw new Error(`${preferred.servidor} error: ${resAlt.status}`);
       streamUrl = (await resAlt.text()).trim();
     }
 
@@ -170,13 +171,35 @@ async function precacheNextEpisode(url, retry = true) {
 
   } catch (err) {
     console.warn("❌ Failed to precache:", err);
-    if (retry) {
-      console.log("🔄 Retrying precache in 5 seconds...");
-      await delay(5000);
-      await precacheNextEpisode(url, false);
+
+    // Si falló SW, intenta con YU
+    if (!triedYU) {
+      console.log("🔁 Trying fallback with server: YU");
+      try {
+        const resYU = await fetch(`${API_BASE}?url=${encodeURIComponent(getNextEpisodeUrl(url))}&server=yu`);
+        if (!resYU.ok) throw new Error(`YU error: ${resYU.status}`);
+        const streamUrl = (await resYU.text()).trim();
+
+        const entry = {
+          url: getNextEpisodeUrl(url),
+          server: "yu",
+          stream: streamUrl,
+          m3u8Content: null,
+          timestamp: Date.now()
+        };
+
+        await savePrecached(entry.url, entry);
+        console.log("✅ Next episode precached with YU fallback:", entry);
+        return;
+      } catch (yuErr) {
+        console.warn("❌ YU fallback also failed:", yuErr);
+      }
     }
+
+    console.warn("⛔ Final precache attempt failed.");
   }
 }
+
 
 async function loadStreamDirect(url, m3u8Content = null) {
   if (hlsInstance) {
