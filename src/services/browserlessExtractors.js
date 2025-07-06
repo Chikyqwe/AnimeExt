@@ -52,14 +52,26 @@ let playwrightBrowser = null;
 let puppeteerBrowser = null;
 
 async function getPlaywrightBrowser() {
-  if (!playwrightBrowser) {
-    playwrightBrowser = await firefox.connect({
-      wsEndpoint: BROWSERLESS_ENDPOINT_FIREFOX_PLAYWRIGHT,
-      timeout: 20_000
-    });
+  try {
+    if (
+      !playwrightBrowser ||
+      typeof playwrightBrowser.isConnected === 'function' &&
+      !playwrightBrowser.isConnected()
+    ) {
+      console.log('[Playwright] Conectando a Browserless Firefox…');
+      playwrightBrowser = await firefox.connect({
+        wsEndpoint: BROWSERLESS_ENDPOINT_FIREFOX_PLAYWRIGHT,
+        timeout: 20_000
+      });
+    }
+    return playwrightBrowser;
+  } catch (err) {
+    console.error('[Playwright] Error al conectar:', err.message);
+    playwrightBrowser = null;
+    throw err;
   }
-  return playwrightBrowser;
 }
+
 
 async function getPuppeteerBrowser() {
   if (!puppeteerBrowser) {
