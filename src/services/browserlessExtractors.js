@@ -51,13 +51,14 @@ async function withRetries(fn, max = 4, base = 800) {
 let playwrightBrowser = null;
 let puppeteerBrowser = null;
 
+// Playwright (Firefox)
 async function getPlaywrightBrowser() {
   try {
-    if (
+    const isDisconnected =
       !playwrightBrowser ||
-      typeof playwrightBrowser.isConnected === 'function' &&
-      !playwrightBrowser.isConnected()
-    ) {
+      (typeof playwrightBrowser.isConnected === 'function' && !playwrightBrowser.isConnected());
+
+    if (isDisconnected) {
       console.log('[Playwright] Conectando a Browserless Firefox…');
       playwrightBrowser = await firefox.connect({
         wsEndpoint: BROWSERLESS_ENDPOINT_FIREFOX_PLAYWRIGHT,
@@ -72,16 +73,28 @@ async function getPlaywrightBrowser() {
   }
 }
 
-
+// Puppeteer
 async function getPuppeteerBrowser() {
-  if (!puppeteerBrowser) {
-    puppeteerBrowser = await puppeteer.connect({
-      browserWSEndpoint: BROWSERLESS_ENDPOINT,
-      timeout: 20_000
-    });
+  try {
+    const isDisconnected =
+      !puppeteerBrowser ||
+      (typeof puppeteerBrowser.isConnected === 'function' && !puppeteerBrowser.isConnected?.());
+
+    if (isDisconnected) {
+      console.log('[Puppeteer] Conectando a Browserless Chromium…');
+      puppeteerBrowser = await puppeteer.connect({
+        browserWSEndpoint: BROWSERLESS_ENDPOINT,
+        timeout: 20_000
+      });
+    }
+    return puppeteerBrowser;
+  } catch (err) {
+    console.error('[Puppeteer] Error al conectar:', err.message);
+    puppeteerBrowser = null;
+    throw err;
   }
-  return puppeteerBrowser;
 }
+
 
 //─────────────────────── 1. Video list extractor ────────────────────────
 async function extractAllVideoLinks(pageUrl) {
