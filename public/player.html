@@ -226,8 +226,7 @@
   </div>
 </div>
 
-<script id="config" type="application/json"></script>
-
+<script id="config" type="application/json"></script> 
 <script>
   async function initPlayerPage() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -237,6 +236,9 @@
 
     if (!url || isNaN(ep)) {
       document.getElementById("anime-title").innerText = "Faltan parámetros";
+      setTimeout(() => {
+        location.href = '/';
+      }, 1000);
       return;
     }
 
@@ -246,29 +248,42 @@
 
       if (data.error) {
         document.getElementById("anime-title").innerText = "Error: " + data.error;
+        // si el error es de episodio invalido, redirigimos a un episodio valido
+        if (data.error.includes("Episodio inválido")) {
+          const validEp = data.valid_ep || 1;
+          setTimeout(() => {
+            location.href = `/player?url=${encodeURIComponent(url)}&ep=${validEp}`;
+          }, 500);
+        }
+        else if (data.error.includes("Anime no encontrado")) {
+          setTimeout(() => {
+            location.href = '/';
+          }, 1000);
+        }
         return;
       }
 
       document.getElementById("anime-title").innerText = data.anime_title;
-// Extraemos la base URL sin el '-N' al final (por si ya lo tuviera)
-function baseWithoutEpisode(url) {
-  return url.replace(/-\d+$/, '');
-}
+      
+    // Extraemos la base URL sin el '-N' al final (por si ya lo tuviera)
+      function baseWithoutEpisode(url) {
+        return url.replace(/-\d+$/, '');
+      }
 
-const baseUrl = typeof data.current_url === 'object' && data.current_url.base_url
-  ? data.current_url.base_url
-  : data.current_url;
+      const baseUrl = typeof data.current_url === 'object' && data.current_url.base_url
+        ? data.current_url.base_url
+        : data.current_url;
 
-const nextbaseurl = (typeof data.current_url === 'object' && data.current_url.base_url
-  ? data.current_url.base_url
-  : data.current_url).replace('/ver/', '/anime/');
+      const nextbaseurl = (typeof data.current_url === 'object' && data.current_url.base_url
+        ? data.current_url.base_url
+        : data.current_url).replace('/ver/', '/anime/');
 
-const currentUrlWithEp = `${baseWithoutEpisode(baseUrl)}-${ep}`;
+      const currentUrlWithEp = `${baseWithoutEpisode(baseUrl)}-${ep}`;
 
-document.getElementById("config").textContent = JSON.stringify({
-  currentUrl: currentUrlWithEp,
-  nextUrl: (ep < data.episodes_count) ? `/player?url=${encodeURIComponent(baseWithoutEpisode(nextbaseurl))}&ep=${ep + 1}` : null
-});
+      document.getElementById("config").textContent = JSON.stringify({
+        currentUrl: currentUrlWithEp,
+        nextUrl: (ep < data.episodes_count) ? `/player?url=${encodeURIComponent(baseWithoutEpisode(nextbaseurl))}&ep=${ep + 1}` : null
+      });
 
 
       const navButtons = document.getElementById("nav-buttons");

@@ -3,7 +3,7 @@ const express = require('express');
 const { getJsonFiles, getJSONPath } = require('../services/jsonService');
 const { extractAllVideoLinks, getExtractor } = require('../services/browserlessExtractors');
 const apiQueue = require('../services/queueService');
-const { proxyImage, streamVideo } = require('../utils/helpers');
+const { proxyImage, streamVideo, downloadVideo } = require('../utils/helpers');
 
 const router = express.Router();
 
@@ -173,6 +173,12 @@ router.get('/api/stream', (req, res) => {
   console.log(`[API STREAM] Solicitando stream para: ${videoUrl}`);
   streamVideo(videoUrl, req, res);
 });
+router.get('/api/stream/download', (req, res) => {
+  const videoUrl = req.query.videoUrl;
+  console.log(`[API DOWNLOAD] Solicitando descarga para: ${videoUrl}`);
+  downloadVideo(req, res);
+});
+
 //actualiza el estado de la cola
 router.get('/api/queue/status', (req, res) => {
   const pendingCount = apiQueue.getPendingCount();

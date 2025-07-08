@@ -83,7 +83,65 @@ function streamVideo(videoUrl, req, res) {
   proxyReq.end();
 }
 
+// funcion para descargar el video con los headers correctos
+function downloadVideo(req, res) {
+  const videoUrl = req.query.videoUrl;
+  console.log(`[API DOWNLOAD] Solicitud para videoUrl: ${videoUrl}`);
+
+  if (!videoUrl) {
+    console.warn(`[API DOWNLOAD] Falta parámetro videoUrl`);
+    return res.status(400).send('Falta parámetro videoUrl');
+  }
+
+  const parsedUrl = urlLib.parse(videoUrl);
+  const isHttps = parsedUrl.protocol === 'https:';
+  const protocol = isHttps ? https : http;
+
+  const headers = {
+    'Referer': 'https://www.yourupload.com/',
+    'Origin': 'https://www.yourupload.com',
+    'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0'
+  };
+  if (req.headers.range) headers['Range'] = req.headers.range;
+
+  console.log(`[API DOWNLOAD] Opciones de petición:`, {
+    hostname: parsedUrl.hostname,
+    port: parsedUrl.port || (isHttps ? 443 : 80),
+    path: parsedUrl.path + (parsedUrl.search || ''),
+    headers
+  });
+
+  const options = {
+    hostname: parsedUrl.hostname,
+    port: parsedUrl.port || (isHttps ? 443 : 80),
+    path: parsedUrl.path + (parsedUrl.search || ''),
+    method: 'GET',
+    headers,
+    rejectUnauthorized: false,
+  };
+
+  const proxyReq = protocol.request(options, (proxyRes) => {
+    console.log(`[API DOWNLOAD] Respuesta recibida con status: ${proxyRes.statusCode}`);
+    proxyRes.headers['Content-Disposition'] = 'attachment; filename="video.mp4"';
+    proxyRes.headers['Content-Type'] = 'video/mp4';
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+
+  proxyReq.on('error', err => {
+    console.error(`[API DOWNLOAD] Error en proxy:`, err);
+    if (!res.headersSent) {
+      res.status(500).send('Error al obtener el video: ' + err.message);
+    } else {
+      res.end();
+    }
+  });
+
+  proxyReq.end();
+}
+
 module.exports = {
   proxyImage,
-  streamVideo
+  streamVideo,
+  downloadVideo
 };

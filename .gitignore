@@ -123,3 +123,4 @@ node_modules/has-tostringtag/test/shams/core-js.js
 node_modules/has-tostringtag/test/shams/get-own-property-symbols.js
 node_modules/has-tostringtag/test/tests.js
 node_modules/has-tostringtag/tsconfig.json
+node_modules/.package-lock.json
