@@ -1,3 +1,4 @@
+// === Configuración inicial ===
 const API_BASE = "api";
 const config = JSON.parse(document.getElementById("config").textContent);
 let currentUrl = config.currentUrl;
@@ -10,15 +11,13 @@ let serverList = [];
 let currentBlobUrl = null;
 let wakeLock = null;
 
-// --- IndexedDB setup ---
+// === IndexedDB: configuración y utilidades ===
 const DB_NAME = 'AnimeCacheDB';
 const STORE_NAME = 'precached';
-
 let dbPromise = null;
 
 function openDB() {
   if (dbPromise) return dbPromise;
-
   dbPromise = new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 1);
     request.onerror = () => reject(request.error);
@@ -30,7 +29,6 @@ function openDB() {
       }
     };
   });
-
   return dbPromise;
 }
 
@@ -56,8 +54,7 @@ async function idbGet(url) {
   });
 }
 
-// --- Helpers y funciones previas ---
-
+// === Utilidades ===
 function getStorageKey(url) {
   const match = url.match(/ver\/([^\/?#]+)/);
   return match ? `precached-${match[1]}` : 'precached-unknown';
@@ -116,8 +113,7 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// --- Funciones principales ---
-
+// === Precarga de episodios ===
 async function precacheNextEpisode(url, triedYU = false) {
   const nextUrl = getNextEpisodeUrl(url);
   if (!nextUrl) return;
@@ -172,7 +168,6 @@ async function precacheNextEpisode(url, triedYU = false) {
   } catch (err) {
     console.warn("❌ Failed to precache:", err);
 
-    // Si falló SW, intenta con YU
     if (!triedYU) {
       console.log("🔁 Trying fallback with server: YU");
       try {
@@ -200,7 +195,7 @@ async function precacheNextEpisode(url, triedYU = false) {
   }
 }
 
-
+// === Reproducción directa ===
 async function loadStreamDirect(url, m3u8Content = null) {
   if (hlsInstance) {
     try {
@@ -210,13 +205,10 @@ async function loadStreamDirect(url, m3u8Content = null) {
     hlsInstance = null;
     currentBlobUrl = null;
   }
-
   const isM3U8 = url.endsWith(".m3u8") || m3u8Content;
   const isMP4 = url.endsWith(".mp4");
 
-  // 👉 Si es .mp4, usar <video> directo
   if (isMP4) {
-    console.log("🎞️ Cargando MP4 directo:", url);
     video.src = url;
     video.load();
     video.addEventListener('loadedmetadata', async () => {
@@ -229,7 +221,6 @@ async function loadStreamDirect(url, m3u8Content = null) {
       } catch (err) {
         console.warn("Play() error:", err);
       }
-
       await delay(10000);
       precacheNextEpisode(currentUrl);
       video.muted = false;
@@ -237,7 +228,6 @@ async function loadStreamDirect(url, m3u8Content = null) {
     return;
   }
 
-  // 👉 Si es m3u8 y está soportado, usar Hls.js
   if (Hls.isSupported() && isM3U8) {
     hlsInstance = new Hls();
     if (m3u8Content) {
@@ -248,7 +238,6 @@ async function loadStreamDirect(url, m3u8Content = null) {
     } else {
       hlsInstance.loadSource(url);
     }
-
     hlsInstance.attachMedia(video);
     hlsInstance.on(Hls.Events.MANIFEST_PARSED, async () => {
       loader.style.display = 'none';
@@ -260,12 +249,10 @@ async function loadStreamDirect(url, m3u8Content = null) {
       } catch (err) {
         console.warn("Play() error:", err);
       }
-
       await delay(10000);
       precacheNextEpisode(currentUrl);
       video.muted = false;
     });
-
     hlsInstance.on(Hls.Events.ERROR, (event, data) => {
       if (data.fatal) {
         console.warn("HLS Fatal Error:", data);
@@ -275,8 +262,6 @@ async function loadStreamDirect(url, m3u8Content = null) {
     return;
   }
 
-  // 👉 Fallback genérico (no es m3u8, ni mp4, ni soportado por HLS)
-  console.log("⚠️ Reproducción directa sin HLS ni .mp4:", url);
   video.src = url;
   video.load();
   video.addEventListener('loadedmetadata', async () => {
@@ -289,23 +274,20 @@ async function loadStreamDirect(url, m3u8Content = null) {
     } catch (err) {
       console.warn("Play() error:", err);
     }
-
     await delay(10000);
     precacheNextEpisode(currentUrl);
     video.muted = false;
   }, { once: true });
 }
 
-
-// Solicitar Wake Lock
+// === Wake Lock ===
 async function requestWakeLock() {
   try {
     wakeLock = await navigator.wakeLock.request('screen');
-    console.log("🔒 Wake Lock activado");
-
     wakeLock.addEventListener('release', () => {
       console.log('🔓 Wake Lock liberado');
     });
+    console.log("🔒 Wake Lock activado");
   } catch (err) {
     console.error(`${err.name}, no se pudo mantener la pantalla activa:`, err.message);
   }
@@ -317,18 +299,17 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+// === Cargar desde servidor ===
 async function loadServerByIndex(index) {
   if (index >= serverList.length) {
     loader.textContent = 'Failed to load stream';
     video.style.opacity = 0;
     return;
   }
-
   highlightActiveButton(index);
   const server = serverList[index].servidor;
   const serverName = server.toLowerCase();
   const serverUrl = `${API_BASE}?url=${encodeURIComponent(currentUrl)}&server=${server}`;
-
   loader.style.display = 'flex';
   video.style.opacity = 0;
 
@@ -347,39 +328,33 @@ async function loadServerByIndex(index) {
       if (!res.ok) throw new Error(`SW server error: ${res.status}`);
       const m3u8Text = await res.text();
       loadStreamDirect(currentUrl, m3u8Text);
-
-      const entry = {
+      await savePrecached(currentUrl, {
         url: currentUrl,
         server: "sw",
         stream: currentUrl,
         m3u8Content: m3u8Text,
         timestamp: Date.now()
-      };
-      await savePrecached(currentUrl, entry);
+      });
       return;
     }
-    
-if (serverName === "yu") {
-  const res = await fetch(serverUrl);
-  if (!res.ok) throw new Error(`YU server error: ${res.status}`);
-  const json = await res.json();
-  const redirectUrl = json.url;
-  if (!redirectUrl) throw new Error("YU no devolvió URL directa");
 
-  const finalUrl = `/api/stream?videoUrl=${encodeURIComponent(redirectUrl)}`;
-  loadStreamDirect(finalUrl);
-
-  const entry = {
-    url: finalUrl,
-    server,
-    stream: finalUrl,
-    m3u8Content: null,
-    timestamp: Date.now()
-  };
-  await savePrecached(currentUrl, entry);
-  return;
-}
-
+    if (serverName === "yu") {
+      const res = await fetch(serverUrl);
+      if (!res.ok) throw new Error(`YU server error: ${res.status}`);
+      const json = await res.json();
+      const redirectUrl = json.url;
+      if (!redirectUrl) throw new Error("YU no devolvió URL directa");
+      const finalUrl = `/api/stream?videoUrl=${encodeURIComponent(redirectUrl)}`;
+      loadStreamDirect(finalUrl);
+      await savePrecached(currentUrl, {
+        url: finalUrl,
+        server,
+        stream: finalUrl,
+        m3u8Content: null,
+        timestamp: Date.now()
+      });
+      return;
+    }
 
     const res = await fetch(serverUrl);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -388,24 +363,21 @@ if (serverName === "yu") {
       const baseUrl = new URL(res.url);
       streamUrl = new URL(streamUrl, baseUrl).toString();
     }
-
     loadStreamDirect(streamUrl);
-
-    const entry = {
+    await savePrecached(currentUrl, {
       url: currentUrl,
       server,
       stream: streamUrl,
       m3u8Content: null,
       timestamp: Date.now()
-    };
-    await savePrecached(currentUrl, entry);
-
+    });
   } catch (err) {
     console.warn("Server failed:", err);
     loadServerByIndex(index + 1);
   }
 }
 
+// === Inicio de reproducción ===
 async function start() {
   const cached = await loadPrecached(currentUrl);
   if (cached && cached.url === currentUrl) {
@@ -413,7 +385,6 @@ async function start() {
     loadStreamDirect(cached.stream, cached.m3u8Content || null);
     return;
   }
-
   try {
     const res = await fetch(`${API_BASE}/servers?url=${encodeURIComponent(currentUrl)}`);
     serverList = await res.json();
@@ -422,9 +393,7 @@ async function start() {
       video.style.opacity = 0;
       return;
     }
-
     loadServerByIndex(0);
-
   } catch (err) {
     console.error("Failed to load servers:", err);
     loader.textContent = 'Error loading servers';
@@ -432,29 +401,28 @@ async function start() {
   }
 }
 
-// Funciones para manejar cookies simples
+// === Manejo de cookies y fullscreen ===
 function getCookie(name) {
   const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
   return v ? v.pop() : null;
 }
 
-function setCookie(name, value, days=1) {
+function setCookie(name, value, days = 1) {
   const d = new Date();
-  d.setTime(d.getTime() + (days*24*60*60*1000));
+  d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
   document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()}`;
 }
 
-// Guardar estado fullscreen al cambiar fullscreen
 document.addEventListener('fullscreenchange', () => {
   const isFs = !!document.fullscreenElement;
   setCookie('playerFullscreen', isFs ? '1' : '0', 7);
 });
+
 document.addEventListener('webkitfullscreenchange', () => {
   const isFs = !!document.webkitFullscreenElement;
   setCookie('playerFullscreen', isFs ? '1' : '0', 7);
 });
 
-// Restaurar fullscreen SOLO en el primer gesto del usuario, si la cookie indica fullscreen
 if (getCookie('playerFullscreen') === '1') {
   const tryFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -467,13 +435,13 @@ if (getCookie('playerFullscreen') === '1') {
   };
 
   const removeListeners = () => {
-    ['click','keydown','touchstart'].forEach(evt =>
+    ['click', 'keydown', 'touchstart'].forEach(evt =>
       document.removeEventListener(evt, tryFullscreen, true));
   };
 
-  ['click','keydown','touchstart'].forEach(evt =>
+  ['click', 'keydown', 'touchstart'].forEach(evt =>
     document.addEventListener(evt, tryFullscreen, true));
 }
 
-
+// === Iniciar ===
 start();

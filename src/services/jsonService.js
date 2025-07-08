@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { JSON_FOLDER, JSON_PATH_TIO } = require('../config');
 
-// Aseg�rate de que la carpeta de JSONs existe
+// Asegúrate de que la carpeta de JSONs existe
 if (!fs.existsSync(JSON_FOLDER)) {
   fs.mkdirSync(JSON_FOLDER, { recursive: true });
 }
@@ -11,7 +11,7 @@ if (!fs.existsSync(JSON_FOLDER)) {
 function readAnimeList() {
   try {
     if (!fs.existsSync(JSON_PATH_TIO)) {
-      console.warn(`[JSON SERVICE] El archivo  no existe. Devolviendo lista vacia.`);
+      console.warn(`[JSON SERVICE] El archivo no existe. Devolviendo lista vacia.`);
       return [];
     }
     const data = fs.readFileSync(JSON_PATH_TIO, 'utf8');

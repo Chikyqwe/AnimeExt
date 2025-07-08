@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Anime Content</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      color: #fff;
+    }
+    h1 {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      margin-top: 20px;
+    }
+    iframe {
+      width: 100%;
+      height: 90vh;
+      border: none;
+      display: block;
+      margin: 0 auto;
+    }
+    @media (max-width: 600px) {
+      iframe {
+        height: 80vh;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Anime Content</h1>
+  <iframe src="" allowfullscreen></iframe>
+
+  <script>
+    const iframe = document.querySelector('iframe');
+
+    // Leer el ID desde ?id=... o desde el hash #!... si no vino en query
+    const searchParams = new URLSearchParams(window.location.search);
+    let idParam = searchParams.get('id');
+
+    if (!idParam && window.location.hash.startsWith('#!')) {
+      idParam = window.location.hash;
+    }
+
+    if (!idParam) {
+      console.error('No se proporcionó un ID en la URL.');
+      document.body.innerHTML = '<h1>Error: Falta el parámetro ?id=</h1>';
+    } else if (idParam.startsWith('https://mega.nz/')) {
+      const match = idParam.match(/(?:file|embed)\/([a-zA-Z0-9_-]+)#([a-zA-Z0-9_-]+)/);
+      if (match) {
+        const fileId = match[1];
+        const key = match[2];
+        iframe.src = `https://mega.nz/embed/${fileId}#${key}`;
+      } else {
+        document.body.innerHTML = '<h1>Error: Enlace de MEGA inválido</h1>';
+      }
+    } else if (idParam.startsWith('#!')) {
+      const parts = idParam.replace('#!', '').split('!');
+      if (parts.length === 2) {
+        const [fileId, key] = parts;
+        iframe.src = `https://mega.nz/embed/${fileId}#${key}`;
+      } else {
+        document.body.innerHTML = '<h1>Error: Formato de ID inválido</h1>';
+      }
+    } else {
+      document.body.innerHTML = '<h1>Error: Formato de ID no reconocido</h1>';
+    }
+  </script>
+</body>
+</html>

@@ -1,7 +1,6 @@
 // src/routes/player.js
 const express = require('express');
 const { readAnimeList } = require('../services/jsonService');
-// const { JSON_PATH_TIO } = require('../config'); // No usas esta constante aquí
 
 const router = express.Router();
 

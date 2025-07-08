@@ -13,19 +13,21 @@ const apiRoutes = require('./routes/api');
 
 const app = express();
 
-console.log('?? Inicio del servidor y carga de m�dulos completada');
+console.log('[INFO] Iniciando aplicación AnimeExt...');
 
 // =================== MIDDLEWARE ===================
+
 app.use(maintenanceBlock); // Primero el middleware de bloqueo
 // Ruta al favicon
-app.use(favicon(path.join('./public', 'static', 'logo.png')));
+app.use(favicon(path.join('./public', 'img', 'logo.png')));
 app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
-// Servir archivos est�ticos desde la carpeta 'public'
+// Servir archivos estáticos desde la carpeta 'public'
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-console.log('?? Middlewares aplicados: CORS, cookieParser, JSON, Static Files');
+console.log('[INFO] Middleware configurado correctamente');
+
 
 // =================== RUTAS ===================
 app.use('/', viewsRoutes);

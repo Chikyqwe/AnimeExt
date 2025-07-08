@@ -1,3 +1,14 @@
+const container = document.getElementById('card-container');
+const mainContent = document.getElementById('main-content');
+const recolectForm = document.getElementById('recolect-form');
+const pageTitle = document.getElementById('page-title');
+let currentAnime = null;
+const loadedCards = new Map();
+let fullAnimeList = [];
+const DB_NAME = 'FavoritosDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'favoritos';
+
 window.addEventListener('load', async () => {
   const loader = document.getElementById('loader');
   const MIN_LOADING_TIME = 3000;
@@ -78,14 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-const container = document.getElementById('card-container');
-const mainContent = document.getElementById('main-content');
-const recolectForm = document.getElementById('recolect-form');
-const pageTitle = document.getElementById('page-title');
-let currentAnime = null;
-const loadedCards = new Map();
-let fullAnimeList = [];
-
 function cleanTitle(title) {
   return title.trim();
 }
@@ -155,7 +158,7 @@ function createCard(data, animeTitle) {
   const proxyUrl = `/proxy-image?url=${encodeURIComponent(data.image)}`;
 
   card.innerHTML = `
-    <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(animeTitle)}" class="anime-image" loading="lazy" />
+    <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(animeTitle)}" class="anime-image" loading="all" />
     <div class="anime-title">${cleanTitle(animeTitle)}</div>
   `;
 
@@ -431,14 +434,6 @@ window.addEventListener('resize', () => {
   createPagination(fullAnimeList.length, page);
 });
 
-// --- INICIO: Mostrar favoritos en modal con tarjetas ---
-
-// --- INICIO: Favoritos usando IndexedDB ---
-
-const DB_NAME = 'FavoritosDB';
-const DB_VERSION = 1;
-const STORE_NAME = 'favoritos';
-
 function abrirDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -617,3 +612,42 @@ async function mostrarFavoritosEnModal() {
 }
 
 // --- FIN: Mostrar favoritos en modal ---
+const suggestionBox = document.getElementById('search-suggestions');
+
+document.getElementById('searchInput').addEventListener('input', () => {
+  const value = normalizeText(searchInput.value);
+  suggestionBox.innerHTML = '';
+
+  if (!value || !fullAnimeList.length) {
+    suggestionBox.style.display = 'none';
+    return;
+  }
+
+  const results = fullAnimeList
+    .filter(anime => normalizeText(anime.title).includes(value))
+    .slice(0, 4); // máximo 4 resultados
+
+  results.forEach(anime => {
+    const item = document.createElement('li');
+    const proxyUrl = `/proxy-image?url=${encodeURIComponent(anime.image)}`;
+    item.innerHTML = `
+      <img src="${proxyUrl}" alt="${anime.title}" />
+      <span>${anime.title}</span>
+    `;
+    item.addEventListener('click', () => {
+      openModal(anime, anime.title);
+      suggestionBox.innerHTML = '';
+      suggestionBox.style.display = 'none';
+    });
+    suggestionBox.appendChild(item);
+  });
+
+  suggestionBox.style.display = results.length ? 'block' : 'none';
+});
+
+document.addEventListener('click', e => {
+  if (!suggestionBox.contains(e.target) && e.target !== searchInput) {
+    suggestionBox.innerHTML = '';
+    suggestionBox.style.display = 'none';
+  }
+});

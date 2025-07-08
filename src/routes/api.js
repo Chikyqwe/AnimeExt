@@ -173,9 +173,20 @@ router.get('/api/stream', (req, res) => {
   console.log(`[API STREAM] Solicitando stream para: ${videoUrl}`);
   streamVideo(videoUrl, req, res);
 });
-
-router.get('/queue-status', (req, res) => {
-  res.json({ pending: apiQueue.getPendingCount() });
+//actualiza el estado de la cola
+router.get('/api/queue/status', (req, res) => {
+  const pendingCount = apiQueue.getPendingCount();
+  const currentTask = apiQueue.getCurrentTask();
+  console.log(`[API QUEUE STATUS] Pendientes: ${pendingCount}, Tarea actual:`, currentTask);
+  
+  res.json({
+    pendingCount,
+    currentTask: currentTask ? {
+      name: currentTask.meta.name,
+      startedAt: currentTask.startedAt,
+      meta: currentTask.meta
+    } : null
+  });
 });
 
 module.exports = router;

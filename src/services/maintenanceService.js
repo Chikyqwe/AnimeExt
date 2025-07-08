@@ -4,8 +4,9 @@ const path = require('path');
 const { setUpdatingStatus } = require('../middleware/maintenanceBlock');
 
 async function iniciarMantenimiento() {
-  // Aqu� usamos la funci�n que modifica el estado global del middleware,
-  // para mantener una �nica fuente de verdad sobre si se est� actualizando.
+  // Aqui se verifica si ya se está ejecutando el mantenimiento y se evita iniciar otro si ya hay uno en curso.
+  // setUpdatingStatus devuelve el estado anterior, por lo que si es true, significa que ya hay un mantenimiento en curso.
+  console.log(`[MANTENIMIENTO] Verificando estado de mantenimiento...`);
   if (setUpdatingStatus(true)) { // setUpdatingStatus devuelve el estado anterior
     console.log(`[MANTENIMIENTO] Ya se esta ejecutando mantenimiento, ignorando nueva solicitud`);
     return;
@@ -17,9 +18,9 @@ async function iniciarMantenimiento() {
 
   worker.on('message', (msg) => {
     if (msg.type === 'log') {
-      console.log(`[MANTENIMIENTO][WORKER] `);
+      console.log(`[MANTENIMIENTO][WORKER]`, msg.data);
     } else if (msg.type === 'done') {
-      console.log(`[MANTENIMIENTO][WORKER] Finalizado correctamente`);
+      console.log(`[MANTENIMIENTO][WORKER] Mantenimiento completado`);
       setUpdatingStatus(false);
     } else if (msg.type === 'error') {
       console.error(`[MANTENIMIENTO][WORKER] Error reportado:`, msg.err);
@@ -36,9 +37,9 @@ async function iniciarMantenimiento() {
 
   worker.on('exit', (code) => {
     if (code !== 0) {
-      console.error(`[MANTENIMIENTO] Worker termin� con c�digo `);
+      console.error(`[MANTENIMIENTO] Worker terminó con código ${code}`);
     } else {
-      console.log(`[MANTENIMIENTO] Worker sali� correctamente`);
+      console.log(`[MANTENIMIENTO] Worker salió correctamente`);
     }
     setUpdatingStatus(false);
   });

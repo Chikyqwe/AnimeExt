@@ -1,4 +1,5 @@
 // src/server.js
+console.log('[INFO] Iniciando servidor AnimeExt...');
 const app = require('./app');
 const { PORT, MAINTENANCE_PASSWORD } = require('./config');
 const { iniciarMantenimiento } = require('./services/maintenanceService');

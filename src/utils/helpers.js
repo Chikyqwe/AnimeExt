@@ -3,25 +3,27 @@ const axios = require('axios');
 const urlLib = require('url');
 const { http, https } = require('follow-redirects');
 
-// Funci�n para el proxy de im�genes, si decides mantenerlo
+// Funci�n para el proxy de im�genes
 async function proxyImage(url, res) {
-  console.log(`[PROXY IMAGE] Solicitud de imagen: `);
+  console.log(`[PROXY IMAGE] Solicitud de imagen para URL: ${url} `);
 
   if (!url) {
-    console.warn('[PROXY IMAGE] Par�metro url faltante');
+    console.warn('[PROXY IMAGE] Parámetro url faltante');
     return res.status(400).send('URL faltante');
   }
 
   try {
-    console.log(`[PROXY IMAGE] Haciendo petici�n GET a imagen...${url}`);
+    // muestra la url en el log pls
+    console.log(`[PROXY IMAGE] Haciendo petición GET a imagen: ${url}`);
     const response = await axios.get(url, { responseType: 'stream', timeout: 10000 });
     res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
     res.setHeader('Cache-Control', 'no-store');
-    console.log(`[PROXY IMAGE] Encabezados seteados, transmitiendo imagen...`);
+    
+    console.log(`[PROXY IMAGE] Imagen obtenida con status: ${response.status}`);
     response.data.pipe(res);
   } catch (err) {
-    console.error(`[PROXY IMAGE] Error al obtener imagen: `);
-    res.status(500).send(`Error al obtener imagen: `);
+    console.error(`[PROXY IMAGE] Error al obtener imagen: ${err.message}`);
+    res.status(500).send(`Error al obtener imagen: ${err.message}`);
   }
 }
 
@@ -62,7 +64,7 @@ function streamVideo(videoUrl, req, res) {
   };
 
   const proxyReq = protocol.request(options, (proxyRes) => {
-    console.log(`[API STREAM] Respuesta recibida con status: `);
+    console.log(`[API STREAM] Respuesta recibida con status: ${proxyRes.statusCode}`);
     proxyRes.headers['Content-Disposition'] = 'inline; filename="video.mp4"';
     proxyRes.headers['Content-Type'] = 'video/mp4';
     res.writeHead(proxyRes.statusCode, proxyRes.headers);

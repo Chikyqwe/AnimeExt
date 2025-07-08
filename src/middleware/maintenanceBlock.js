@@ -9,7 +9,7 @@ function maintenanceBlock(req, res, next) {
   console.log(`[MIDDLEWARE] Request a: ${req.path} - isUpdating: ${isUpdating}`);
   
   if (isUpdating && req.path !== '/maintenance' && req.path !== '/up') {
-    console.log(`[BLOQUEADO] Acceso denegado temporalmente a ${req.path}`);
+    console.log(`[MIDDLEWARE] Redirecting to maintenance page for path: ${req.path}`);
     return res.redirect('/maintenance');
   }
   next();

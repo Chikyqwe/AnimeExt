@@ -7,13 +7,15 @@ const router = express.Router();
 
 router.get('/up', async (req, res) => {
   const { pass } = req.query;
-  console.log(`[UP] Solicitud de mantenimiento con pass: `);
+  console.log(`[UP] Solicitud de mantenimiento con pass: ${pass || 'ausente'}`);
   if (pass !== MAINTENANCE_PASSWORD) {
-    console.warn(`[UP] ContraseÒa incorrecta o ausente`);
-    return res.status(401).send('? Acceso no autorizado. Par·metro "pass" requerido.');
+    console.warn(`[UP] Contrase√±a incorrecta o ausente`);
+    return res.status(401).send('[UP] Contrase√±a incorrecta o ausente');
   }
 
-  res.send('? Iniciando mantenimiento. Intenta nuevamente en unos minutos...');
+  res.send('[UP] Iniciando mantenimiento. Intenta nuevamente en unos minutos...');
+  res.redirect('/maintenance');
+  console.log(`[UP] Mantenimiento iniciado, redirigiendo a /maintenance`);
   iniciarMantenimiento();
 });
 
