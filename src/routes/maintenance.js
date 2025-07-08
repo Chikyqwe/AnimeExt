@@ -13,7 +13,6 @@ router.get('/up', async (req, res) => {
     return res.status(401).send('[UP] Contraseña incorrecta o ausente');
   }
 
-  res.send('[UP] Iniciando mantenimiento. Intenta nuevamente en unos minutos...');
   res.redirect('/maintenance');
   console.log(`[UP] Mantenimiento iniciado, redirigiendo a /maintenance`);
   iniciarMantenimiento();
