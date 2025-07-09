@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./logo.svg" alt="AnimeEXT Logo" width="300" />
+  <img src="./public/img/logo.svg" alt="AnimeEXT Logo" width="300" />
 </p>
 ========
 
