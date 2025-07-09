@@ -1,7 +1,6 @@
 <p align="center">
-  <img src="./public/img/logo.svg" alt="AnimeEXT Logo" width="300" />
+  <img src="./public/img/logo.svg" alt="AnimeEXT Logo" width="900" />
 </p>
-========
 
 ![Node.js >=22](https://img.shields.io/badge/Node.js-%3E%3D22-blue)
 ![Npm >=10](https://img.shields.io/badge/Npm-%3E%3D10-red)
