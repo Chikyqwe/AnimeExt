@@ -4,6 +4,7 @@ AnimeExt
 ![Node.js >=22](https://img.shields.io/badge/Node.js-%3E%3D22-blue)
 ![Npm >=10](https://img.shields.io/badge/Npm-%3E%3D10-red)
 ![Licencia](https://img.shields.io/badge/licencia-MIT-yellow)
+![LicenciaMIT](https://img.shields.io/github/license/Chikyqwe/AnimeExt?color=yellow)
 
 AnimeExt es un servidor web diseñado para la visualización de anime mediante streaming directo desde fuentes públicas. El sistema automatiza la obtención de enlaces , integra una lógica personalizada de reproducción y ofrece vistas organizadas para facilitar su uso.
 
@@ -66,7 +67,8 @@ Estructura del proyecto
 │   ├── jsons
 │   │   └── anime_list.json
 │   ├── main.js
-│   ├── main.py
+|   ├── README.md
+|   ├── LICENSE
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── public
