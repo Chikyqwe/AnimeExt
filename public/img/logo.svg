@@ -1,0 +1,12 @@
+<svg viewBox="0 0 300 120" class="logo-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <!-- Texto principal -->
+  <text x="10" y="60" font-family="Alice, serif" font-size="36" font-weight="bold">
+    <tspan class="main-text" fill="#000000">Anime </tspan>
+    <tspan class="ext-text" fill="#00cfff">EXT</tspan>
+  </text>
+
+  <!-- Texto japonés centrado debajo -->
+  <text x="100" y="90" text-anchor="middle" font-family="sans-serif" font-size="14" class="subtext" fill="#444444">
+    アニメが好きな私たち
+  </text>
+</svg>

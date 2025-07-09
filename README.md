@@ -1,4 +1,6 @@
-AnimeExt
+<p align="center">
+  <img src="./logo.svg" alt="AnimeEXT Logo" width="300" />
+</p>
 ========
 
 ![Node.js >=22](https://img.shields.io/badge/Node.js-%3E%3D22-blue)
