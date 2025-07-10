@@ -361,7 +361,7 @@ async function openModal(data, animeTitle) {
     btn.className = 'episode-button';
     btn.textContent = `Episodio ${i}`;
     btn.addEventListener('click', () => {
-      const url = `/player?url=${encodeURIComponent(data.url)}&ep=${i}`;
+      const url = `/player?url=${encodeURIComponent(data.id)}&ep=${i}`;
       window.location.href = url;
     });
     episodesList.appendChild(btn);

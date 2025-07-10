@@ -1,4 +1,3 @@
-// src/services/jsonService.js
 const fs = require('fs');
 const path = require('path');
 const { JSON_FOLDER, JSON_PATH_TIO } = require('../config');
@@ -11,15 +10,20 @@ if (!fs.existsSync(JSON_FOLDER)) {
 function readAnimeList() {
   try {
     if (!fs.existsSync(JSON_PATH_TIO)) {
-      console.warn(`[JSON SERVICE] El archivo no existe. Devolviendo lista vacia.`);
+      console.warn(`[JSON SERVICE] El archivo no existe. Devolviendo lista vacía.`);
       return [];
     }
     const data = fs.readFileSync(JSON_PATH_TIO, 'utf8');
     return JSON.parse(data);
   } catch (err) {
-    console.error(`[JSON SERVICE] Error al leer la lista de animes en :`, err);
+    console.error(`[JSON SERVICE] Error al leer la lista de animes:`, err);
     return [];
   }
+}
+
+function getAnimeById(id) {
+  const list = readAnimeList();
+  return list.find(anime => anime.id === parseInt(id, 10));
 }
 
 function getJsonFiles() {
@@ -33,6 +37,7 @@ function getJsonFiles() {
 
 module.exports = {
   readAnimeList,
+  getAnimeById,
   getJsonFiles,
   getJSONPath: (filename) => path.join(JSON_FOLDER, filename)
 };

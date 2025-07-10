@@ -243,7 +243,7 @@
     }
 
     try {
-      const res = await fetch(`/api/player?url=${encodeURIComponent(url)}&ep=${ep}`);
+      const res = await fetch(`/api/player?id=${encodeURIComponent(url)}&ep=${ep}`);
       const data = await res.json();
 
       if (data.error) {
@@ -254,11 +254,6 @@
           setTimeout(() => {
             location.href = `/player?url=${encodeURIComponent(url)}&ep=${validEp}`;
           }, 500);
-        }
-        else if (data.error.includes("Anime no encontrado")) {
-          setTimeout(() => {
-            location.href = '/';
-          }, 1000);
         }
         return;
       }
