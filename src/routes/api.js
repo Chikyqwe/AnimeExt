@@ -1,33 +1,10 @@
 const express = require('express');
-const { getJsonFiles, getJSONPath, getAnimeById } = require('../services/jsonService');
+const { getJsonFiles, getJSONPath, getAnimeById, buildEpisodeUrl } = require('../services/jsonService');
 const { extractAllVideoLinks, getExtractor } = require('../services/browserlessExtractors');
 const apiQueue = require('../services/queueService');
 const { proxyImage, streamVideo, downloadVideo } = require('../utils/helpers');
 
 const router = express.Router();
-
-// Helper para construir URL del episodio
-function buildEpisodeUrl(anime, ep) {
-  if (!anime?.url || !ep) return null;
-
-  let baseUrl = '';
-  let slug = '';
-
-  if (anime.url.includes('animeflv')) {
-    baseUrl = 'https://www3.animeflv.net';
-    slug = anime.slug;
-  } else if (anime.url.includes('tioanime')) {
-    baseUrl = 'https://tioanime.com';
-    const parts = anime.url.split('/');
-    slug = parts[parts.length - 1];
-  } else {
-    return null;
-  }
-
-  if (!slug) return null;
-
-  return `${baseUrl}/ver/${slug}-${ep}`;
-}
 
 // === JSON LIST ===
 router.get('/json-list', (req, res) => {
@@ -49,6 +26,14 @@ router.get('/proxy-image', async (req, res) => {
   const { url } = req.query;
   await proxyImage(url, res);
 });
+
+// === NORMALIZE SERVER NAME ===
+function normalizeServerName(name) {
+  if (!name) return '';
+  const n = name.toLowerCase();
+  if (n.includes('yourupload') || n.includes('your-up') || n.includes('yourup') || n.includes('yu')) return 'yu';
+  return n;
+}
 
 // === SERVERS ===
 router.get('/api/servers', async (req, res) => {
@@ -77,18 +62,23 @@ router.get('/api/servers', async (req, res) => {
 
   try {
     const videos = await extractAllVideoLinks(pageUrl);
-    const valid = videos.filter(v => getExtractor(v.servidor));
+
+    const valid = videos
+      .map(v => ({ ...v, servidor: normalizeServerName(v.servidor) }))
+      .filter(v => getExtractor(v.servidor));
+
     res.json(valid);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
+
 // === MAIN API ===
 router.get('/api', async (req, res) => {
   let pageUrl = req.query.url;
   const animeId = req.query.id;
-  const serverRequested = req.query.server;
+  const serverRequested = normalizeServerName(req.query.server);
 
   if (!pageUrl && animeId) {
     const ep = req.query.ep;
@@ -113,7 +103,10 @@ router.get('/api', async (req, res) => {
 
     try {
       const videos = await extractAllVideoLinks(pageUrl);
-      const valid = videos.filter(v => getExtractor(v.servidor));
+
+      const valid = videos
+        .map(v => ({ ...v, servidor: normalizeServerName(v.servidor) }))
+        .filter(v => getExtractor(v.servidor));
 
       if (!valid.length) {
         return { status: 404, message: 'No hay servidores válidos' };
@@ -121,7 +114,7 @@ router.get('/api', async (req, res) => {
 
       let selected = valid[0];
       if (serverRequested) {
-        const found = valid.find(v => v.servidor.toLowerCase() === serverRequested.toLowerCase());
+        const found = valid.find(v => normalizeServerName(v.servidor) === serverRequested);
         if (!found) {
           return { status: 404, message: `Servidor '${serverRequested}' no soportado` };
         }
@@ -151,6 +144,7 @@ router.get('/api', async (req, res) => {
     }
   });
 });
+
 
 // === M3U8 ===
 router.get('/api/m3u8', async (req, res) => {

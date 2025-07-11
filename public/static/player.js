@@ -1,7 +1,9 @@
 // === Configuración inicial ===
 const API_BASE = "api";
 const config = JSON.parse(document.getElementById("config").textContent);
-let currentUrl = config.currentUrl;
+const slug = `${config.id}-${config.ep}`;
+let currentUrl = slug;
+
 const video = document.getElementById('player');
 const loader = document.getElementById('loader');
 const serverButtonsContainer = document.getElementById('serverButtons');
@@ -11,7 +13,7 @@ let serverList = [];
 let currentBlobUrl = null;
 let wakeLock = null;
 
-// === IndexedDB: configuración y utilidades ===
+// === IndexedDB ===
 const DB_NAME = 'AnimeCacheDB';
 const STORE_NAME = 'precached';
 let dbPromise = null;
@@ -55,34 +57,11 @@ async function idbGet(url) {
 }
 
 // === Utilidades ===
-function getStorageKey(url) {
-  const match = url.match(/ver\/([^\/?#]+)/);
-  return match ? `precached-${match[1]}` : 'precached-unknown';
-}
-
-function isCacheValid(entry) {
-  if (!entry?.timestamp) return false;
-  return Date.now() - entry.timestamp < 12 * 60 * 60 * 1000;
-}
-
-async function savePrecached(url, data) {
-  const entry = { ...data, url };
-  try {
-    await idbPut(entry);
-  } catch (e) {
-    console.error('Error guardando en IndexedDB:', e);
-  }
-}
-
-async function loadPrecached(url) {
-  try {
-    const entry = await idbGet(url);
-    if (!entry) return null;
-    return isCacheValid(entry) ? entry : null;
-  } catch (e) {
-    console.error('Error leyendo de IndexedDB:', e);
-    return null;
-  }
+function getNextEpisodeSlug(slug) {
+  const match = slug.match(/-(\d+)$/);
+  if (!match) return null;
+  const nextEp = parseInt(match[1], 10) + 1;
+  return slug.replace(/-\d+$/, `-${nextEp}`);
 }
 
 function fixM3u8(content, baseUrl) {
@@ -95,11 +74,8 @@ function fixM3u8(content, baseUrl) {
   });
 }
 
-function getNextEpisodeUrl(url) {
-  const match = url.match(/-(\d+)$/);
-  if (!match) return null;
-  const currentEp = parseInt(match[1], 10);
-  return url.replace(/-\d+$/, `-${currentEp + 1}`);
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function highlightActiveButton(activeIndex) {
@@ -109,28 +85,18 @@ function highlightActiveButton(activeIndex) {
   });
 }
 
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+// === Precarga del próximo episodio ===
+async function precacheNextEpisode(slug, triedYU = false) {
+  const nextSlug = getNextEpisodeSlug(slug);
+  if (!nextSlug) return;
 
-// === Precarga de episodios ===
-async function precacheNextEpisode(url, triedYU = false) {
-  const nextUrl = getNextEpisodeUrl(url);
-  if (!nextUrl) return;
-
-  const cached = await loadPrecached(nextUrl);
-  if (cached && cached.url === nextUrl) {
-    console.log("🟡 Next episode already cached, skipping precache.");
-    return;
-  }
+  const cached = await loadPrecached(nextSlug);
+  if (cached && cached.url === nextSlug) return;
 
   try {
-    console.log(`⏳ Waiting 10 seconds before precaching next episode: ${nextUrl}`);
     await delay(10000);
-
-    console.log(`🔍 Fetching servers for ${nextUrl}`);
-    const res = await fetch(`${API_BASE}/servers?url=${encodeURIComponent(nextUrl)}`);
-    if (!res.ok) throw new Error(`Error fetching servers: ${res.status}`);
+    const res = await fetch(`${API_BASE}/servers?id=${config.id}&ep=${parseInt(config.ep) + 1}`);
+    if (!res.ok) throw new Error("Error al precargar servidores");
 
     const servers = await res.json();
     const preferred = servers.find(s => s.servidor.toLowerCase() === "sw") ||
@@ -140,62 +106,52 @@ async function precacheNextEpisode(url, triedYU = false) {
 
     let streamUrl = "", m3u8Content = null;
 
-    if (preferred.servidor.toLowerCase() === "sw" && !triedYU) {
-      console.log("📥 Fetching m3u8 content from SW server");
-      const resM3u8 = await fetch(`/api/m3u8?url=${encodeURIComponent(nextUrl)}`);
+    if (preferred.servidor.toLowerCase() === "sw") {
+      const resM3u8 = await fetch(`/api/m3u8?id=${config.id}&ep=${parseInt(config.ep) + 1}`);
       if (!resM3u8.ok) throw new Error(`SW error: ${resM3u8.status}`);
       m3u8Content = await resM3u8.text();
-      streamUrl = nextUrl;
-
+      streamUrl = nextSlug;
     } else {
-      console.log(`📥 Fetching stream URL from server ${preferred.servidor}`);
-      const resAlt = await fetch(`${API_BASE}?url=${encodeURIComponent(nextUrl)}&server=${preferred.servidor}`);
+      const resAlt = await fetch(`${API_BASE}?id=${config.id}&ep=${parseInt(config.ep) + 1}&server=${preferred.servidor}`);
       if (!resAlt.ok) throw new Error(`${preferred.servidor} error: ${resAlt.status}`);
       streamUrl = (await resAlt.text()).trim();
     }
 
-    const entry = {
-      url: nextUrl,
+    await savePrecached(nextSlug, {
+      url: nextSlug,
       server: preferred.servidor,
       stream: streamUrl,
       m3u8Content,
       timestamp: Date.now()
-    };
-
-    await savePrecached(nextUrl, entry);
-    console.log("✅ Next episode precached:", entry);
+    });
 
   } catch (err) {
-    console.warn("❌ Failed to precache:", err);
-
-    if (!triedYU) {
-      console.log("🔁 Trying fallback with server: YU");
-      try {
-        const resYU = await fetch(`${API_BASE}?url=${encodeURIComponent(getNextEpisodeUrl(url))}&server=yu`);
-        if (!resYU.ok) throw new Error(`YU error: ${resYU.status}`);
-        const streamUrl = (await resYU.text()).trim();
-
-        const entry = {
-          url: getNextEpisodeUrl(url),
-          server: "yu",
-          stream: streamUrl,
-          m3u8Content: null,
-          timestamp: Date.now()
-        };
-
-        await savePrecached(entry.url, entry);
-        console.log("✅ Next episode precached with YU fallback:", entry);
-        return;
-      } catch (yuErr) {
-        console.warn("❌ YU fallback also failed:", yuErr);
-      }
-    }
-
-    console.warn("⛔ Final precache attempt failed.");
+    console.warn("Precache failed:", err);
   }
 }
 
-// === Reproducción directa ===
+function isCacheValid(entry) {
+  return entry && Date.now() - entry.timestamp < 12 * 60 * 60 * 1000;
+}
+
+async function loadPrecached(url) {
+  try {
+    const entry = await idbGet(url);
+    return isCacheValid(entry) ? entry : null;
+  } catch {
+    return null;
+  }
+}
+
+async function savePrecached(url, data) {
+  try {
+    await idbPut({ ...data, url });
+  } catch (e) {
+    console.error("Error guardando en cache:", e);
+  }
+}
+
+// === Reproducción ===
 async function loadStreamDirect(url, m3u8Content = null) {
   if (hlsInstance) {
     try {
@@ -205,6 +161,7 @@ async function loadStreamDirect(url, m3u8Content = null) {
     hlsInstance = null;
     currentBlobUrl = null;
   }
+
   const isM3U8 = url.endsWith(".m3u8") || m3u8Content;
   const isMP4 = url.endsWith(".mp4");
 
@@ -218,11 +175,9 @@ async function loadStreamDirect(url, m3u8Content = null) {
       try {
         await video.play();
         await requestWakeLock();
-      } catch (err) {
-        console.warn("Play() error:", err);
-      }
+      } catch {}
       await delay(10000);
-      precacheNextEpisode(currentUrl);
+      precacheNextEpisode(slug);
       video.muted = false;
     }, { once: true });
     return;
@@ -246,18 +201,10 @@ async function loadStreamDirect(url, m3u8Content = null) {
       try {
         await video.play();
         await requestWakeLock();
-      } catch (err) {
-        console.warn("Play() error:", err);
-      }
+      } catch {}
       await delay(10000);
-      precacheNextEpisode(currentUrl);
+      precacheNextEpisode(slug);
       video.muted = false;
-    });
-    hlsInstance.on(Hls.Events.ERROR, (event, data) => {
-      if (data.fatal) {
-        console.warn("HLS Fatal Error:", data);
-        hlsInstance.destroy();
-      }
     });
     return;
   }
@@ -271,61 +218,25 @@ async function loadStreamDirect(url, m3u8Content = null) {
     try {
       await video.play();
       await requestWakeLock();
-    } catch (err) {
-      console.warn("Play() error:", err);
-    }
+    } catch {}
     await delay(10000);
-    precacheNextEpisode(currentUrl);
+    precacheNextEpisode(slug);
     video.muted = false;
   }, { once: true });
 }
 
-// === Wake Lock ===
-async function requestWakeLock() {
-  try {
-    wakeLock = await navigator.wakeLock.request('screen');
-    wakeLock.addEventListener('release', () => {
-      console.log('🔓 Wake Lock liberado');
-    });
-    console.log("🔒 Wake Lock activado");
-  } catch (err) {
-    console.error(`${err.name}, no se pudo mantener la pantalla activa:`, err.message);
-  }
-}
-
-document.addEventListener('visibilitychange', () => {
-  if (wakeLock !== null && document.visibilityState === 'visible') {
-    requestWakeLock();
-  }
-});
-
-// === Cargar desde servidor ===
+// === Cargar servidor por índice ===
 async function loadServerByIndex(index) {
-  if (index >= serverList.length) {
-    loader.textContent = 'Failed to load stream';
-    video.style.opacity = 0;
-    return;
-  }
+  if (index >= serverList.length) return;
+
   highlightActiveButton(index);
-  const server = serverList[index].servidor;
-  const serverName = server.toLowerCase();
-  const serverUrl = `${API_BASE}?url=${encodeURIComponent(currentUrl)}&server=${server}`;
+  const server = serverList[index].servidor.toLowerCase();
   loader.style.display = 'flex';
   video.style.opacity = 0;
 
-  if (hlsInstance) {
-    try {
-      hlsInstance.destroy();
-      if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
-    } catch {}
-    hlsInstance = null;
-    currentBlobUrl = null;
-  }
-
   try {
-    if (serverName === "sw") {
-      const res = await fetch(`/api/m3u8?url=${encodeURIComponent(currentUrl)}`);
-      if (!res.ok) throw new Error(`SW server error: ${res.status}`);
+    if (server === "sw") {
+      const res = await fetch(`/api/m3u8?id=${config.id}&ep=${config.ep}`);
       const m3u8Text = await res.text();
       loadStreamDirect(currentUrl, m3u8Text);
       await savePrecached(currentUrl, {
@@ -338,31 +249,23 @@ async function loadServerByIndex(index) {
       return;
     }
 
-    if (serverName === "yu") {
-      const res = await fetch(serverUrl);
-      if (!res.ok) throw new Error(`YU server error: ${res.status}`);
+    if (server === "yu" || server === "YourUpload" || server === "yourupload") {
+      const res = await fetch(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=yu`);
       const json = await res.json();
-      const redirectUrl = json.url;
-      if (!redirectUrl) throw new Error("YU no devolvió URL directa");
-      const finalUrl = `/api/stream?videoUrl=${encodeURIComponent(redirectUrl)}`;
-      loadStreamDirect(finalUrl);
+      const streamUrl = `/api/stream?videoUrl=${encodeURIComponent(json.url)}`;
+      loadStreamDirect(streamUrl);
       await savePrecached(currentUrl, {
-        url: finalUrl,
-        server,
-        stream: finalUrl,
+        url: currentUrl,
+        server: "yu",
+        stream: streamUrl,
         m3u8Content: null,
         timestamp: Date.now()
       });
       return;
     }
 
-    const res = await fetch(serverUrl);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    let streamUrl = (await res.text()).trim();
-    if (!streamUrl.startsWith("http")) {
-      const baseUrl = new URL(res.url);
-      streamUrl = new URL(streamUrl, baseUrl).toString();
-    }
+    const res = await fetch(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=${server}`);
+    const streamUrl = (await res.text()).trim();
     loadStreamDirect(streamUrl);
     await savePrecached(currentUrl, {
       url: currentUrl,
@@ -371,76 +274,43 @@ async function loadServerByIndex(index) {
       m3u8Content: null,
       timestamp: Date.now()
     });
+
   } catch (err) {
-    console.warn("Server failed:", err);
+    console.warn("Fallo servidor:", err);
     loadServerByIndex(index + 1);
   }
 }
 
-// === Inicio de reproducción ===
+// === Wake Lock ===
+async function requestWakeLock() {
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => console.log("🔓 Wake Lock liberado"));
+    console.log("🔒 Wake Lock activado");
+  } catch (err) {
+    console.warn("No Wake Lock:", err.message);
+  }
+}
+
+// === Inicio ===
 async function start() {
   const cached = await loadPrecached(currentUrl);
   if (cached && cached.url === currentUrl) {
-    console.log("▶️ Using cached stream:", cached);
+    console.log("Usando cache:", cached);
     loadStreamDirect(cached.stream, cached.m3u8Content || null);
     return;
   }
+
   try {
-    const res = await fetch(`${API_BASE}/servers?url=${encodeURIComponent(currentUrl)}`);
+    const res = await fetch(`${API_BASE}/servers?id=${config.id}&ep=${config.ep}`);
     serverList = await res.json();
-    if (serverList.length === 0) {
-      loader.textContent = 'No servers found';
-      video.style.opacity = 0;
-      return;
-    }
+    if (serverList.length === 0) throw new Error("No hay servidores disponibles");
     loadServerByIndex(0);
   } catch (err) {
-    console.error("Failed to load servers:", err);
-    loader.textContent = 'Error loading servers';
+    loader.textContent = 'Error al cargar servidores';
     video.style.opacity = 0;
+    console.error(err);
   }
-}
-
-// === Manejo de cookies y fullscreen ===
-function getCookie(name) {
-  const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-  return v ? v.pop() : null;
-}
-
-function setCookie(name, value, days = 1) {
-  const d = new Date();
-  d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-  document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()}`;
-}
-
-document.addEventListener('fullscreenchange', () => {
-  const isFs = !!document.fullscreenElement;
-  setCookie('playerFullscreen', isFs ? '1' : '0', 7);
-});
-
-document.addEventListener('webkitfullscreenchange', () => {
-  const isFs = !!document.webkitFullscreenElement;
-  setCookie('playerFullscreen', isFs ? '1' : '0', 7);
-});
-
-if (getCookie('playerFullscreen') === '1') {
-  const tryFullscreen = () => {
-    if (!document.fullscreenElement) {
-      const p = video.requestFullscreen
-        ? video.requestFullscreen()
-        : video.webkitRequestFullscreen && video.webkitRequestFullscreen();
-      if (p && p.catch) p.catch(() => {});
-    }
-    removeListeners();
-  };
-
-  const removeListeners = () => {
-    ['click', 'keydown', 'touchstart'].forEach(evt =>
-      document.removeEventListener(evt, tryFullscreen, true));
-  };
-
-  ['click', 'keydown', 'touchstart'].forEach(evt =>
-    document.addEventListener(evt, tryFullscreen, true));
 }
 
 // === Iniciar ===
