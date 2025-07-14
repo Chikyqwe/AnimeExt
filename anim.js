@@ -32,23 +32,32 @@ function normalizarTitulo(titulo) {
     .trim();
 }
 
-function combinarJSONPorTitulo(datos1, datos2, outputPath, log = console.log) {
+function combinarJSONPorTitulo(datosTio, datosFlv, outputPath, log = console.log) {
   const mapa = new Map();
 
-  for (const anime of [...datos1, ...datos2]) {
+  // Primero agregamos animes de AnimeFLV (más preferidos)
+  for (const anime of datosFlv) {
+    const clave = normalizarTitulo(anime.title);
+    mapa.set(clave, anime);
+  }
+
+  // Luego agregamos animes de TioAnime solo si no existen en el mapa
+  for (const anime of datosTio) {
     const clave = normalizarTitulo(anime.title);
     if (!mapa.has(clave)) {
       mapa.set(clave, anime);
-    } else {
-      const actual = mapa.get(clave);
-      if ((anime.episodes_count || 0) > (actual.episodes_count || 0)) {
-        mapa.set(clave, anime);
-      }
     }
   }
 
+  const combinado = [...mapa.values()];
+
+  // Asignar IDs secuenciales empezando en 1
+  combinado.forEach((anime, index) => {
+    anime.id = index + 1;
+  });
+
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, JSON.stringify([...mapa.values()], null, 2), "utf-8");
+  fs.writeFileSync(outputPath, JSON.stringify(combinado, null, 2), "utf-8");
   log(`✅ JSON combinado guardado en: ${outputPath}`);
 }
 
