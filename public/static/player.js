@@ -263,7 +263,19 @@ async function loadServerByIndex(index) {
       });
       return;
     }
-
+    
+    if (server === "voe") {
+      const streamUrl = `/api/voe?id=${config.id}&ep=${config.ep}`;
+      loadStreamDirect(streamUrl);
+      await savePrecached(currentUrl, {
+        url: currentUrl,
+        server: "voe",
+        stream: streamUrl,
+        m3u8Content: null,
+        timestamp: Date.now()
+      });
+      return;
+    }
     const res = await fetch(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=${server}`);
     const streamUrl = (await res.text()).trim();
     loadStreamDirect(streamUrl);

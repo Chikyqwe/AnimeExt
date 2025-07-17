@@ -998,32 +998,63 @@ body.light-theme .suggestions-list li {
     }
   });
   // ---------- MODAL POLÍTICA DE PRIVACIDAD ----------
-function initPolicyModal() {
-  const overlay   = document.getElementById('policyOverlay');
-  const acceptBtn = document.getElementById('policyAcceptBtn');
-  const iframe    = document.getElementById('policyIframe');
+  // ---------- MODAL POLÍTICA DE PRIVACIDAD ----------
+  function initPolicyModal() {
+    const overlay   = document.getElementById('policyOverlay');
+    const acceptBtn = document.getElementById('policyAcceptBtn');
+    const iframe    = document.getElementById('policyIframe');
 
-  // Establecer URL dinámica
-  iframe.src = `${window.location.origin}/privacy-policy.html`;
+    if (!overlay || !acceptBtn || !iframe) return;
 
-  // Mostrar modal
-  overlay.classList.remove('d-none');
+    iframe.src = `${window.location.origin}/privacy-policy.html`;
+    overlay.classList.remove('d-none');
 
-  // Al aceptar
-  function closePolicyModal() {
-    localStorage.setItem('policyAccepted', 'true');
-    overlay.classList.add('d-none');
+    acceptBtn.addEventListener('click', () => {
+      localStorage.setItem('policyAccepted', 'true');
+      overlay.classList.add('d-none');
+    });
   }
 
-  acceptBtn.addEventListener('click', closePolicyModal);
-}
+  function monitorPolicyIntegrity() {
+    setInterval(() => {
+      const overlay = document.getElementById('policyOverlay');
+      const iframe  = document.getElementById('policyIframe');
 
-window.addEventListener('DOMContentLoaded', () => {
-  if (!localStorage.getItem('policyAccepted')) {
-    initPolicyModal();      // solo la primera visita
+      if (!localStorage.getItem('policyAccepted') && (!overlay || !iframe)) {
+        console.warn('[POLICY] Se detectó eliminación del modal. Restaurando...');
+
+        document.body.insertAdjacentHTML('beforeend', `
+          <div id="policyOverlay" class="policy-overlay">
+            <div class="policy-modal">
+              <div class="policy-header">
+                <h5 class="m-0">Política de Privacidad</h5>
+              </div>
+              <iframe
+                id="policyIframe"
+                class="policy-iframe"
+                loading="lazy"
+                title="Política de privacidad">
+              </iframe>
+              <div class="policy-footer text-end">
+                <button id="policyAcceptBtn" class="btn btn-success fw-semibold px-4">
+                  Aceptar
+                </button>
+              </div>
+            </div>
+          </div>
+        `);
+
+        initPolicyModal();
+      }
+    }, 1000);
   }
-});
 
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('policyAccepted')) {
+      initPolicyModal();
+      monitorPolicyIntegrity();
+    }
+  });
 </script>
 </body>
 </html>

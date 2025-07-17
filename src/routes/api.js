@@ -1,9 +1,12 @@
-const express = require('express');
+const { extractAllVideoLinks, getExtractor, openVoePage } = require('../services/browserlessExtractors');
 const { getJsonFiles, getJSONPath, getAnimeById, buildEpisodeUrl } = require('../services/jsonService');
-const { extractAllVideoLinks, getExtractor } = require('../services/browserlessExtractors');
-const apiQueue = require('../services/queueService');
 const { proxyImage, streamVideo, downloadVideo } = require('../utils/helpers');
-
+const { parseMegaUrl, verificarArchivoMega } = require('../utils/CheckMega');
+const apiQueue = require('../services/queueService');
+const ffmpegPath = require('ffmpeg-static');
+const { spawn } = require('child_process');
+const { PassThrough } = require('stream');
+const express = require('express');
 const router = express.Router();
 
 // === JSON LIST ===
@@ -63,16 +66,37 @@ router.get('/api/servers', async (req, res) => {
   try {
     const videos = await extractAllVideoLinks(pageUrl);
 
-    const valid = videos
+    const rawValid = videos
       .map(v => ({ ...v, servidor: normalizeServerName(v.servidor) }))
       .filter(v => getExtractor(v.servidor));
+
+    const valid = [];
+
+    for (const video of rawValid) {
+      if (typeof video.url === 'string' && video.url.includes('mega.nz')) {
+        try {
+          const { id, key } = parseMegaUrl(video.url);
+          const resultado = await verificarArchivoMega(id, key);
+
+          if (resultado.disponible) {
+            video.url = `https://mega.nz/embed/${id}#${key}`;
+            valid.push(video); // ✅ Solo lo agregamos si está disponible
+          }
+          // ❌ No se agrega si no está disponible
+        } catch (e) {
+          // ❌ No se agrega si falla el parseo
+        }
+      } else {
+        // Otros servidores se agregan sin verificación
+        valid.push(video);
+      }
+    }
 
     res.json(valid);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
-
 
 // === MAIN API ===
 router.get('/api', async (req, res) => {
@@ -145,6 +169,82 @@ router.get('/api', async (req, res) => {
   });
 });
 
+// === Voe ===
+router.get('/api/voe', async (req, res) => {
+  const animeId = parseInt(req.query.id);
+  const ep = parseInt(req.query.ep);
+
+  if (isNaN(animeId) || isNaN(ep)) {
+    return res.status(400).json({ error: 'Parámetros inválidos' });
+  }
+
+  const anime = getAnimeById(animeId);
+  if (!anime || !anime.url) {
+    return res.status(404).json({ error: 'Anime no encontrado' });
+  }
+
+  try {
+    const pageUrl = buildEpisodeUrl(anime, ep);
+    const allLinks = await extractAllVideoLinks(pageUrl);
+
+    const voe = allLinks.find(v => v.servidor.toLowerCase().includes('voe'));
+    if (!voe) {
+      return res.status(404).json({ error: 'No se encontró enlace VOE' });
+    }
+
+    const buffer = await openVoePage(voe.url); // buffer con ts
+
+    if (!buffer) return res.status(204).end();
+
+    // Creamos un stream para enviar buffer a ffmpeg
+    const inputStream = new PassThrough();
+    inputStream.end(buffer);
+
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Content-Disposition', `inline; filename="anime-${animeId}-ep-${ep}.mp4"`);
+
+    // Args para ffmpeg para leer TS desde stdin y output MP4 a stdout
+    const ffmpegArgs = [
+      '-i', 'pipe:0',       // entrada por stdin
+      '-c:v', 'copy',       // copiar video sin recodificar (si compatible)
+      '-c:a', 'aac',        // audio compatible mp4
+      '-f', 'mp4',          // formato mp4
+      '-movflags', 'frag_keyframe+empty_moov', // para streaming progresivo
+      'pipe:1'              // salida por stdout
+    ];
+
+    const ffmpegProc = spawn(ffmpegPath, ffmpegArgs);
+
+    // Pipe input stream al stdin de ffmpeg
+    inputStream.pipe(ffmpegProc.stdin);
+
+    // Pipe salida de ffmpeg al response
+    ffmpegProc.stdout.pipe(res);
+
+    ffmpegProc.stderr.on('data', data => {
+      // Opcional: para debuguear ffmpeg
+      // console.error(`FFmpeg stderr: ${data}`);
+    });
+
+    ffmpegProc.on('error', err => {
+      console.error('[FFmpeg error]', err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Error en conversión de video' });
+      }
+    });
+
+    ffmpegProc.on('close', code => {
+      if (code !== 0) {
+        console.error(`[FFmpeg] proceso terminó con código ${code}`);
+      }
+      res.end();
+    });
+
+  } catch (err) {
+    console.error('[VOE Stream Error]', err);
+    res.status(500).json({ error: 'Error al procesar stream' });
+  }
+});
 
 // === M3U8 ===
 router.get('/api/m3u8', async (req, res) => {

@@ -10,6 +10,7 @@ const viewsRoutes = require('./routes/views');
 const maintenanceRoutes = require('./routes/maintenance');
 const playerRoutes = require('./routes/player');
 const apiRoutes = require('./routes/api');
+const WakeUP = require('./utils/wakeUp');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/', viewsRoutes);
 app.use('/', maintenanceRoutes); // Las rutas /up y /maintenance
 app.use('/', playerRoutes); // La ruta /api/player
 app.use('/', apiRoutes); // Las rutas /json-list, /jsons/:filename, /proxy-image, /api, /api/servers, /api/m3u8, /api/stream, /queue-status
+app.use('/', WakeUP); // Las ruta de wake up
 
 // Manejo de rutas no encontradas (404)
 app.use((req, res, next) => {

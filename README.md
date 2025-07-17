@@ -47,6 +47,7 @@ Uso básico
 - Use `/api?url=` para obtener los enlaces a videos.
 - Usa `/proxy-image?url=` para mostrar imágenes sin exponer dominios externos.
 - Supervisa la cola de scraping desde `/queue-status`.
+- Use `/status` para obtener informacion del status.
 
 Consideraciones
 ===============
@@ -103,7 +104,9 @@ Estructura del proyecto
 │   │   │   ├── maintenanceService.js
 │   │   │   └── queueService.js
 │   │   └── utils
-│   │       └── helpers.js
+│   │       ├── CheckMega.js
+|   |       ├── helpers.js
+|   |       └── wakeUp.js
 │   └── worker-mantenimiento.js
 
 ```
