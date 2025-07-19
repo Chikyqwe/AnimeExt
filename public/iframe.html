@@ -3,73 +3,173 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Anime Content</title>
+  <title>Anime Viewer</title>
   <style>
-    body {
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
       margin: 0;
       padding: 0;
-      background-color: #000;
-      color: #fff;
+      overflow-x: hidden;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0d0d0d;
+      color: #e0fefc;
     }
-    h1 {
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      background-color: #0d0d0d;
+      width: 100%;
+      padding: 1rem;
       text-align: center;
-      font-family: Arial, sans-serif;
-      margin-top: 20px;
     }
+
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #a6fff7;
+    }
+
+    .iframe-wrapper {
+      position: relative;
+      width: 90%;
+      max-width: 960px;
+      margin-top: 2rem;
+    }
+
+    .iframe-container {
+      background-color: #111;
+      border: 2px solid #0ff1e0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+    }
+
     iframe {
       width: 100%;
-      height: 90vh;
+      height: 500px;
       border: none;
       display: block;
-      margin: 0 auto;
     }
-    @media (max-width: 600px) {
-      iframe {
-        height: 80vh;
-      }
-      h1 {
-        font-size: 1.5rem;
-      }
+
+    .ep-overlay {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 255, 255, 0.2);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      color: #0ff1e0;
+      z-index: 10;
+      display: none;
+    }
+
+    .next-btn {
+      margin: 2rem auto;
+      padding: 0.8rem 1.5rem;
+      background-color: #00d5c5;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      display: block;
+    }
+
+    .next-btn:hover {
+      background-color: #00fff2;
+    }
+
+    .error {
+      padding: 2rem;
+      color: #ff4b4b;
+      font-weight: bold;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>Anime Content</h1>
-  <iframe src="" allowfullscreen></iframe>
+  <header>
+    <h1 id="anime-title">Anime Content</h1>
+  </header>
+
+  <div class="iframe-wrapper">
+    <div class="iframe-container">
+      <iframe id="mega-frame" src="" allowfullscreen></iframe>
+    </div>
+    <div id="ep-overlay" class="ep-overlay"></div>
+  </div>
+
+  <button id="next-btn" class="next-btn" style="display: none;">Siguiente video</button>
 
   <script>
-    const iframe = document.querySelector('iframe');
-
-    // Leer el ID desde ?id=... o desde el hash #!... si no vino en query
+    const iframe = document.getElementById('mega-frame');
+    const titleElement = document.getElementById('anime-title');
+    const nextBtn = document.getElementById('next-btn');
+    const epOverlay = document.getElementById('ep-overlay');
     const searchParams = new URLSearchParams(window.location.search);
-    let idParam = searchParams.get('id');
+
+    let idParam = searchParams.get('id') || '';
+    const title = searchParams.get('_title');
+    const ep = searchParams.get('ep');
+    const nextVid = searchParams.get('next_vid');
+
+    if (title) {
+      titleElement.textContent = decodeURIComponent(title);
+      document.title = decodeURIComponent(title);
+    }
+
+    if (ep && epOverlay) {
+      epOverlay.textContent = `Episodio ${ep}`;
+      epOverlay.style.display = 'block';
+    }
+
+    if (idParam.includes('mega.nz') && !idParam.includes('#') && window.location.hash) {
+      idParam += window.location.hash;
+    }
 
     if (!idParam && window.location.hash.startsWith('#!')) {
       idParam = window.location.hash;
     }
 
-    if (!idParam) {
-      console.error('No se proporcionó un ID en la URL.');
-      document.body.innerHTML = '<h1>Error: Falta el parámetro ?id=</h1>';
-    } else if (idParam.startsWith('https://mega.nz/')) {
-      const match = idParam.match(/(?:file|embed)\/([a-zA-Z0-9_-]+)#([a-zA-Z0-9_-]+)/);
-      if (match) {
-        const fileId = match[1];
-        const key = match[2];
-        iframe.src = `https://mega.nz/embed/${fileId}#${key}`;
-      } else {
-        document.body.innerHTML = '<h1>Error: Enlace de MEGA inválido</h1>';
-      }
-    } else if (idParam.startsWith('#!')) {
-      const parts = idParam.replace('#!', '').split('!');
-      if (parts.length === 2) {
-        const [fileId, key] = parts;
-        iframe.src = `https://mega.nz/embed/${fileId}#${key}`;
-      } else {
-        document.body.innerHTML = '<h1>Error: Formato de ID inválido</h1>';
-      }
+    function extractMegaInfo(input) {
+      input = decodeURIComponent(input.trim());
+
+      let match = input.match(/mega\.nz\/(?:file|embed)\/([a-zA-Z0-9_-]+)#([a-zA-Z0-9_-]+)/);
+      if (match) return { fileId: match[1], key: match[2] };
+
+      match = input.match(/#!?([a-zA-Z0-9_-]+)!([a-zA-Z0-9_-]+)/);
+      if (match) return { fileId: match[1], key: match[2] };
+
+      return null;
+    }
+
+    const info = extractMegaInfo(idParam);
+
+    if (info) {
+      iframe.src = `https://mega.nz/embed/${info.fileId}#${info.key}`;
     } else {
-      document.body.innerHTML = '<h1>Error: Formato de ID no reconocido</h1>';
+      document.querySelector('.iframe-container').innerHTML = `
+        <div class="error">❌ Error: Enlace de MEGA inválido o no reconocido</div>
+      `;
+    }
+
+    if (nextVid) {
+      nextBtn.style.display = 'inline-block';
+      nextBtn.addEventListener('click', () => {
+        window.location.href = decodeURIComponent(nextVid);
+      });
     }
   </script>
 </body>

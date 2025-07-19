@@ -225,6 +225,31 @@ async function loadStreamDirect(url, m3u8Content = null) {
   }, { once: true });
 }
 
+function showMegaModal(onContinue, onCancel) {
+  const modal = document.getElementById('megaModal');
+  modal.style.display = 'flex';
+
+  const continueBtn = document.getElementById('continueMega');
+  const cancelBtn = document.getElementById('cancelMega');
+
+  const cleanup = () => {
+    modal.style.display = 'none';
+    continueBtn.onclick = null;
+    cancelBtn.onclick = null;
+  };
+
+  continueBtn.onclick = () => {
+    cleanup();
+    onContinue();
+  };
+
+  cancelBtn.onclick = () => {
+    cleanup();
+    onCancel();
+  };
+}
+
+
 // === Cargar servidor por índice ===
 async function loadServerByIndex(index) {
   if (index >= serverList.length) return;
@@ -276,6 +301,19 @@ async function loadServerByIndex(index) {
       });
       return;
     }
+
+    if (server === "mega") {
+      const megaUrl = serverList[index].url || "";
+      showMegaModal(() => {
+        window.open(`/iframe.html?id=${encodeURIComponent(megaUrl)}&_title=${config.title}&next_vid=${encodeURIComponent(config.nextUrl)}`, "_blank");
+      }, () => {
+        highlightActiveButton(index + 1); // Avanza al siguiente
+        loadServerByIndex(index + 1);
+      });
+
+      return;
+    }
+
     const res = await fetch(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=${server}`);
     const streamUrl = (await res.text()).trim();
     loadStreamDirect(streamUrl);
@@ -316,6 +354,11 @@ async function start() {
   try {
     const res = await fetch(`${API_BASE}/servers?id=${config.id}&ep=${config.ep}`);
     serverList = await res.json();
+    serverList.sort((a, b) => {
+      if (a.servidor.toLowerCase() === 'mega.nz') return -1;
+      if (b.servidor.toLowerCase() === 'mega.nz') return 1;
+      return 0;
+    });
     if (serverList.length === 0) throw new Error("No hay servidores disponibles");
     loadServerByIndex(0);
   } catch (err) {
