@@ -5,6 +5,7 @@
     icon.classList.toggle('fa-moon');
     icon.classList.toggle('fa-sun');
     localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+adaptarBotonCerrarTema()
   }
 
   function restoreTheme() {
