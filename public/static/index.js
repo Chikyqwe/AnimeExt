@@ -389,7 +389,6 @@ async function openModal(data, animeTitle) {
   const modalImage = document.getElementById('modalImage');
   const modalTitle = document.getElementById('modalTitle');
   const episodesList = document.getElementById('episodes-list');
-  const downloadBtn = document.getElementById('downloadImageBtn');
 
   const proxyUrl = `/proxy-image?url=${encodeURIComponent(data.image)}`;
 
@@ -442,16 +441,6 @@ async function openModal(data, animeTitle) {
     });
     episodesList.appendChild(btn);
   }
-
-  // Descargar imagen
-  downloadBtn.onclick = () => {
-    const a = document.createElement('a');
-    a.href = proxyUrl;
-    a.download = `${cleanTitle(animeTitle)}.jpg`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
 
   const animeModalEl = document.getElementById('animeModal');
   const modal = new bootstrap.Modal(animeModalEl);
