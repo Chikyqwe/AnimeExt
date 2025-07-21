@@ -141,4 +141,5 @@ body.light-theme .logo-svg .ext-text{fill:#2e94dc}
   .modal-img{width:100%;max-height:300px}
   .modal-info{width:100%}
   .episodes-list{max-height:none;flex:1 1 auto}
+  #adsOverlay .policy-modal{height: 400px;width: 100%;}
 }
