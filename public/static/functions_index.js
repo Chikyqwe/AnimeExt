@@ -106,8 +106,8 @@ adaptarBotonCerrarTema()
       initPolicyModal();
       monitorPolicyIntegrity();
     }
-    if (!localStorage.getItem('ads')) {
-      initAdsModal()
+    if (!localStorage.getItem('ads') && localStorage.getItem('policyAccepted')) {
+      initAdsModal();
     }
   });
 
