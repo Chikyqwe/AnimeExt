@@ -225,30 +225,6 @@ async function loadStreamDirect(url, m3u8Content = null) {
   }, { once: true });
 }
 
-function showMegaModal(onContinue, onCancel) {
-  const modal = document.getElementById('megaModal');
-  modal.style.display = 'flex';
-
-  const continueBtn = document.getElementById('continueMega');
-  const cancelBtn = document.getElementById('cancelMega');
-
-  const cleanup = () => {
-    modal.style.display = 'none';
-    continueBtn.onclick = null;
-    cancelBtn.onclick = null;
-  };
-
-  continueBtn.onclick = () => {
-    cleanup();
-    onContinue();
-  };
-
-  cancelBtn.onclick = () => {
-    cleanup();
-    onCancel();
-  };
-}
-
 
 // === Cargar servidor por índice ===
 async function loadServerByIndex(index) {
@@ -302,17 +278,41 @@ async function loadServerByIndex(index) {
       return;
     }
 
-    if (server === "mega") {
-      const megaUrl = serverList[index].url || "";
-      showMegaModal(() => {
-        window.open(`/iframe.html?id=${encodeURIComponent(megaUrl)}&_title=${config.title}&next_vid=${encodeURIComponent(config.nextUrl)}`, "_blank");
-      }, () => {
-        highlightActiveButton(index + 1); // Avanza al siguiente
-        loadServerByIndex(index + 1);
-      });
+ if (server === "mega") {
+  const megaUrl = serverList[index].url || "";
 
-      return;
-    }
+  if (hlsInstance) {
+    try {
+      hlsInstance.destroy();
+      if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+    } catch {}
+    hlsInstance = null;
+    currentBlobUrl = null;
+  }
+
+  video.pause();
+  video.style.display = 'none';
+
+  const existingIframe = document.getElementById('megaIframe');
+  if (existingIframe) existingIframe.remove();
+
+  const iframe = document.createElement('iframe');
+  iframe.src = megaUrl.replace('/file/', '/embed/');
+  iframe.allowFullscreen = true;
+  iframe.id = 'megaIframe';
+
+  // Estilo con altura fija
+  iframe.style.width = '100%';
+  iframe.style.height = '200px';
+  iframe.style.border = 'none';
+  iframe.style.display = 'block';
+  iframe.style.borderRadius = '1rem'; // opcional para redondear
+
+  video.parentElement.insertBefore(iframe, video.nextSibling);
+
+  loader.style.display = 'none';
+  return;
+}
 
     const res = await fetch(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=${server}`);
     const streamUrl = (await res.text()).trim();
@@ -342,25 +342,49 @@ async function requestWakeLock() {
   }
 }
 
-// === Inicio ===
+// === Iniciar ===
 async function start() {
-  const cached = await loadPrecached(currentUrl);
-  if (cached && cached.url === currentUrl) {
-    console.log("Usando cache:", cached);
-    loadStreamDirect(cached.stream, cached.m3u8Content || null);
-    return;
-  }
+  const ads = localStorage.getItem("ads") === "true";
 
   try {
     const res = await fetch(`${API_BASE}/servers?id=${config.id}&ep=${config.ep}`);
     serverList = await res.json();
+
+    if (serverList.length === 0) throw new Error("No hay servidores disponibles");
+
+    if (ads) {
+      const orden = ["mega", "yu", "sw", "voe"];
+      for (const nombre of orden) {
+        const i = serverList.findIndex(s =>
+          s.servidor.toLowerCase().includes(nombre)
+        );
+        if (i !== -1) {
+          await loadServerByIndex(i);
+          return;
+        }
+      }
+
+      // Si ninguno está en orden de preferencia, cargar primero como fallback
+      await loadServerByIndex(0);
+      return;
+    }
+
+    // ⚡ Si no hay ads, comportamiento normal con caché
+    const cached = await loadPrecached(currentUrl);
+    if (cached && cached.url === currentUrl) {
+      console.log("Usando cache:", cached);
+      loadStreamDirect(cached.stream, cached.m3u8Content || null);
+      return;
+    }
+
     serverList.sort((a, b) => {
       if (a.servidor.toLowerCase() === 'mega.nz') return -1;
       if (b.servidor.toLowerCase() === 'mega.nz') return 1;
       return 0;
     });
-    if (serverList.length === 0) throw new Error("No hay servidores disponibles");
-    loadServerByIndex(0);
+
+    await loadServerByIndex(0);
+
   } catch (err) {
     loader.textContent = 'Error al cargar servidores';
     video.style.opacity = 0;
