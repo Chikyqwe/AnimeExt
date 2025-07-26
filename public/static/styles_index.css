@@ -143,3 +143,130 @@ body.light-theme .logo-svg .ext-text{fill:#2e94dc}
   .episodes-list{max-height:none;flex:1 1 auto}
   #adsOverlay .policy-modal{height: 400px;width: 100%;}
 }
+
+#menuOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#menuOverlay.show {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.policy-modal {
+  transition: background-color 0.3s, color 0.3s;
+}
+
+
+#menuOverlay .policy-modal {
+  width: 92vw;
+  max-width: 450px;
+  height: auto;
+  background: #1f1f1f;
+  color: #e0e0e0;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+}
+
+#menuOverlay .policy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #121212;
+  border-bottom: 1px solid #333;
+}
+
+#menuOverlay .policy-header i {
+  font-size: 1.2rem;
+  color: #e0e0e0;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 1.2rem;
+  padding: 1.2rem;
+  justify-items: center;
+}
+
+.menu-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: #2b2b2b;
+  color: #00bfa5;
+  font-size: 1.4rem;
+  border: 2px solid #333;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.menu-circle:hover {
+  background-color: #333;
+  transform: scale(1.05);
+}
+
+.menu-text {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  user-select: none;
+  text-align: center;
+}
+
+@media (max-width: 400px) {
+  .menu-circle {
+    width: 60px;
+    height: 60px;
+    font-size: 1.2rem;
+  }
+
+  .menu-text {
+    font-size: 0.7rem;
+  }
+}
+
+/* Light Theme */
+body.light-theme #menuOverlay .policy-modal {
+  background: #fff;
+  color: #1a1a1a;
+}
+
+body.light-theme #menuOverlay .policy-header {
+  background: #f8f8f8;
+  border-color: #ddd;
+}
+
+body.light-theme .menu-circle {
+  background-color: #f4f4f4;
+  border-color: #ddd;
+  color: #00796b;
+}
+
+body.light-theme .menu-circle:hover {
+  background-color: #e0f7f4;
+}
+
+body.light-theme .menu-text {
+  color: #121212;
+}

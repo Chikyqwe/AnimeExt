@@ -2,7 +2,7 @@ body{background:#121212;color:#e0e0e0;font-family:'Inter',sans-serif;margin:0;pa
 .container-player{max-width:960px;margin:auto}
 h1{text-align:center;font-weight:700;font-size:1.8rem;margin-bottom:30px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.5)}body.light-theme h1{color:#111}
 .video-wrapper{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.7);background:#000}body.light-theme .video-wrapper{box-shadow:0 8px 18px rgba(0,0,0,.1)}
-video{width:100%;height:200px;border-radius:16px;background:#000;opacity:0;transition:opacity .4s ease-in-out}
+video{width:100%;height:485px;border-radius:16px;background:#000;opacity:0;transition:opacity .4s ease-in-out}
 .loader{position:absolute;inset:0;background:rgba(20,20,20,.95);display:flex;justify-content:center;align-items:center;z-index:10}body.light-theme .loader{background:rgba(255,255,255,.95)}
 .dot{width:20px;height:20px;background:#00bfa5;border-radius:50%;margin:0 8px;animation:bounce 1s infinite ease-in-out}body.light-theme .dot{background:#00bfa5}
 .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
@@ -17,3 +17,4 @@ video{width:100%;height:200px;border-radius:16px;background:#000;opacity:0;trans
 .episode-btn:hover{background:#009e87!important}body.light-theme .episode-btn:hover{background:#009e87!important}
 .episode-btn.active{background:#fff!important;color:#121212!important;box-shadow:0 0 8px #00bfa5}body.light-theme .episode-btn.active{background:#121212!important;color:#fff!important}
 .episode-btn,.episode-btn.active,.nav-buttons button{transition:background-color .6s ease,color .6s ease,box-shadow .4s ease}
+@media(max-width:600px){.video{height: 200px; width: 100%;}}

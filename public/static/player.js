@@ -86,7 +86,7 @@ function highlightActiveButton(activeIndex) {
 }
 
 // === Precarga del próximo episodio ===
-async function precacheNextEpisode(slug, triedYU = false) {
+async function precacheNextEpisode(slug, triedServers = []) {
   const nextSlug = getNextEpisodeSlug(slug);
   if (!nextSlug) return;
 
@@ -96,39 +96,67 @@ async function precacheNextEpisode(slug, triedYU = false) {
   try {
     await delay(10000);
     const res = await fetch(`${API_BASE}/servers?id=${config.id}&ep=${parseInt(config.ep) + 1}`);
-    if (!res.ok) throw new Error("Error al precargar servidores");
+    if (!res.ok) throw new Error("Error al obtener lista de servidores");
 
     const servers = await res.json();
-    const preferred = servers.find(s => s.servidor.toLowerCase() === "sw") ||
-                      servers.find(s => s.servidor.toLowerCase() === "yu") ||
-                      servers[0];
-    if (!preferred) return;
 
-    let streamUrl = "", m3u8Content = null;
+    const remaining = servers.filter(s =>
+      !triedServers.includes(s.servidor.toLowerCase())
+    );
 
-    if (preferred.servidor.toLowerCase() === "sw") {
-      const resM3u8 = await fetch(`/api/m3u8?id=${config.id}&ep=${parseInt(config.ep) + 1}`);
-      if (!resM3u8.ok) throw new Error(`SW error: ${resM3u8.status}`);
-      m3u8Content = await resM3u8.text();
-      streamUrl = nextSlug;
-    } else {
-      const resAlt = await fetch(`${API_BASE}?id=${config.id}&ep=${parseInt(config.ep) + 1}&server=${preferred.servidor}`);
-      if (!resAlt.ok) throw new Error(`${preferred.servidor} error: ${resAlt.status}`);
-      streamUrl = (await resAlt.text()).trim();
+    if (!remaining.length) {
+      console.warn("Todos los servidores fallaron al precachear.");
+      return;
     }
 
-    await savePrecached(nextSlug, {
-      url: nextSlug,
-      server: preferred.servidor,
-      stream: streamUrl,
-      m3u8Content,
-      timestamp: Date.now()
-    });
+    const preferred = remaining.find(s => s.servidor.toLowerCase() === "sw") ||
+                      remaining.find(s => s.servidor.toLowerCase() === "yu") ||
+                      remaining.find(s => s.servidor.toLowerCase() === "mega") ||
+                      remaining[0];
+
+    let streamUrl = "", m3u8Content = null;
+    const server = preferred.servidor.toLowerCase();
+
+    try {
+      if (server === "sw") {
+        const resM3u8 = await fetch(`/api/m3u8?id=${config.id}&ep=${parseInt(config.ep) + 1}`);
+        if (!resM3u8.ok) throw new Error(`SW error: ${resM3u8.status}`);
+        m3u8Content = await resM3u8.text();
+        if (!m3u8Content || m3u8Content.includes("error")) throw new Error("M3U8 vacío o inválido");
+        streamUrl = nextSlug;
+      } else if (server === "yu" || server === "yourupload") {
+        const resAlt = await fetch(`${API_BASE}?id=${config.id}&ep=${parseInt(config.ep) + 1}&server=yu`);
+        if (!resAlt.ok) throw new Error(`YU error: ${resAlt.status}`);
+        const json = await resAlt.json();
+        if (!json.url) throw new Error("YU: URL no encontrada");
+        streamUrl = `/api/stream?videoUrl=${encodeURIComponent(json.url)}`;
+      } else {
+        const resAlt = await fetch(`${API_BASE}?id=${config.id}&ep=${parseInt(config.ep) + 1}&server=${server}`);
+        if (!resAlt.ok) throw new Error(`${server} error: ${resAlt.status}`);
+        const stream = await resAlt.text();
+        streamUrl = stream.trim();
+        if (!streamUrl) throw new Error(`${server}: stream URL vacío`);
+      }
+
+      await savePrecached(nextSlug, {
+        url: nextSlug,
+        server: server,
+        stream: streamUrl,
+        m3u8Content,
+        timestamp: Date.now()
+      });
+
+    } catch (innerErr) {
+      console.warn(`Falló precache con ${server}:`, innerErr.message || innerErr);
+      triedServers.push(server);
+      await precacheNextEpisode(slug, triedServers);
+    }
 
   } catch (err) {
-    console.warn("Precache failed:", err);
+    console.warn("Precache global error:", err.message || err);
   }
 }
+
 
 function isCacheValid(entry) {
   return entry && Date.now() - entry.timestamp < 12 * 60 * 60 * 1000;
@@ -235,10 +263,16 @@ async function loadServerByIndex(index) {
   loader.style.display = 'flex';
   video.style.opacity = 0;
 
+  let success = false;
+
   try {
+    // Servidor SW
     if (server === "sw") {
       const res = await fetch(`/api/m3u8?id=${config.id}&ep=${config.ep}`);
+      if (!res.ok) throw new Error("SW: respuesta no OK");
       const m3u8Text = await res.text();
+      if (!m3u8Text || m3u8Text.includes("error")) throw new Error("SW: m3u8 inválido");
+
       loadStreamDirect(currentUrl, m3u8Text);
       await savePrecached(currentUrl, {
         url: currentUrl,
@@ -247,12 +281,18 @@ async function loadServerByIndex(index) {
         m3u8Content: m3u8Text,
         timestamp: Date.now()
       });
-      return;
+
+      success = true;
     }
 
-    if (server === "yu" || server === "YourUpload" || server === "yourupload") {
+    // Servidor YU
+    else if (server === "yu" || server === "yourupload") {
       const res = await fetch(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=yu`);
+      if (!res.ok) throw new Error("YU: respuesta no OK");
+
       const json = await res.json();
+      if (!json.url) throw new Error("YU: URL vacía");
+
       const streamUrl = `/api/stream?videoUrl=${encodeURIComponent(json.url)}`;
       loadStreamDirect(streamUrl);
       await savePrecached(currentUrl, {
@@ -262,11 +302,15 @@ async function loadServerByIndex(index) {
         m3u8Content: null,
         timestamp: Date.now()
       });
-      return;
+
+      success = true;
     }
-    
-    if (server === "voe") {
+
+    // Servidor VOE
+    else if (server === "voe") {
       const streamUrl = `/api/voe?id=${config.id}&ep=${config.ep}`;
+      if (!streamUrl) throw new Error("VOE: URL vacía");
+
       loadStreamDirect(streamUrl);
       await savePrecached(currentUrl, {
         url: currentUrl,
@@ -275,61 +319,78 @@ async function loadServerByIndex(index) {
         m3u8Content: null,
         timestamp: Date.now()
       });
-      return;
+
+      success = true;
     }
 
- if (server === "mega") {
-  const megaUrl = serverList[index].url || "";
+    // Servidor MEGA
+    else if (server === "mega") {
+      const megaUrl = serverList[index].url || "";
+      if (!megaUrl) throw new Error("MEGA: URL no encontrada");
 
-  if (hlsInstance) {
-    try {
-      hlsInstance.destroy();
-      if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
-    } catch {}
-    hlsInstance = null;
-    currentBlobUrl = null;
-  }
+      if (hlsInstance) {
+        try {
+          hlsInstance.destroy();
+          if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+        } catch {}
+        hlsInstance = null;
+        currentBlobUrl = null;
+      }
 
-  video.pause();
-  video.style.display = 'none';
+      video.pause();
+      video.style.display = 'none';
 
-  const existingIframe = document.getElementById('megaIframe');
-  if (existingIframe) existingIframe.remove();
+      const existingIframe = document.getElementById('megaIframe');
+      if (existingIframe) existingIframe.remove();
 
-  const iframe = document.createElement('iframe');
-  iframe.src = megaUrl.replace('/file/', '/embed/');
-  iframe.allowFullscreen = true;
-  iframe.id = 'megaIframe';
+      const iframe = document.createElement('iframe');
+      iframe.src = megaUrl.replace('/file/', '/embed/');
+      iframe.allowFullscreen = true;
+      iframe.id = 'megaIframe';
 
-  // Estilo con altura fija
-  iframe.style.width = '100%';
-  iframe.style.height = '200px';
-  iframe.style.border = 'none';
-  iframe.style.display = 'block';
-  iframe.style.borderRadius = '1rem'; // opcional para redondear
+      iframe.style.width = '100%';
+      iframe.style.height = '200px';
+      iframe.style.border = 'none';
+      iframe.style.display = 'block';
+      iframe.className = video.className;
+      iframe.style.borderRadius = '1rem';
 
-  video.parentElement.insertBefore(iframe, video.nextSibling);
+      video.parentElement.insertBefore(iframe, video.nextSibling);
 
-  loader.style.display = 'none';
-  return;
-}
+      loader.style.display = 'none';
 
-    const res = await fetch(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=${server}`);
-    const streamUrl = (await res.text()).trim();
-    loadStreamDirect(streamUrl);
-    await savePrecached(currentUrl, {
-      url: currentUrl,
-      server,
-      stream: streamUrl,
-      m3u8Content: null,
-      timestamp: Date.now()
-    });
+      success = true;
+    }
+
+    // Cualquier otro servidor genérico
+    else {
+      const res = await fetch(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=${server}`);
+      if (!res.ok) throw new Error(`${server}: respuesta no OK`);
+      const streamUrl = (await res.text()).trim();
+      if (!streamUrl) throw new Error(`${server}: stream URL vacía`);
+
+      loadStreamDirect(streamUrl);
+      await savePrecached(currentUrl, {
+        url: currentUrl,
+        server,
+        stream: streamUrl,
+        m3u8Content: null,
+        timestamp: Date.now()
+      });
+
+      success = true;
+    }
 
   } catch (err) {
-    console.warn("Fallo servidor:", err);
+    console.warn(`Fallo servidor "${server}":`, err.message || err);
+  }
+
+  // Si no fue exitoso, intenta con el siguiente
+  if (!success) {
     loadServerByIndex(index + 1);
   }
 }
+
 
 // === Wake Lock ===
 async function requestWakeLock() {
@@ -345,52 +406,183 @@ async function requestWakeLock() {
 // === Iniciar ===
 async function start() {
   const ads = localStorage.getItem("ads") === "true";
+  console.log("🔍 Anuncios:", ads ? "Activados" : "Desactivados");
 
   try {
     const res = await fetch(`${API_BASE}/servers?id=${config.id}&ep=${config.ep}`);
-    serverList = await res.json();
+    let servers = await res.json();
 
-    if (serverList.length === 0) throw new Error("No hay servidores disponibles");
+    if (servers.length === 0) throw new Error("No hay servidores disponibles");
 
-    if (ads) {
-      const orden = ["mega", "yu", "sw", "voe"];
-      for (const nombre of orden) {
-        const i = serverList.findIndex(s =>
-          s.servidor.toLowerCase().includes(nombre)
-        );
-        if (i !== -1) {
-          await loadServerByIndex(i);
-          return;
-        }
+    // Normaliza nombres de servidor
+    serverList = servers.map(s => ({
+      ...s,
+      servidor: s.servidor.toLowerCase(),
+    }));
+
+    // Contenedor botones, creamos si no existe
+    let serverButtonsContainer = document.getElementById('serverButtons');
+    if (!serverButtonsContainer) {
+      serverButtonsContainer = document.createElement('div');
+      serverButtonsContainer.id = 'serverButtons';
+      serverButtonsContainer.style.display = 'flex';
+      serverButtonsContainer.style.gap = '10px';
+      serverButtonsContainer.style.flexWrap = 'wrap';
+      serverButtonsContainer.style.justifyContent = 'center';
+      serverButtonsContainer.style.margin = '1rem 0';
+      video.parentElement.insertBefore(serverButtonsContainer, video);
+    }
+
+    function limpiarIframeYVideo() {
+      const existingIframe = document.getElementById('adsIframe');
+      if (existingIframe) existingIframe.remove();
+
+      video.pause();
+      video.style.display = 'none';
+    }
+
+    function cargarServidor(server) {
+      limpiarIframeYVideo();
+
+      let url = server.url;
+      if (server.servidor === 'mega') {
+        url = url.replace('/file/', '/embed/');
       }
 
-      // Si ninguno está en orden de preferencia, cargar primero como fallback
-      await loadServerByIndex(0);
-      return;
+      const iframe = document.createElement('iframe');
+      iframe.src = url;
+      iframe.id = "adsIframe";
+      iframe.allowFullscreen = true;
+      iframe.style.width = '100%';
+      iframe.style.height = window.innerWidth > 500 ? '485px' : '185px';
+      iframe.style.border = 'none';
+      iframe.style.display = 'block';
+      iframe.style.borderRadius = '1rem';
+      iframe.style.opacity = 1;
+
+      video.parentElement.insertBefore(iframe, video.nextSibling);
+      loader.style.display = 'none';
+
+      // Actualiza estilos de botones para activo/inactivo
+      document.querySelectorAll('#serverButtons button').forEach(btn => {
+        if (btn.dataset.servidor === server.servidor) {
+          btn.classList.add('active');
+          // Estilo verde para activo
+          btn.style.background = 'linear-gradient(135deg, #4ade80, #22c55e)';
+          btn.style.boxShadow = '0 6px 14px rgba(34, 197, 94, 0.6)';
+        } else {
+          btn.classList.remove('active');
+          // Estilo azul para inactivo
+          btn.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+          btn.style.boxShadow = '0 6px 10px rgba(37, 99, 235, 0.4)';
+        }
+      });
     }
 
-    // ⚡ Si no hay ads, comportamiento normal con caché
+    function crearBotones(servers) {
+      serverButtonsContainer.innerHTML = '';
+
+      servers.forEach(server => {
+        const btn = document.createElement('button');
+        btn.textContent = server.servidor;
+        btn.dataset.servidor = server.servidor;
+
+        // Estilos base (inactivo - azul)
+        btn.style.cursor = 'pointer';
+        btn.style.padding = '10px 18px';
+        btn.style.borderRadius = '12px';
+        btn.style.border = 'none';
+        btn.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+        btn.style.color = 'white';
+        btn.style.fontWeight = '600';
+        btn.style.fontFamily = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
+        btn.style.boxShadow = '0 6px 10px rgba(37, 99, 235, 0.4)';
+        btn.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
+        btn.style.minWidth = '90px';
+        btn.style.textTransform = 'capitalize';
+
+        btn.onmouseenter = () => {
+          btn.style.transform = 'scale(1.08)';
+          btn.style.boxShadow = btn.classList.contains('active')
+            ? '0 10px 20px rgba(34, 197, 94, 0.8)'
+            : '0 10px 18px rgba(37, 99, 235, 0.7)';
+        };
+        btn.onmouseleave = () => {
+          btn.style.transform = 'scale(1)';
+          btn.style.boxShadow = btn.classList.contains('active')
+            ? '0 6px 14px rgba(34, 197, 94, 0.6)'
+            : '0 6px 10px rgba(37, 99, 235, 0.4)';
+        };
+        btn.onmousedown = () => {
+          btn.style.transform = 'scale(0.96)';
+          btn.style.boxShadow = btn.classList.contains('active')
+            ? '0 4px 8px rgba(34, 197, 94, 0.5)'
+            : '0 4px 6px rgba(37, 99, 235, 0.5)';
+        };
+        btn.onmouseup = () => {
+          btn.style.transform = 'scale(1.08)';
+          btn.style.boxShadow = btn.classList.contains('active')
+            ? '0 10px 20px rgba(34, 197, 94, 0.8)'
+            : '0 10px 18px rgba(37, 99, 235, 0.7)';
+        };
+
+        btn.onclick = () => cargarServidor(server);
+
+        serverButtonsContainer.appendChild(btn);
+      });
+    }
+
+    if (ads) {
+      // Orden para priorizar servidores al cargar el primero
+      const orden = ["yu", "mega", "sw", "voe"];
+
+      // Ordena serverList según prioridad
+      serverList.sort((a, b) => {
+        const ia = orden.indexOf(a.servidor);
+        const ib = orden.indexOf(b.servidor);
+        if (ia === -1 && ib === -1) return 0;
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      });
+
+      crearBotones(serverList);
+
+      const firstServer = serverList.find(s =>
+        orden.includes(s.servidor) || orden.some(name => s.servidor.includes(name))
+      ) || serverList[0];
+
+      if (firstServer) {
+        cargarServidor(firstServer);
+      } else {
+        loader.textContent = "No se encontró ningún servidor disponible";
+      }
+
+      return; // Fin ads
+    }
+
+    // Modo normal sin ads
     const cached = await loadPrecached(currentUrl);
     if (cached && cached.url === currentUrl) {
-      console.log("Usando cache:", cached);
-      loadStreamDirect(cached.stream, cached.m3u8Content || null);
+      console.log("✅ Usando caché:", cached);
+      await loadStreamDirect(cached.stream, cached.m3u8Content || null);
       return;
     }
 
+    // Mueve MEGA al final de la lista
     serverList.sort((a, b) => {
-      if (a.servidor.toLowerCase() === 'mega.nz') return -1;
-      if (b.servidor.toLowerCase() === 'mega.nz') return 1;
+      if (a.servidor === 'mega' || a.servidor === 'mega.nz') return 1;
+      if (b.servidor === 'mega' || b.servidor === 'mega.nz') return -1;
       return 0;
     });
 
     await loadServerByIndex(0);
 
   } catch (err) {
-    loader.textContent = 'Error al cargar servidores';
+    loader.textContent = '❌ Error al cargar servidores';
     video.style.opacity = 0;
-    console.error(err);
+    console.error("🚨 start() error:", err);
   }
 }
-
 // === Iniciar ===
 start();

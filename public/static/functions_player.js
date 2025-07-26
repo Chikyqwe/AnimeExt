@@ -27,6 +27,8 @@
       }
 
       document.getElementById("anime-title").innerText = data.anime_title;
+      // titulo de la pagina
+      document.title = `${data.anime_title}`;
 
       document.getElementById("config").textContent = JSON.stringify({
         id: id,

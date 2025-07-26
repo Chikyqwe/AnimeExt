@@ -20,18 +20,14 @@
     <div class="dot"></div>
     <div class="dot"></div>
   </div>
+
   <!-- Modal de Política de Privacidad -->
   <div id="policyOverlay" class="policy-overlay d-none">
     <div class="policy-modal">
       <div class="policy-header">
         <h5 class="m-0">Política de Privacidad</h5>
       </div>
-      <iframe
-        id="policyIframe"
-        class="policy-iframe"
-        loading="lazy"
-        title="Política de privacidad"
-      ></iframe>
+      <iframe id="policyIframe" class="policy-iframe" loading="lazy" title="Política de privacidad"></iframe>
       <div class="policy-footer text-end">
         <button id="policyAcceptBtn" class="btn btn-success fw-semibold px-4">Aceptar</button>
       </div>
@@ -39,64 +35,20 @@
   </div>
 
   <div class="topbar d-flex align-items-center">
-    <svg
-      viewBox="0 0 300 120"
-      class="logo-svg"
-      xmlns="http://www.w3.org/2000/svg"
-      preserveAspectRatio="xMidYMid meet"
-    >
-      <!-- Texto principal -->
+    <svg viewBox="0 0 300 120" class="logo-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
       <text x="10" y="60" font-family="Alice, serif" font-size="36" font-weight="bold">
         <tspan class="main-text">Anime </tspan>
         <tspan class="ext-text">EXT</tspan>
       </text>
-
-      <!-- Flecha vertical tipo > justo pegada al texto -->
-      <path
-        d="M220,30 L230,60 L220,90"
-        stroke="#3C873A"
-        stroke-width="3"
-        fill="none"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-
-      <!-- Texto japonés centrado debajo -->
-      <text
-        x="100"
-        y="90"
-        text-anchor="middle"
-        font-family="sans-serif"
-        font-size="14"
-        class="subtext"
-      >
-        アニメが好きな私たち
-      </text>
+      <path d="M220,30 L230,60 L220,90" stroke="#3C873A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="100" y="90" text-anchor="middle" font-family="sans-serif" font-size="14" class="subtext">アニメが好きな私たち</text>
     </svg>
 
-    <form
-      class="search-form d-flex ms-auto align-items-center"
-      role="search"
-      onsubmit="searchAnime(event)"
-    >
-      <!-- Botón solo visible en móvil -->
+    <form class="search-form d-flex ms-auto align-items-center" role="search" onsubmit="searchAnime(event)">
       <button type="button" id="search-toggle-btn" class="btn btn-outline-light d-md-none">
         <i class="fa fa-search"></i>
       </button>
-
-      <!-- Campo y botón visibles solo en pantallas medianas o mayores -->
-      <input
-        id="searchInput"
-        autocomplete="off"
-        autocorrect="off"
-        autocapitalize="off"
-        spellcheck="false"
-        class="form-control me-2 d-none d-md-block"
-        type="search"
-        placeholder="Buscar anime..."
-        aria-label="Buscar"
-      />
-
+      <input id="searchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="form-control me-2 d-none d-md-block" type="search" placeholder="Buscar anime..." aria-label="Buscar" />
       <button class="btn btn-outline-light d-none d-md-block" type="submit">
         <i class="fa fa-search"></i>
       </button>
@@ -104,49 +56,61 @@
     </form>
   </div>
 
-  <h1
-    id="page-title"
-    class="text-center my-4 text-secondary fw-bold"
-    style="font-family: 'Delius Swash Caps', cursive; font-size: 3.5rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.2);"
-  >
+  <h1 id="page-title" class="text-center my-4 text-secondary fw-bold" style="font-family: 'Delius Swash Caps', cursive; font-size: 3.5rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.2);">
     Anime Directory
   </h1>
 
-  <!-- Contenedor donde se muestran las tarjetas o el formulario -->
   <div class="main" id="main-content">
     <div class="card-container" id="card-container"></div>
   </div>
 
   <div class="bottom-bar">
+    <button class="bottom-btn" onclick="abrirMenuOpciones()">
+      <i class="fa fa-bars"></i>
+    </button>
+    <div id="pagination-controls" class="pagination-controls"></div>
     <button class="bottom-btn" onclick="mostrarFavoritosEnModal()">
       <i class="fa fa-heart"></i>
     </button>
-
-    <div id="pagination-controls" class="pagination-controls"></div>
-
-    <button class="bottom-btn" onclick="toggleTheme()">
-      <i class="fa fa-moon" id="bottomThemeIcon"></i>
-    </button>
   </div>
+
+<div id="menuOverlay" class="policy-overlay d-none">
+  <div class="policy-modal">
+    <div class="policy-header">
+      <i class="fa fa-gear"></i>
+      <button onclick="cerrarMenuOpciones()" style="background:none;border:none;color:#ccc;font-size:1.2rem;">
+        <i class="fa fa-xmark"></i>
+      </button>
+    </div>
+    <div class="menu-grid">
+      <div class="menu-circle" onclick="toggleTheme()">
+        <i class="fa fa-moon"></i>
+        <div class="menu-text">Tema</div>
+      </div>
+      <div class="menu-circle" onclick="verAds()">
+        <i class="fa fa-tv"></i>
+        <div class="menu-text">Anuncios</div>
+      </div>
+      <div class="menu-circle" onclick="verPolitica()">
+        <i class="fa fa-scale-balanced"></i>
+        <div class="menu-text">Privacidad</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
   <!-- Modal -->
   <div class="modal fade" id="animeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header">
-          <button
-            type="button"
-            class="btn-close btn-close-black"
-            data-bs-dismiss="modal"
-            aria-label="Cerrar"
-            id="modalCloseBtn"
-          ></button>
+          <button type="button" class="btn-close btn-close-black" data-bs-dismiss="modal" aria-label="Cerrar" id="modalCloseBtn"></button>
         </div>
         <div class="modal-body">
           <div class="modal-left">
             <img id="modalImage" class="modal-img" src="" alt="Anime Image" />
-            <!-- Botón descargar eliminado -->
-            <!-- <button id="downloadImageBtn" class="download-btn">Descargar imagen</button> -->
           </div>
           <div class="modal-info">
             <h2 id="modalTitle" class="modal-title"></h2>
@@ -192,7 +156,21 @@
       }
     }
 
-    // Ejecuta al cargar la página
+function abrirMenuOpciones() {
+  const overlay = document.getElementById('menuOverlay');
+  overlay.classList.remove('d-none');
+  setTimeout(() => {
+    overlay.classList.add('show');
+  }, 10); // pequeño retraso para permitir la transición
+}
+
+function cerrarMenuOpciones() {const overlay = document.getElementById('menuOverlay');overlay.classList.remove('show');setTimeout(() => { overlay.classList.add('d-none');}, 300); // coincide con el tiempo de transición en CSS
+}
+
+
+    function verPolitica() {cerrarMenuOpciones();initPolicyModal();}
+    function verAds(){cerrarMenuOpciones();const overlay = document.getElementById('adsOverlay');if (overlay) overlay.classList.remove('d-none');}
+
     document.addEventListener('DOMContentLoaded', adaptarBotonCerrarTema);
   </script>
 

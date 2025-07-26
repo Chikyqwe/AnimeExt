@@ -10,6 +10,19 @@ const FLV_MAX_PAGES = 173;
 const TIO_TOTAL_PAGES = 209;
 const CONCURRENT_REQUESTS = 150;
 
+const erroresReportados = [];
+
+function registrarError(origen, contexto, mensaje, url = null) {
+  const error = {
+    origen,
+    contexto,
+    mensaje,
+    url,
+    timestamp: new Date().toISOString()
+  };
+  erroresReportados.push(error);
+}
+
 function eliminarArchivo(filePath, log = console.log) {
   const fullPath = path.resolve(filePath);
   try {
@@ -35,13 +48,11 @@ function normalizarTitulo(titulo) {
 function combinarJSONPorTitulo(datosTio, datosFlv, outputPath, log = console.log) {
   const mapa = new Map();
 
-  // Primero agregamos animes de AnimeFLV (más preferidos)
   for (const anime of datosFlv) {
     const clave = normalizarTitulo(anime.title);
     mapa.set(clave, anime);
   }
 
-  // Luego agregamos animes de TioAnime solo si no existen en el mapa
   for (const anime of datosTio) {
     const clave = normalizarTitulo(anime.title);
     if (!mapa.has(clave)) {
@@ -50,8 +61,6 @@ function combinarJSONPorTitulo(datosTio, datosFlv, outputPath, log = console.log
   }
 
   const combinado = [...mapa.values()];
-
-  // Asignar IDs secuenciales empezando en 1
   combinado.forEach((anime, index) => {
     anime.id = index + 1;
   });
@@ -62,8 +71,8 @@ function combinarJSONPorTitulo(datosTio, datosFlv, outputPath, log = console.log
 }
 
 async function extraerTioanimesDePagina(pagina, log = console.log) {
+  const url = `${TIO_BASE_URL}/directorio?p=${pagina}`;
   try {
-    const url = `${TIO_BASE_URL}/directorio?p=${pagina}`;
     log(`[Tio][Página ${pagina}] Descargando...`);
     const resp = await axios.get(url, { timeout: 10000 });
     const $ = cheerio.load(resp.data);
@@ -82,13 +91,14 @@ async function extraerTioanimesDePagina(pagina, log = console.log) {
     return animes;
   } catch (error) {
     log(`[Tio][Página ${pagina}] Error: ${error.message}`);
+    registrarError("TioAnime", `Página ${pagina}`, error.message, url);
     return [];
   }
 }
 
 async function procesarTioanime(anime, log = console.log) {
+  const url = `${TIO_BASE_URL}/anime/${anime.slug}`;
   try {
-    const url = `${TIO_BASE_URL}/anime/${anime.slug}`;
     const resp = await axios.get(url, { timeout: 10000 });
     const html = resp.data;
     const match = html.match(/var episodes\s*=\s*(\[[^\]]*\])/);
@@ -103,13 +113,14 @@ async function procesarTioanime(anime, log = console.log) {
     return { url, title, image, episodes_count: episodesCount };
   } catch (err) {
     log(`[Tio][${anime.titulo}] Error: ${err.message}`);
+    registrarError("TioAnime", `anime: ${anime.titulo}`, err.message, url);
     return null;
   }
 }
 
 async function extraerFlvDePagina(pagina, log = console.log) {
+  const url = `${FLV_BASE_URL}/browse?page=${pagina}`;
   try {
-    const url = `${FLV_BASE_URL}/browse?page=${pagina}`;
     log(`[FLV][Página ${pagina}] Descargando...`);
     const resp = await axios.get(url, { timeout: 10000 });
     const $ = cheerio.load(resp.data);
@@ -137,6 +148,7 @@ async function extraerFlvDePagina(pagina, log = console.log) {
     return animes;
   } catch (err) {
     log(`[FLV][Página ${pagina}] Error: ${err.message}`);
+    registrarError("FLV", `Página ${pagina}`, err.message, url);
     return [];
   }
 }
@@ -158,6 +170,7 @@ async function procesarAnimeflv(anime, log = console.log) {
     };
   } catch (err) {
     log(`[FLV][${anime.titulo}] Error al procesar: ${err.message}`);
+    registrarError("FLV", `anime: ${anime.titulo}`, err.message, anime.url);
     return null;
   }
 }
@@ -204,6 +217,7 @@ async function main({ log = console.log } = {}) {
   const outTio = path.join(__dirname, "anime_list_tio.json");
   const outFlv = path.join(__dirname, "anime_list_flv.json");
   const outFinal = path.join(__dirname, "jsons", "anime_list.json");
+  const outReporte = path.join(__dirname,"jsons","report_error.json");
 
   fs.writeFileSync(outTio, JSON.stringify(tio, null, 2), "utf-8");
   fs.writeFileSync(outFlv, JSON.stringify(flv, null, 2), "utf-8");
@@ -211,6 +225,13 @@ async function main({ log = console.log } = {}) {
   combinarJSONPorTitulo(tio, flv, outFinal, log);
   eliminarArchivo(outTio, log);
   eliminarArchivo(outFlv, log);
+
+  if (erroresReportados.length > 0) {
+    fs.writeFileSync(outReporte, JSON.stringify(erroresReportados, null, 2), "utf-8");
+    log(`⚠️ Errores registrados en: ${outReporte}`);
+  } else {
+    eliminarArchivo(outReporte, log);
+  }
 
   log("✅ Scraping y combinación completados.");
 }
