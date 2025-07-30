@@ -189,10 +189,12 @@ function toJsonFilename(animeTitle) {
 // ===== FUNCIONES DE CARGA Y PÁGINAS =====
 async function fetchJsonList() {
   try {
-    const resp = await fetch('/jsons/anime_list.json', { cache: 'no-store' });
+    const resp = await fetch('/anime/list', {method: 'POST',cache: 'no-store',});
     if (!resp.ok) return;
 
-    fullAnimeList = await resp.json();
+    const json = await resp.json();
+    fullAnimeList = Array.isArray(json.animes) ? json.animes : [];
+
 
     const totalPages = Math.ceil(fullAnimeList.length / 24);
     let page = getPageParam();
@@ -294,7 +296,7 @@ function createCard(data, animeTitle) {
   card.tabIndex = 0;
   card.setAttribute('role', 'button');
 
-  const proxyUrl = `/proxy-image?url=${encodeURIComponent(data.image)}`;
+  const proxyUrl = `/image?url=${encodeURIComponent(data.image)}`;
 
   card.innerHTML = `
     <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(animeTitle)}" class="anime-image" loading="all" />
@@ -357,7 +359,7 @@ document.getElementById('searchInput').addEventListener('input', () => {
 
   results.forEach(anime => {
     const item = document.createElement('li');
-    const proxyUrl = `/proxy-image?url=${encodeURIComponent(anime.image)}`;
+    const proxyUrl = `/image?url=${encodeURIComponent(anime.image)}`;
     item.innerHTML = `
       <img src="${proxyUrl}" alt="${anime.title}" />
       <span>${anime.title}</span>
@@ -390,7 +392,7 @@ async function openModal(data, animeTitle) {
   const modalTitle = document.getElementById('modalTitle');
   const episodesList = document.getElementById('episodes-list');
 
-  const proxyUrl = `/proxy-image?url=${encodeURIComponent(data.image)}`;
+  const proxyUrl = `/image?url=${encodeURIComponent(data.image)}`;
 
   modalImage.src = proxyUrl;
   modalTitle.textContent = cleanTitle(animeTitle);
@@ -598,7 +600,7 @@ async function mostrarFavoritosEnModal() {
       card.style.cursor = 'pointer';
       card.style.width = '150px';
 
-      const proxyUrl = `/proxy-image?url=${encodeURIComponent(anime.image)}`;
+      const proxyUrl = `/image?url=${encodeURIComponent(anime.image)}`;
 
       card.innerHTML = `
         <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(anime.title)}" class="anime-image" loading="lazy" style="width: 100%; border-radius: 4px;" />

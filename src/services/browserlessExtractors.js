@@ -5,6 +5,7 @@
   const puppeteer = require('puppeteer-core');
   const { firefox } = require('playwright-core');
   const { URL } = require('url');
+  const PQueue = require('p-queue').default;
   const {
     BROWSERLESS_ENDPOINT,
     BROWSERLESS_ENDPOINT_FIREFOX_PLAYWRIGHT
@@ -226,123 +227,7 @@
         .catch((e) => done(e));
     });
   }
-
   //──────────────────────────── 4. Voe extractor ──────────────────────────
-async function openVoePage(voeUrl) {
-  const label = `[Voe] Duración total ${Date.now()}`;
-  console.time(label);
-  console.log(`[Voe] Abriendo: ${voeUrl}`);
-
-  const browser = await getPlaywrightBrowser();
-  if (!browser) throw new Error('[Voe] No se pudo obtener el navegador.');
-
-  let context, page;
-
-  try {
-    context = await browser.newContext({ userAgent: UA_FIREFOX });
-    page = await context.newPage();
-
-    const loadPage = async () => {
-      if (page) await page.close().catch(() => {});
-      page = await context.newPage();
-      await page.goto(voeUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
-      console.log('[Voe] Página cargada.');
-    };
-
-    await loadPage();
-
-    let clickSuccess = false;
-    for (let i = 0; i < 5; i++) {
-      try {
-        await page.click('div.spin', { timeout: 2000 });
-        console.log('[Voe] Click en "div.spin" realizado.');
-        clickSuccess = true;
-        break;
-      } catch {
-        console.log(`[Voe] Intento ${i + 1}: No se pudo clicar "div.spin", esperando 1s...`);
-        await page.waitForTimeout(1000);
-      }
-    }
-
-    if (!clickSuccess) {
-      console.warn('[Voe] Reintentando después de recargar...');
-      await loadPage();
-      try {
-        await page.click('div.spin', { timeout: 3000 });
-        console.log('[Voe] Click en "div.spin" realizado tras recarga.');
-      } catch {
-        throw new Error('[Voe] No se pudo clicar "div.spin" tras recargar la página.');
-      }
-    }
-
-    console.log('[Voe] Esperando respuesta del .m3u8...');
-    const m3u8Response = await page.waitForResponse(
-      r => r.url().includes('index-v1-a1.m3u8'),
-      { timeout: 15000 }
-    );
-
-    const m3u8Url = m3u8Response.url();
-    const m3u8Text = await m3u8Response.text();
-    const baseUrl = new URL('.', m3u8Url).href;
-
-    const allSegments = m3u8Text
-      .split('\n')
-      .filter(line => line.trim().match(/\.ts(\?|$)/))
-      .map(line => line.trim());
-
-    console.log(`[Voe] Se encontraron ${allSegments.length} segmentos .ts.`);
-
-    const absoluteUrls = allSegments.map(path =>
-      path.startsWith('http') ? path : new URL(path, baseUrl).href
-    );
-
-    console.log('[Voe] Descargando todos los segmentos...');
-
-    const segmentBuffers = [];
-    const PQueue = require('p-queue').default || require('p-queue');
-    const queue = new PQueue({ concurrency: 10 });
-
-    const tasks = absoluteUrls.map(url =>
-      queue.add(async () => {
-        const res = await page.request.get(url);
-        if (!res.ok()) {
-          throw new Error(`[Voe] Error ${res.status()} al descargar: ${url}`);
-        }
-        const buf = await res.body();
-        segmentBuffers.push({ url, buffer: buf });
-      })
-    );
-
-    await Promise.all(tasks); // Espera que todas las descargas terminen
-
-    // Ordenar segmentos
-    segmentBuffers.sort((a, b) => {
-      const numA = parseInt(a.url.match(/seg-(\d+)-/)?.[1] || '0', 10);
-      const numB = parseInt(b.url.match(/seg-(\d+)-/)?.[1] || '0', 10);
-      return numA - numB;
-    });
-
-    const allBuffer = Buffer.concat(segmentBuffers.map(seg => seg.buffer));
-    console.log('[Voe] Descarga y ensamblado completo.');
-
-    await context.close().catch(e => console.warn('[Voe] Error al cerrar contexto:', e));
-    console.timeEnd(label);
-
-    return allBuffer;
-
-  } catch (err) {
-    console.error('[Voe] Error en openVoePage:', err);
-    if (context) {
-      try {
-        await context.close();
-      } catch (e) {
-        console.warn('[Voe] Error al cerrar contexto en catch:', e.message || e);
-      }
-    }
-    console.timeEnd(label);
-    throw err;
-  }
-}
 
   function pass(){
     // fucnion para pasar osea vacio
@@ -355,7 +240,6 @@ async function openVoePage(voeUrl) {
     streamwish: extractFromSW,
     sw: extractFromSW,
     swiftplayers: extractFromSW,
-    voe:pass,
     "mega.nz": pass,
     mega:pass,
   };
@@ -375,5 +259,4 @@ async function openVoePage(voeUrl) {
   module.exports = {
     extractAllVideoLinks,
     getExtractor,
-    openVoePage,
   };

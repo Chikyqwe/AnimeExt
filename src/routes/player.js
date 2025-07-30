@@ -1,30 +1,7 @@
 const express = require('express');
-const { readAnimeList } = require('../services/jsonService');
+const { readAnimeList,buildEpisodeUrl } = require('../services/jsonService');
 
 const router = express.Router();
-
-// Helper para construir la URL del episodio
-function buildEpisodeUrl(anime, ep) {
-  if (!anime?.url || !ep) return null;
-
-  let baseUrl = '';
-  let slug = '';
-
-  if (anime.url.includes('animeflv')) {
-    baseUrl = 'https://www3.animeflv.net';
-    slug = anime.slug;
-  } else if (anime.url.includes('tioanime')) {
-    baseUrl = 'https://tioanime.com';
-    const parts = anime.url.split('/');
-    slug = parts[parts.length - 1];
-  } else {
-    return null;
-  }
-
-  if (!slug) return null;
-
-  return `${baseUrl}/ver/${slug}-${ep}`;
-}
 
 router.get('/api/player', (req, res) => {
   const url_original = req.query.url;

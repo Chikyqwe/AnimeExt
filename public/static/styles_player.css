@@ -1,4 +1,4 @@
-body{background:#121212;color:#e0e0e0;font-family:'Inter',sans-serif;margin:0;padding:80px 20px 40px}body.light-theme{background:#f9f9fb;color:#1a1a1a}body,.video-wrapper,.loader,.episode-list{transition:background-color .6s ease,color .6s ease}
+body{background:#333;color:#e0e0e0;font-family:'Inter',sans-serif;margin:0;padding:80px 20px 40px}body.light-theme{background:#f9f9fb;color:#1a1a1a}body,.video-wrapper,.loader,.episode-list{transition:background-color .6s ease,color .6s ease}
 .container-player{max-width:960px;margin:auto}
 h1{text-align:center;font-weight:700;font-size:1.8rem;margin-bottom:30px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.5)}body.light-theme h1{color:#111}
 .video-wrapper{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.7);background:#000}body.light-theme .video-wrapper{box-shadow:0 8px 18px rgba(0,0,0,.1)}

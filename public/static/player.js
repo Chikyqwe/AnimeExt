@@ -119,7 +119,7 @@ async function precacheNextEpisode(slug, triedServers = []) {
 
     try {
       if (server === "sw") {
-        const resM3u8 = await fetch(`/api/m3u8?id=${config.id}&ep=${parseInt(config.ep) + 1}`);
+        const resM3u8 = await fetch(`/api?id=${config.id}&ep=${parseInt(config.ep) + 1}&server=sw`);
         if (!resM3u8.ok) throw new Error(`SW error: ${resM3u8.status}`);
         m3u8Content = await resM3u8.text();
         if (!m3u8Content || m3u8Content.includes("error")) throw new Error("M3U8 vacío o inválido");
@@ -255,20 +255,54 @@ async function loadStreamDirect(url, m3u8Content = null) {
 
 
 // === Cargar servidor por índice ===
-async function loadServerByIndex(index) {
-  if (index >= serverList.length) return;
+let currentMirror = 1;
 
-  highlightActiveButton(index);
+async function loadServerByIndex(index) {
+  function buildApiUrl(baseUrl) {
+    return currentMirror === 2 ? `${baseUrl}&mirror=2` : baseUrl;
+  }
+
+  if (index >= serverList.length) {
+    if (currentMirror === 1) {
+      currentMirror = 2;
+
+      try {
+        const res = await fetch(`/api/servers?id=${config.id}&ep=${config.ep}&mirror=2`);
+        if (!res.ok) throw new Error('No se pudo cargar el mirror 2');
+
+        const newList = await res.json();
+        if (!Array.isArray(newList) || newList.length === 0) {
+          throw new Error('Mirror 2 sin servidores');
+        }
+
+        serverList = newList;
+        console.log(`[Player] Cambiado a mirror=2 con ${serverList.length} servidores`);
+        loadServerByIndex(0);
+        return;
+
+      } catch (err) {
+        console.error('[Player] Falló la carga del mirror 2:', err.message);
+        loader.style.display = 'none';
+        return;
+      }
+    }
+
+    console.error('Todos los mirrors fallaron');
+    loader.style.display = 'none';
+    return;
+  }
+
   const server = serverList[index].servidor.toLowerCase();
+  highlightActiveButton(index);
   loader.style.display = 'flex';
   video.style.opacity = 0;
 
   let success = false;
 
   try {
-    // Servidor SW
+    // --- SW ---
     if (server === "sw") {
-      const res = await fetch(`/api/m3u8?id=${config.id}&ep=${config.ep}`);
+      const res = await fetch(buildApiUrl(`/api?id=${config.id}&ep=${config.ep}&server=sw`));
       if (!res.ok) throw new Error("SW: respuesta no OK");
       const m3u8Text = await res.text();
       if (!m3u8Text || m3u8Text.includes("error")) throw new Error("SW: m3u8 inválido");
@@ -285,11 +319,10 @@ async function loadServerByIndex(index) {
       success = true;
     }
 
-    // Servidor YU
+    // --- YOURUPLOAD ---
     else if (server === "yu" || server === "yourupload") {
-      const res = await fetch(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=yu`);
+      const res = await fetch(buildApiUrl(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=yu`));
       if (!res.ok) throw new Error("YU: respuesta no OK");
-
       const json = await res.json();
       if (!json.url) throw new Error("YU: URL vacía");
 
@@ -306,11 +339,9 @@ async function loadServerByIndex(index) {
       success = true;
     }
 
-    // Servidor VOE
+    // --- VOE ---
     else if (server === "voe") {
-      const streamUrl = `/api/voe?id=${config.id}&ep=${config.ep}`;
-      if (!streamUrl) throw new Error("VOE: URL vacía");
-
+      const streamUrl = buildApiUrl(`/api?id=${config.id}&ep=${config.ep}&server=voe`);
       loadStreamDirect(streamUrl);
       await savePrecached(currentUrl, {
         url: currentUrl,
@@ -323,7 +354,7 @@ async function loadServerByIndex(index) {
       success = true;
     }
 
-    // Servidor MEGA
+    // --- MEGA ---
     else if (server === "mega") {
       const megaUrl = serverList[index].url || "";
       if (!megaUrl) throw new Error("MEGA: URL no encontrada");
@@ -356,15 +387,14 @@ async function loadServerByIndex(index) {
       iframe.style.borderRadius = '1rem';
 
       video.parentElement.insertBefore(iframe, video.nextSibling);
-
       loader.style.display = 'none';
 
       success = true;
     }
 
-    // Cualquier otro servidor genérico
+    // --- CUALQUIER OTRO ---
     else {
-      const res = await fetch(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=${server}`);
+      const res = await fetch(buildApiUrl(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=${server}`));
       if (!res.ok) throw new Error(`${server}: respuesta no OK`);
       const streamUrl = (await res.text()).trim();
       if (!streamUrl) throw new Error(`${server}: stream URL vacía`);
@@ -385,11 +415,12 @@ async function loadServerByIndex(index) {
     console.warn(`Fallo servidor "${server}":`, err.message || err);
   }
 
-  // Si no fue exitoso, intenta con el siguiente
   if (!success) {
     loadServerByIndex(index + 1);
   }
 }
+
+
 
 
 // === Wake Lock ===

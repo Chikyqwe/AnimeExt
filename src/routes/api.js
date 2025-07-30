@@ -1,120 +1,188 @@
-const { extractAllVideoLinks, getExtractor, openVoePage } = require('../services/browserlessExtractors');
-const { getJsonFiles, getJSONPath, getAnimeById, buildEpisodeUrl } = require('../services/jsonService');
-const { proxyImage, streamVideo, downloadVideo } = require('../utils/helpers');
-const { parseMegaUrl, verificarArchivoMega } = require('../utils/CheckMega');
-const apiQueue = require('../services/queueService');
-const ffmpegPath = require('ffmpeg-static');
-const { spawn } = require('child_process');
-const { PassThrough } = require('stream');
 const express = require('express');
 const router = express.Router();
+const { spawn } = require('child_process');
+const { PassThrough } = require('stream');
+const ffmpegPath = require('ffmpeg-static');
 
-// === JSON LIST ===
-router.get('/json-list', (req, res) => {
-  try {
-    const files = getJsonFiles();
-    res.json(files);
-  } catch (err) {
-    res.status(500).send('Error al leer directorio de JSONs');
+const {
+  extractAllVideoLinks,
+  getExtractor
+} = require('../services/browserlessExtractors');
+
+const {
+  getJSONPath,
+  getAnimeById,
+  buildEpisodeUrl
+} = require('../services/jsonService');
+
+const {
+  proxyImage,
+  streamVideo,
+  downloadVideo,
+  validateVideoUrl
+} = require('../utils/helpers');
+
+const {
+  parseMegaUrl,
+  verificarArchivoMega
+} = require('../utils/CheckMega');
+
+const apiQueue = require('../services/queueService');
+
+// --- Helpers ---
+
+/**
+ * Normaliza el nombre del servidor para facilitar comparaciones
+ * @param {string} name 
+ * @returns {string}
+ */
+function normalizeServerName(name) {
+  if (!name) return '';
+  const n = name.toLowerCase();
+  if (['yourupload', 'your-up', 'yourup', 'yu'].some(sub => n.includes(sub))) return 'yu';
+  return n;
+}
+
+/**
+ * Valida y construye URL a partir de parámetros id y ep, devuelve error si no válido
+ */
+function getPageUrlOrError({ url, id, ep, mirror }) {
+  if (url && typeof url === 'string') return url;
+
+  if (!id) return { error: 'Falta parámetro url o id' };
+
+  const anime = getAnimeById(id);
+  if (!anime) return { error: `No se encontró anime con id=${id}` };
+
+  if (!ep) return { error: 'Parámetro "ep" obligatorio' };
+
+  const pageUrl = buildEpisodeUrl(anime, ep, mirror ? parseInt(mirror) : undefined);
+  if (!pageUrl) return { error: 'No se pudo construir la URL del episodio' };
+
+  return pageUrl;
+}
+
+/**
+ * Filtra y valida servidores, incluye verificación de enlaces Mega
+ * @param {Array} videos
+ * @returns {Promise<Array>}
+ */
+async function filterValidVideos(videos) {
+  const valid = [];
+
+  for (const video of videos) {
+    const servidor = normalizeServerName(video.servidor);
+    const extractor = getExtractor(servidor);
+    if (!extractor) continue;
+
+    const enriched = { ...video, servidor };
+
+    if (typeof enriched.url === 'string' && enriched.url.includes('mega.nz')) {
+      try {
+        const { id, key } = parseMegaUrl(enriched.url);
+        const resultado = await verificarArchivoMega(id, key);
+        if (resultado.disponible) {
+          enriched.url = `https://mega.nz/embed/${id}#${key}`;
+          valid.push(enriched);
+        }
+      } catch {
+        // Ignorar URL Mega inválida
+      }
+    } else {
+      valid.push(enriched);
+    }
   }
+
+  return valid;
+}
+
+// --- Routes ---
+
+// Listado de animes JSON
+router.post('/anime/list', (req, res) => {
+  res.sendFile(getJSONPath('anime_list.json'));
 });
 
-router.get('/jsons/:filename', (req, res) => {
-  const filename = req.params.filename;
-  res.sendFile(getJSONPath(filename));
-});
-
-// === IMAGE PROXY ===
-router.get('/proxy-image', async (req, res) => {
+// Proxy para imágenes
+router.get('/image', async (req, res) => {
   const { url } = req.query;
   await proxyImage(url, res);
 });
 
-// === NORMALIZE SERVER NAME ===
-function normalizeServerName(name) {
-  if (!name) return '';
-  const n = name.toLowerCase();
-  if (n.includes('yourupload') || n.includes('your-up') || n.includes('yourup') || n.includes('yu')) return 'yu';
-  return n;
-}
-
-// === SERVERS ===
+// Obtener servidores disponibles para un episodio
 router.get('/api/servers', async (req, res) => {
-  let pageUrl = req.query.url;
-  const animeId = req.query.id;
+  const { url: pageUrlParam, id: animeId, ep, mirror = 1 } = req.query;
+  let pageUrl = pageUrlParam;
+  let source = 'UNKNOWN';
 
   if (!pageUrl && animeId) {
-    const ep = req.query.ep;
     const anime = getAnimeById(animeId);
-    if (!anime || !anime.url) {
+    if (!anime || !anime.unit_id) {
       return res.status(404).json({ error: `No se encontró anime con id=${animeId}` });
     }
     if (!ep) {
       return res.status(400).json({ error: 'Parámetro "ep" obligatorio' });
     }
 
-    pageUrl = buildEpisodeUrl(anime, ep);
+    pageUrl = buildEpisodeUrl(anime, ep, parseInt(mirror));
     if (!pageUrl) {
       return res.status(400).json({ error: 'No se pudo construir la URL del episodio' });
+    }
+
+    // Detectar origen si está disponible desde el objeto anime
+    if (anime.source) {
+      source = anime.source;
     }
   }
 
   if (!pageUrl || typeof pageUrl !== 'string') {
-    return res.status(400).json({ error: 'Falta parámetro url válido' });
+    return res.status(400).json({ error: 'Falta parámetro "url" válido' });
+  }
+
+  // Detectar fuente si no se obtuvo del objeto anime
+  if (source === 'UNKNOWN') {
+    if (pageUrl.includes('tioanime')) {
+      source = 'TIO';
+    } else if (pageUrl.includes('animeflv')) {
+      source = 'FLV';
+    }
   }
 
   try {
     const videos = await extractAllVideoLinks(pageUrl);
+    const valid = await filterValidVideos(videos);
 
-    const rawValid = videos
-      .map(v => ({ ...v, servidor: normalizeServerName(v.servidor) }))
-      .filter(v => getExtractor(v.servidor));
+    const enriched = valid.map(video => ({
+      ...video,
+      source
+    }));
 
-    const valid = [];
-
-    for (const video of rawValid) {
-      if (typeof video.url === 'string' && video.url.includes('mega.nz')) {
-        try {
-          const { id, key } = parseMegaUrl(video.url);
-          const resultado = await verificarArchivoMega(id, key);
-
-          if (resultado.disponible) {
-            video.url = `https://mega.nz/embed/${id}#${key}`;
-            valid.push(video); // ✅ Solo lo agregamos si está disponible
-          }
-          // ❌ No se agrega si no está disponible
-        } catch (e) {
-          // ❌ No se agrega si falla el parseo
-        }
-      } else {
-        // Otros servidores se agregan sin verificación
-        valid.push(video);
-      }
-    }
-
-    res.json(valid);
+    res.json(enriched);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: 'Error al extraer videos: ' + e.message });
   }
 });
 
-// === MAIN API ===
+
+// API principal para obtener enlace de video según servidor
 router.get('/api', async (req, res) => {
-  let pageUrl = req.query.url;
-  const animeId = req.query.id;
+  const animeId = parseInt(req.query.id);
+  const ep = parseInt(req.query.ep);
+  const mirror = parseInt(req.query.mirror) || 1; // <-- ✅ aquí lo convertimos
   const serverRequested = normalizeServerName(req.query.server);
+  let pageUrl = req.query.url;
 
   if (!pageUrl && animeId) {
-    const ep = req.query.ep;
     const anime = getAnimeById(animeId);
-    if (!anime || !anime.url) {
-      return res.status(404).json({ error: `No se encontró anime con id=${animeId}` });
+    if (!anime || !anime.unit_id) {
+      return res.status(404).json({ error: 'Anime no encontrado o sin unit_id' });
     }
     if (!ep) {
       return res.status(400).json({ error: 'Parámetro "ep" obligatorio' });
     }
 
-    pageUrl = buildEpisodeUrl(anime, ep);
+    pageUrl = buildEpisodeUrl(anime, ep, mirror);
+    console.log(pageUrl);
     if (!pageUrl) {
       return res.status(400).json({ error: 'No se pudo construir la URL del episodio' });
     }
@@ -125,161 +193,19 @@ router.get('/api', async (req, res) => {
       return { status: 400, message: 'URL no válida' };
     }
 
-    try {
-      const videos = await extractAllVideoLinks(pageUrl);
+    const videos = await extractAllVideoLinks(pageUrl);
+    const valid = videos
+      .map(v => ({ ...v, servidor: normalizeServerName(v.servidor) }))
+      .filter(v => getExtractor(v.servidor));
 
-      const valid = videos
-        .map(v => ({ ...v, servidor: normalizeServerName(v.servidor) }))
-        .filter(v => getExtractor(v.servidor));
-
-      if (!valid.length) {
-        return { status: 404, message: 'No hay servidores válidos' };
-      }
-
-      let selected = valid[0];
-      if (serverRequested) {
-        const found = valid.find(v => normalizeServerName(v.servidor) === serverRequested);
-        if (!found) {
-          return { status: 404, message: `Servidor '${serverRequested}' no soportado` };
-        }
-        selected = found;
-      }
-
-      const extractor = getExtractor(selected.servidor);
-      const result = await extractor(selected.url);
-
-      if (Array.isArray(result) && result[0]?.content) {
-        res.json({ count: result.length, files: result, firstUrl: result[0].url });
-      } else if (result?.url) {
-        res.json({ url: result.url });
-      } else {
-        throw new Error('Formato de extractor no reconocido');
-      }
-    } catch (e) {
-      return { status: 500, message: 'Error interno del servidor: ' + e.message };
-    }
-  }).then(queueResult => {
-    if (queueResult && queueResult.status) {
-      res.status(queueResult.status).send(queueResult.message);
-    }
-  }).catch(error => {
-    if (!res.headersSent) {
-      res.status(500).send('Error al procesar la solicitud de la cola: ' + error.message);
-    }
-  });
-});
-
-// === Voe ===
-router.get('/api/voe', async (req, res) => {
-  const animeId = parseInt(req.query.id);
-  const ep = parseInt(req.query.ep);
-
-  if (isNaN(animeId) || isNaN(ep)) {
-    return res.status(400).json({ error: 'Parámetros inválidos' });
-  }
-
-  const anime = getAnimeById(animeId);
-  if (!anime || !anime.url) {
-    return res.status(404).json({ error: 'Anime no encontrado' });
-  }
-
-  try {
-    const pageUrl = buildEpisodeUrl(anime, ep);
-    const allLinks = await extractAllVideoLinks(pageUrl);
-
-    const voe = allLinks.find(v => v.servidor.toLowerCase().includes('voe'));
-    if (!voe) {
-      return res.status(404).json({ error: 'No se encontró enlace VOE' });
+    if (!valid.length) {
+      return { status: 404, message: 'No hay servidores válidos' };
     }
 
-    const buffer = await openVoePage(voe.url); // buffer con ts
-
-    if (!buffer) return res.status(204).end();
-
-    // Creamos un stream para enviar buffer a ffmpeg
-    const inputStream = new PassThrough();
-    inputStream.end(buffer);
-
-    res.setHeader('Content-Type', 'video/mp4');
-    res.setHeader('Content-Disposition', `inline; filename="anime-${animeId}-ep-${ep}.mp4"`);
-
-    // Args para ffmpeg para leer TS desde stdin y output MP4 a stdout
-    const ffmpegArgs = [
-      '-i', 'pipe:0',       // entrada por stdin
-      '-c:v', 'copy',       // copiar video sin recodificar (si compatible)
-      '-c:a', 'aac',        // audio compatible mp4
-      '-f', 'mp4',          // formato mp4
-      '-movflags', 'frag_keyframe+empty_moov', // para streaming progresivo
-      'pipe:1'              // salida por stdout
-    ];
-
-    const ffmpegProc = spawn(ffmpegPath, ffmpegArgs);
-
-    // Pipe input stream al stdin de ffmpeg
-    inputStream.pipe(ffmpegProc.stdin);
-
-    // Pipe salida de ffmpeg al response
-    ffmpegProc.stdout.pipe(res);
-
-    ffmpegProc.stderr.on('data', data => {
-      // Opcional: para debuguear ffmpeg
-      // console.error(`FFmpeg stderr: ${data}`);
-    });
-
-    ffmpegProc.on('error', err => {
-      console.error('[FFmpeg error]', err);
-      if (!res.headersSent) {
-        res.status(500).json({ error: 'Error en conversión de video' });
-      }
-    });
-
-    ffmpegProc.on('close', code => {
-      if (code !== 0) {
-        console.error(`[FFmpeg] proceso terminó con código ${code}`);
-      }
-      res.end();
-    });
-
-  } catch (err) {
-    console.error('[VOE Stream Error]', err);
-    res.status(500).json({ error: 'Error al procesar stream' });
-  }
-});
-
-// === M3U8 ===
-router.get('/api/m3u8', async (req, res) => {
-  let pageUrl = req.query.url;
-  const animeId = req.query.id;
-
-  if (!pageUrl && animeId) {
-    const ep = req.query.ep;
-    const anime = getAnimeById(animeId);
-    if (!anime || !anime.url) {
-      return res.status(404).send('#EXTM3U\n#EXT-X-ENDLIST\n');
-    }
-    if (!ep) {
-      return res.status(400).send('#EXTM3U\n#EXT-X-ENDLIST\n');
-    }
-
-    pageUrl = buildEpisodeUrl(anime, ep);
-    if (!pageUrl) {
-      return res.status(400).send('#EXTM3U\n#EXT-X-ENDLIST\n');
-    }
-  }
-
-  apiQueue.add(async () => {
-    if (!pageUrl || typeof pageUrl !== 'string') {
-      return { status: 400, message: '#EXTM3U\n#EXT-X-ENDLIST\n' };
-    }
-
-    try {
-      const videos = await extractAllVideoLinks(pageUrl);
-      const valid = videos.filter(v => getExtractor(v.servidor));
-      const swVideo = valid.find(v => v.servidor.toLowerCase() === 'sw' || v.servidor.toLowerCase().includes('swift'));
-
-      if (!swVideo) {
-        return { status: 404, message: '#EXTM3U\n#EXT-X-ENDLIST\n' };
-      }
+    // 🔁 --- M3U8 SWIFT ---
+    if (serverRequested === 'sw') {
+      const swVideo = valid.find(v => v.servidor === 'sw' || v.servidor.includes('swift'));
+      if (!swVideo) return { status: 404, message: '#EXTM3U\n#EXT-X-ENDLIST\n' };
 
       const extractor = getExtractor(swVideo.servidor);
       const swResult = await extractor(swVideo.url);
@@ -292,30 +218,66 @@ router.get('/api/m3u8', async (req, res) => {
 
       res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
       res.send(best.content);
-    } catch (e) {
-      return { status: 500, message: '#EXTM3U\n#EXT-X-ENDLIST\n' };
+      return;
     }
+
+    // 🎬 --- GENERAL ---
+    let selected = valid[0];
+    if (serverRequested) {
+      const found = valid.find(v => v.servidor === serverRequested);
+      if (!found) return { status: 404, message: `Servidor '${serverRequested}' no soportado` };
+      selected = found;
+    }
+
+    const extractor = getExtractor(selected.servidor);
+    const result = await extractor(selected.url);
+
+if (Array.isArray(result) && result[0]?.content) {
+  const validatedResults = await Promise.all(result.map(async (r) => ({
+    ...r,
+    isValid: await validateVideoUrl(r.url)
+  })));
+
+  const validFiles = validatedResults.filter(r => r.isValid);
+
+  if (!validFiles.length) {
+    return { status: 404, message: 'No se encontró ninguna URL de video válida' };
+  }
+
+  res.json({ count: validFiles.length, files: validFiles, firstUrl: validFiles[0].url });
+} else if (result?.url) {
+  const isValid = await validateVideoUrl(result.url);
+  if (!isValid) {
+    return { status: 404, message: 'La URL del video no es válida o está caída' };
+  }
+
+  res.json({ url: result.url });
+} else {
+  throw new Error('Formato de extractor no reconocido');
+}
+
   }).then(queueResult => {
-    if (queueResult && queueResult.status) {
+    if (queueResult && queueResult.status && !res.headersSent) {
       res.status(queueResult.status).send(queueResult.message);
     }
   }).catch(error => {
     if (!res.headersSent) {
-      res.status(500).send('#EXTM3U\n#EXT-X-ENDLIST\n');
+      res.status(500).send('Error al procesar la solicitud: ' + error.message);
     }
   });
 });
 
-// === STREAM & DOWNLOAD ===
+// Streaming video con formulario para cuando falta videoUrl
 router.get('/api/stream', (req, res) => {
   const videoUrl = req.query.videoUrl;
 
   if (!videoUrl) {
+    // Página HTML para introducir URL
     return res.send(`
       <!DOCTYPE html>
       <html lang="es">
       <head>
-        <meta charset="UTF-8">
+        <meta charset="UTF-8" />
         <title>Falta videoUrl</title>
         <style>
           body {
@@ -381,7 +343,6 @@ router.get('/api/stream', (req, res) => {
           <input type="text" id="videoUrl" placeholder="https://example.com/video.mp4" />
           <button onclick="redirectToStream()">Ver video</button>
         </div>
-
         <script>
           function redirectToStream() {
             const url = document.getElementById('videoUrl').value.trim();
@@ -400,24 +361,31 @@ router.get('/api/stream', (req, res) => {
   streamVideo(videoUrl, req, res);
 });
 
-
+// Descargar video
 router.get('/api/stream/download', (req, res) => {
   downloadVideo(req, res);
 });
 
-// === QUEUE STATUS ===
+// Estado de la cola de procesamiento
 router.get('/api/queue/status', (req, res) => {
-  const pendingCount = apiQueue.getPendingCount();
-  const currentTask = apiQueue.getCurrentTask();
+  try {
+    const pendingCount = apiQueue.getPendingCount();
+    const currentTask = apiQueue.getCurrentTask();
 
-  res.json({
-    pendingCount,
-    currentTask: currentTask ? {
-      name: currentTask.meta.name,
-      startedAt: currentTask.startedAt,
-      meta: currentTask.meta
-    } : null
-  });
+    res.json({
+      pendingCount,
+      currentTask: currentTask
+        ? {
+            name: currentTask.meta.name,
+            startedAt: currentTask.startedAt,
+            meta: currentTask.meta,
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error('Error obteniendo estado de la cola:', error);
+    res.status(500).json({ error: 'Error interno al obtener estado de la cola' });
+  }
 });
 
 module.exports = router;

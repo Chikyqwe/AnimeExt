@@ -34,8 +34,8 @@ async function verificarArchivoMega(id, key) {
 
 function parseMegaUrl(url) {
   const regexes = [
-    /mega\.nz\/(?:file|embed)\/([^#]+)#(.+)/,                      // Formato antiguo
-    /mega\.nz\/#!([a-zA-Z0-9\-_]+)!([a-zA-Z0-9\-_]+)/              // Formato nuevo
+    /mega\.nz\/(?:file|embed)\/([^#]+)#(.+)/,                      // Formato nuevo
+    /mega\.nz\/#!([a-zA-Z0-9\-_]+)!([a-zA-Z0-9\-_]+)/              // Formato antiguo
   ];
 
   for (const regex of regexes) {

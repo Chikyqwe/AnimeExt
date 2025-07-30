@@ -2,50 +2,51 @@ const fs = require('fs');
 const path = require('path');
 const { JSON_FOLDER, JSON_PATH_TIO } = require('../config');
 
-// Asegúrate de que la carpeta de JSONs existe
 if (!fs.existsSync(JSON_FOLDER)) {
   fs.mkdirSync(JSON_FOLDER, { recursive: true });
 }
 
-function readAnimeList() {
+// Lee el JSON completo (metadata + animes)
+function readRawJson() {
   try {
     if (!fs.existsSync(JSON_PATH_TIO)) {
-      console.warn(`[JSON SERVICE] El archivo no existe. Devolviendo lista vacía.`);
-      return [];
+      console.warn(`[JSON SERVICE] El archivo no existe. Devolviendo objeto vacío.`);
+      return { metadata: {}, animes: [] };
     }
     const data = fs.readFileSync(JSON_PATH_TIO, 'utf8');
     return JSON.parse(data);
   } catch (err) {
-    console.error(`[JSON SERVICE] Error al leer la lista de animes:`, err);
-    return [];
+    console.error(`[JSON SERVICE] Error al leer el archivo JSON:`, err);
+    return { metadata: {}, animes: [] };
   }
 }
 
-function getAnimeById(id) {
-  const list = readAnimeList();
-  return list.find(anime => anime.id === parseInt(id, 10));
+// Devuelve solo la lista de animes
+function readAnimeList() {
+  return readRawJson().animes || [];
 }
 
-function buildEpisodeUrl(anime, ep) {
-  if (!anime?.url || !ep) return null;
+function getAnimeById(id) {
+  return readAnimeList().find(anime => anime.id === parseInt(id, 10));
+}
+
+function getAnimeByUnitId(unitId) {
+  return readAnimeList().find(anime => anime.unit_id === parseInt(unitId, 10));
+}
+
+function buildEpisodeUrl(anime, ep, mirror = 1) {
+  if (!anime?.sources || !ep) return null;
 
   let baseUrl = '';
-  let slug = '';
-
-  if (anime.url.includes('animeflv')) {
-    baseUrl = 'https://www3.animeflv.net';
-    slug = anime.slug;
-  } else if (anime.url.includes('tioanime')) {
-    baseUrl = 'https://tioanime.com';
-    const parts = anime.url.split('/');
-    slug = parts[parts.length - 1];
+  if (mirror === 1 && anime.sources.FLV) {
+    baseUrl = anime.sources.FLV.replace('/anime/', '/ver/') + `-${ep}`;
+  } else if (mirror === 2 && anime.sources.TIO) {
+    baseUrl = anime.sources.TIO.replace('/anime/', '/ver/') + `-${ep}`;
   } else {
     return null;
   }
 
-  if (!slug) return null;
-
-  return `${baseUrl}/ver/${slug}-${ep}`;
+  return baseUrl;
 }
 
 function getJsonFiles() {
@@ -59,7 +60,9 @@ function getJsonFiles() {
 
 module.exports = {
   readAnimeList,
+  readRawJson,
   getAnimeById,
+  getAnimeByUnitId,
   buildEpisodeUrl,
   getJsonFiles,
   getJSONPath: (filename) => path.join(JSON_FOLDER, filename)

@@ -45,29 +45,89 @@ function normalizarTitulo(titulo) {
     .trim();
 }
 
+function generarUnitIDExistenteOUnico(slug, usados, existentes) {
+  if (existentes[slug]) {
+    return existentes[slug];
+  }
+
+  let nuevoID;
+  do {
+    nuevoID = Math.floor(1000 + Math.random() * 9000);
+  } while (usados.has(nuevoID));
+
+  usados.add(nuevoID);
+  existentes[slug] = nuevoID;
+  return nuevoID;
+}
+
 function combinarJSONPorTitulo(datosTio, datosFlv, outputPath, log = console.log) {
+  const unitIDPath = path.join(__dirname, "jsons", "UnitID.json");
+  let unitIDsExistentes = {};
+
+  if (fs.existsSync(unitIDPath)) {
+    try {
+      unitIDsExistentes = JSON.parse(fs.readFileSync(unitIDPath, "utf-8"));
+    } catch (err) {
+      log(`⚠️ Error al leer UnitID.json: ${err.message}`);
+    }
+  }
+
+  const usados = new Set(Object.values(unitIDsExistentes));
   const mapa = new Map();
 
   for (const anime of datosFlv) {
-    const clave = normalizarTitulo(anime.title);
-    mapa.set(clave, anime);
+    const clave = normalizarTitulo(anime.title || anime.titulo);
+    mapa.set(clave, {
+      title: anime.title || anime.titulo,
+      slug: anime.slug,
+      image: anime.image,
+      episodes_count: anime.episodes_count,
+      sources: {
+        FLV: anime.url || null,
+        TIO: null
+      }
+    });
   }
 
   for (const anime of datosTio) {
-    const clave = normalizarTitulo(anime.title);
-    if (!mapa.has(clave)) {
-      mapa.set(clave, anime);
+    const clave = normalizarTitulo(anime.title || anime.titulo);
+    if (mapa.has(clave)) {
+      mapa.get(clave).sources.TIO = anime.url || null;
+    } else {
+      mapa.set(clave, {
+        title: anime.title || anime.titulo,
+        slug: anime.slug,
+        image: anime.image,
+        episodes_count: anime.episodes_count,
+        sources: {
+          FLV: null,
+          TIO: anime.url || null
+        }
+      });
     }
   }
 
   const combinado = [...mapa.values()];
   combinado.forEach((anime, index) => {
     anime.id = index + 1;
+    anime.unit_id = generarUnitIDExistenteOUnico(anime.slug, usados, unitIDsExistentes);
   });
 
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, JSON.stringify(combinado, null, 2), "utf-8");
+  const resultadoFinal = {
+    metadata: {
+      creado_en: new Date().toISOString(),
+      total_animes: combinado.length
+    },
+    animes: combinado
+  };
+
+  fs.writeFileSync(outputPath, JSON.stringify(resultadoFinal, null, 2), "utf-8");
+
+  fs.writeFileSync(unitIDPath, JSON.stringify(unitIDsExistentes, null, 2), "utf-8");
+
   log(`✅ JSON combinado guardado en: ${outputPath}`);
+  log(`🔒 UnitID.json actualizado con ${Object.keys(unitIDsExistentes).length} slugs.`);
 }
 
 async function extraerTioanimesDePagina(pagina, log = console.log) {
@@ -110,7 +170,7 @@ async function procesarTioanime(anime, log = console.log) {
     const image = imgUrl ? TIO_BASE_URL + imgUrl : "";
 
     log(`[Tio][${anime.titulo}] ${episodesCount} episodios.`);
-    return { url, title, image, episodes_count: episodesCount };
+    return { url, title, image, episodes_count: episodesCount, slug: anime.slug };
   } catch (err) {
     log(`[Tio][${anime.titulo}] Error: ${err.message}`);
     registrarError("TioAnime", `anime: ${anime.titulo}`, err.message, url);
@@ -217,7 +277,7 @@ async function main({ log = console.log } = {}) {
   const outTio = path.join(__dirname, "anime_list_tio.json");
   const outFlv = path.join(__dirname, "anime_list_flv.json");
   const outFinal = path.join(__dirname, "jsons", "anime_list.json");
-  const outReporte = path.join(__dirname,"jsons","report_error.json");
+  const outReporte = path.join(__dirname, "jsons", "report_error.json");
 
   fs.writeFileSync(outTio, JSON.stringify(tio, null, 2), "utf-8");
   fs.writeFileSync(outFlv, JSON.stringify(flv, null, 2), "utf-8");

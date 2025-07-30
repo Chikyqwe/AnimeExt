@@ -18,7 +18,7 @@ async function iniciarMantenimiento() {
 
   worker.on('message', (msg) => {
     if (msg.type === 'log') {
-      console.log(`[MANTENIMIENTO][WORKER]`, msg.msg);
+      console.log(`[MANTENIMIENTO][WORKER][MSG]`, msg.msg);
     } else if (msg.type === 'done') {
       console.log(`[MANTENIMIENTO][WORKER] Mantenimiento completado`);
       setUpdatingStatus(false);
