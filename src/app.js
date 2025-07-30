@@ -20,7 +20,7 @@ console.log('[INFO] Iniciando aplicación AnimeExt...');
 
 app.use(maintenanceBlock); // Primero el middleware de bloqueo
 // Ruta al favicon
-app.use(favicon(path.join('./public', 'img', 'logo.png')));
+app.use(favicon(path.join('./public', 'img', 'favicon.png')));
 app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
