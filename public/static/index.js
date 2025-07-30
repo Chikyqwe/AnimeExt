@@ -244,39 +244,96 @@ function createPagination(totalItems, currentPage) {
 
   paginationContainer.innerHTML = '';
 
+  // Inyectar estilos solo una vez
+  if (!document.getElementById('pagination-styles')) {
+    const style = document.createElement('style');
+    style.id = 'pagination-styles';
+    style.textContent = `
+      #pagination {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin: 24px 0 20px 0;
+      }
+
+      .pagination-btn {
+        padding: 6px 14px;
+        margin: 4px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 14px;
+        border: 2px solid aquamarine;
+        background-color: transparent;
+        color: aquamarine;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 0 0 transparent;
+      }
+
+      .pagination-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(127, 255, 212, 0.3);
+      }
+
+      .pagination-btn.active {
+        background-color: aquamarine;
+        color: #111;
+      }
+
+      .pagination-btn.nav {
+        border-color: #ccc;
+        color: #ccc;
+      }
+
+      .pagination-btn.nav:hover {
+        background-color: #ccc;
+        color: black;
+        transform: translateY(-3px);
+      }
+
+      @media (max-width: 480px) {
+        .pagination-btn {
+          padding: 4px 10px;
+          font-size: 12px;
+          margin: 2px;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   const pagination = document.createElement('div');
   pagination.id = 'pagination';
-  pagination.className = 'pagination mt-4 justify-content-center flex-wrap';
 
   const totalPages = Math.ceil(totalItems / 24);
 
   let groupSize;
   const screenWidth = window.innerWidth;
-  if (screenWidth < 400) {
-    groupSize = 3;
-  } else if (screenWidth < 600) {
-    groupSize = 5;
-  } else if (screenWidth < 800) {
-    groupSize = 7;
-  } else {
-    groupSize = 10;
-  }
+  if (screenWidth < 400) groupSize = 2;
+  else if (screenWidth < 650) groupSize = 5;
+  else if (screenWidth < 800) groupSize = 7;
+  else groupSize = 10;
 
   const currentGroupStart = Math.floor((currentPage - 1) / groupSize) * groupSize + 1;
   const currentGroupEnd = Math.min(currentGroupStart + groupSize - 1, totalPages);
 
-  function createPageButton(page, label = null, customClass = '') {
+  function createPageButton(page, label = null, isNav = false) {
     const btn = document.createElement('button');
     btn.textContent = label || page;
-    btn.className = `btn btn-sm mx-1 ${page === currentPage ? 'btn-primary' : 'btn-outline-primary'} ${customClass}`;
+    btn.className = 'pagination-btn';
+    if (isNav) btn.classList.add('nav');
+    if (page === currentPage) btn.classList.add('active');
+
     btn.addEventListener('click', () => {
       changePage(page);
     });
+
     return btn;
   }
 
   if (currentGroupStart > 1) {
-    pagination.appendChild(createPageButton(currentGroupStart - 1, '«', 'btn-outline-secondary'));
+    pagination.appendChild(createPageButton(currentPage - 1, '«', true));
   }
 
   for (let i = currentGroupStart; i <= currentGroupEnd; i++) {
@@ -284,11 +341,12 @@ function createPagination(totalItems, currentPage) {
   }
 
   if (currentGroupEnd < totalPages) {
-    pagination.appendChild(createPageButton(currentGroupEnd + 1, '»', 'btn-outline-secondary'));
+    pagination.appendChild(createPageButton(currentPage + 1, '»', true));
   }
 
   paginationContainer.appendChild(pagination);
 }
+
 
 function createCard(data, animeTitle) {
   const card = document.createElement('div');
