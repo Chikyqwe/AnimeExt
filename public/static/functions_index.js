@@ -1,11 +1,25 @@
-  // ----------- TEMA LIGHT/DARK -----------
+    function adaptarBotonesCerrar() {
+      const botones = document.querySelectorAll('button i.fa-xmark');
+      const isLight = document.body.classList.contains('light-theme');
+      botones.forEach(icon => {
+        icon.style.color = isLight ? '#222' : '#f1f1f1';
+        icon.style.transition = 'color 0.3s ease';
+      });
+    }
+
   function toggleTheme() {
     document.body.classList.toggle('light-theme');
-    const icon = document.getElementById('bottomThemeIcon');
+    document.body.classList.toggle('dark-theme');
+
+    const icon = document.querySelector('#bottomThemeIcon i'); // ✅ Selecciona el <i> directamente
+
+    // ✅ Cambia los íconos correctamente
     icon.classList.toggle('fa-moon');
     icon.classList.toggle('fa-sun');
+
     localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
-adaptarBotonCerrarTema()
+    
+    adaptarBotonesCerrar(); // tu función para los botones
   }
 
   function restoreTheme() {
@@ -101,6 +115,7 @@ adaptarBotonCerrarTema()
   window.addEventListener('DOMContentLoaded', () => {
     restoreTheme();
     setupScrollBar();
+    adaptarBotonesCerrar();
 
     if (!localStorage.getItem('policyAccepted')) {
       initPolicyModal();

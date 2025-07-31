@@ -138,7 +138,7 @@ body.light-theme .logo-svg .ext-text{fill:#2e94dc}
   .modal-header{padding:.5rem 1rem}
   .modal-body{flex:1 1 auto;flex-direction:column;padding:1rem;gap:20px}
   .modal-left{width:100%;max-width:100%;align-items:center}
-  .modal-img{width:100%;max-height:300px}
+  .modal-img{width:100%;max-height:500px}
   .modal-info{width:100%}
   .episodes-list{max-height:none;flex:1 1 auto}
   #adsOverlay .policy-modal{height: 400px;width: 100%;}
