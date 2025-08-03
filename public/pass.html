@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Autenticación</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom right, #7fffd4, #40e0d0);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    h1 {
+      color: #008b8b;
+      margin-bottom: 1rem;
+    }
+
+    input[type="password"] {
+      padding: 0.7rem;
+      width: 80%;
+      border: 2px solid #7fffd4;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 0.7rem 1.5rem;
+      background-color: #20b2aa;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #008b8b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Introduce tu contraseña</h1>
+    <form id="passForm">
+      <input type="password" id="password" placeholder="Contraseña" required />
+      <br>
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+
+      document.getElementById("passForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const password = document.getElementById("password").value;
+        if (password) {
+          const url = new URL(window.location.href);
+          url.searchParams.set("pass", password);
+          window.location.href = url.toString(); // recarga con el parámetro
+        }
+      });
+    });
+  </script>
+</body>
+</html>

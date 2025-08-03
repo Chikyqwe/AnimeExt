@@ -60,56 +60,65 @@ Consideraciones
 
 Estructura del proyecto
 =======================
+# 📂 Estructura del proyecto: `AnimeExt`
 
-```
-├── AnimeExt
-│   ├── .gitignore
-│   ├── anim.js
-│   ├── jsons
-│   │   └── anime_list.json
-│   ├── main.js
-|   ├── README.md
-|   ├── LICENSE
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── public
-│   │   ├── 404.html
-│   │   ├── error406.html
-│   │   ├── iframe.html
-│   │   ├── img
-│   │   │   ├── 404.png
-│   │   │   └── logo.png
-│   │   ├── index.html
-│   │   ├── maintenance.html
-│   │   ├── player.html
-│   │   ├── privacy-policy.html
-│   │   └── static
-│   │       ├── index.js
-│   │       └── player.js
-│   ├── src
-│   │   ├── app.js
-│   │   ├── config
-│   │   │   └── index.js
-│   │   ├── middleware
-│   │   │   └── maintenanceBlock.js
-│   │   ├── routes
-│   │   │   ├── api.js
-│   │   │   ├── maintenance.js
-│   │   │   ├── player.js
-│   │   │   └── views.js
-│   │   ├── server.js
-│   │   ├── services
-│   │   │   ├── browserlessExtractors.js
-│   │   │   ├── jsonService.js
-│   │   │   ├── maintenanceService.js
-│   │   │   └── queueService.js
-│   │   └── utils
-│   │       ├── CheckMega.js
-|   |       ├── helpers.js
-|   |       └── wakeUp.js
-│   └── worker-mantenimiento.js
-
-```
+- 📄 [.gitignore](.gitignore)
+- 📄 [anim.js](anim.js)
+- 📄 [eafo.js](eafo.js)
+- 📄 [LICENSE](LICENSE)
+- 📄 [main.js](main.js)
+- 📄 [package-lock.json](package-lock.json)
+- 📄 [package.json](package.json)
+- 📄 [README.md](README.md)
+- 📄 [worker-mantenimiento.js](worker-mantenimiento.js)
+- 📁 [jsons](jsons/)
+  - 📄 [anime_list.json](jsons/anime_list.json)
+  - 📄 [report_error.json](jsons/report_error.json)
+  - 📄 [UnitID.json](jsons/UnitID.json)
+- 📁 [public](public/)
+  - 📄 [404.html](public/404.html)
+  - 📄 [iframe.html](public/iframe.html)
+  - 📄 [index.html](public/index.html)
+  - 📄 [list.html](public/list.html)
+  - 📄 [maintenance.html](public/maintenance.html)
+  - 📄 [pass.html](public/pass.html)
+  - 📄 [player.html](public/player.html)
+  - 📄 [privacy-policy.html](public/privacy-policy.html)
+  - 📁 [img](public/img/)
+    - 📄 [404.png](public/img/404.png)
+    - 📄 [favicon.png](public/img/favicon.png)
+    - 📄 [logo.svg](public/img/logo.svg)
+  - 📁 [static](public/static/)
+    - 📄 [functions_index.js](public/static/functions_index.js)
+    - 📄 [functions_player.js](public/static/functions_player.js)
+    - 📄 [index.js](public/static/index.js)
+    - 📄 [player.js](public/static/player.js)
+    - 📄 [styles_404.css](public/static/styles_404.css)
+    - 📄 [styles_index.css](public/static/styles_index.css)
+    - 📄 [styles_player.css](public/static/styles_player.css)
+- 📁 [src](src/)
+  - 📄 [app.js](src/app.js)
+  - 📄 [server.js](src/server.js)
+  - 📁 [config](src/config/)
+    - 📄 [index.js](src/config/index.js)
+  - 📁 [middleware](src/middleware/)
+    - 📄 [maintenanceBlock.js](src/middleware/maintenanceBlock.js)
+  - 📁 [routes](src/routes/)
+    - 📄 [api.js](src/routes/api.js)
+    - 📄 [maintenance.js](src/routes/maintenance.js)
+    - 📄 [player.js](src/routes/player.js)
+    - 📄 [views.js](src/routes/views.js)
+  - 📁 [services](src/services/)
+    - 📄 [browserlessExtractors.js](src/services/browserlessExtractors.js)
+    - 📄 [jsonService.js](src/services/jsonService.js)
+    - 📄 [maintenanceService.js](src/services/maintenanceService.js)
+    - 📄 [queueService.js](src/services/queueService.js)
+  - 📁 [utils](src/utils/)
+    - 📄 [CheckMega.js](src/utils/CheckMega.js)
+    - 📄 [helpers.js](src/utils/helpers.js)
+    - 📄 [wakeUp.js](src/utils/wakeUp.js)
+- 📁 [test](test/)
+  - 📄 [link.js](test/link.js)
 
 Licencia
 ========

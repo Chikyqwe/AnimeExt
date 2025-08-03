@@ -14,7 +14,7 @@ async function iniciarMantenimiento() {
 
   console.log(`[MANTENIMIENTO] Iniciando mantenimiento en hilo separado...`);
 
-  const worker = new Worker(path.join(__dirname, '..', '..', 'worker-mantenimiento.js'));
+  const worker = new Worker(path.join(__dirname, '..', 'maintenimance', 'worker-mantenimiento.js'));
 
   worker.on('message', (msg) => {
     if (msg.type === 'log') {
