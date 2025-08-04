@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { JSON_FOLDER, JSON_PATH_TIO } = require('../config');
+const { JSON_FOLDER, ANIME_FILE } = require('../config');
 
 if (!fs.existsSync(JSON_FOLDER)) {
   fs.mkdirSync(JSON_FOLDER, { recursive: true });
@@ -9,11 +9,11 @@ if (!fs.existsSync(JSON_FOLDER)) {
 // Lee el JSON completo (metadata + animes)
 function readRawJson() {
   try {
-    if (!fs.existsSync(JSON_PATH_TIO)) {
+    if (!fs.existsSync(ANIME_FILE)) {
       console.warn(`[JSON SERVICE] El archivo no existe. Devolviendo objeto vacío.`);
       return { metadata: {}, animes: [] };
     }
-    const data = fs.readFileSync(JSON_PATH_TIO, 'utf8');
+    const data = fs.readFileSync(ANIME_FILE, 'utf8');
     return JSON.parse(data);
   } catch (err) {
     console.error(`[JSON SERVICE] Error al leer el archivo JSON:`, err);

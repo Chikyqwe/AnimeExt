@@ -1,9 +1,10 @@
   async function initPlayerPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
+    const uid = urlParams.get('uid')
     const ep = parseInt(urlParams.get('ep'));
 
-    if (!id || isNaN(ep)) {
+    if ((!id && !uid) || isNaN(ep)) {
       document.getElementById("anime-title").innerText = "Faltan parámetros";
       setTimeout(() => {
         location.href = '/';
@@ -12,7 +13,12 @@
     }
 
     try {
-      const res = await fetch(`/api/player?id=${encodeURIComponent(id)}&ep=${ep}`);
+      let res;
+      if (id) {
+        res = await fetch(`/api/player?id=${encodeURIComponent(id)}&ep=${ep}`);
+      } else {
+        res = await fetch(`/api/player?uid=${encodeURIComponent(uid)}&ep=${ep}`);
+      }
       const data = await res.json();
 
       if (data.error) {
@@ -31,7 +37,7 @@
       document.title = `${data.anime_title}`;
 
       document.getElementById("config").textContent = JSON.stringify({
-        id: id,
+        id: data.id,
         ep: ep,
         nextUrl: (ep < data.episodes_count) ? `/player?id=${encodeURIComponent(id)}&ep=${ep + 1}` : null,
         title: data.anime_title

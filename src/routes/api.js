@@ -1,8 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const { spawn } = require('child_process');
-const { PassThrough } = require('stream');
-const ffmpegPath = require('ffmpeg-static');
 
 const {
   extractAllVideoLinks,
