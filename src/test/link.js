@@ -1,6 +1,6 @@
 // import browselessExtractor.js
-const { extractAllVideoLinks } = require('../src/services/browserlessExtractors');
-const { getAnimeById, buildEpisodeUrl } = require('../src/services/jsonService');
+const { extractAllVideoLinks } = require('../services/browserlessExtractors');
+const { getAnimeById, buildEpisodeUrl } = require('../services/jsonService');
 const readline = require('readline');
 
 // Función para obtener los enlaces de video

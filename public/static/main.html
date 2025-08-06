@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime EXT - Tu Mundo Anime</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css"> </head>
+    <link rel="stylesheet" href="styles_index.css">
+<body>
+
+    <header class="topbar d-flex align-items-center">
+        <a href="/" class="logo">
+            <svg viewBox="0 0 300 120" class="logo-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+                <text x="10" y="60" font-family="Alice, serif" font-size="36" font-weight="bold">
+                    <tspan class="main-text">Anime </tspan>
+                    <tspan class="ext-text">EXT</tspan>
+                </text>
+                <path d="M220,30 L230,60 L220,90" stroke="#3C873A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                <text x="100" y="90" text-anchor="middle" font-family="sans-serif" font-size="14" class="subtext">アニメが好きな私たち</text>
+            </svg>
+        </a>
+
+        <nav class="main-nav">
+            <a href="#" class="nav-item active">Inicio</a>
+            <a href="#" class="nav-item">Directory</a>
+        </nav>
+
+        <form class="search-form d-flex ms-auto align-items-center" role="search" onsubmit="searchAnime(event)">
+            <button type="button" id="search-toggle-btn" class="btn btn-outline-light d-md-none">
+                <i class="fa fa-search"></i>
+            </button>
+            <input id="searchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="form-control me-2 d-none d-md-block" type="search" placeholder="Buscar anime..." aria-label="Buscar" />
+            <button class="btn btn-outline-light d-none d-md-block" type="submit">
+                <i class="fa fa-search"></i>
+            </button>
+            <ul id="search-suggestions" class="suggestions-list"></ul>
+        </form>
+    </header>
+
+    <div class="layout-container">
+        <aside class="sidebar">
+            <h3 class="sidebar-title">Animes en emision</h3>
+            <ul class="sidebar-menu">
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <h2 class="section-title">Últimos Episodios</h2>
+            <div id="anime-list" class="anime-grid">
+                </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("/anime/last")
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById("anime-list");
+                    if (!Array.isArray(data)) return;
+
+                    data.forEach(anime => {
+                        const cardHtml = `
+                            <div class="anime-card" onclick="window.location.href='${anime.url}'">
+                                <img src="${anime.imagen}" alt="${anime.alt || anime.titulo}" class="card-img">
+                                <div class="card-content">
+                                    <h4 class="card-title">${anime.titulo}</h4>
+                                    <p class="card-subtitle">${anime.episodio}</p>
+                                </div>
+                            </div>
+                        `;
+                        container.innerHTML += cardHtml;
+                    });
+                })
+                .catch(error => console.error("Error al obtener datos:", error));
+        });
+
+        function searchAnime(e) {
+            e.preventDefault();
+            const query = document.getElementById("searchInput").value;
+            if (query) {
+                alert("Buscando: " + query);
+            }
+        }
+    </script>
+</body>
+</html>

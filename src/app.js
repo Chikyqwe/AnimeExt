@@ -6,6 +6,8 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const favicon = require('serve-favicon');
+const { isMetadataStale } = require('./test/CheckAnimeList');
+const { iniciarMantenimiento } = require('./services/maintenanceService');
 
 console.log('[INFO] Librerías cargadas.');
 
@@ -78,8 +80,9 @@ console.log('[MIDDLEWARE] cookieParser habilitado.');
 app.use(express.json());
 console.log('[MIDDLEWARE] express.json habilitado.');
 
-app.use(express.static(path.join(__dirname, '..', 'public')));
-console.log('[MIDDLEWARE] Archivos estáticos servidos desde /public.');
+app.use('/static', express.static(path.join(__dirname, '..', 'public', 'static')));
+app.use('/img', express.static(path.join(__dirname, '..', 'public', 'static', 'img')));
+
 
 console.log('[INFO] Middleware configurado correctamente.');
 
@@ -109,6 +112,12 @@ if (apiRoutes) {
 if (WakeUP) {
   app.use('/', WakeUP);
   console.log('[ROUTE] / → WakeUP montado.');
+}
+if (isMetadataStale()) {
+  console.log('[MANTENIMIENTO] Metadata expirada. Iniciando mantenimiento...');
+  iniciarMantenimiento();
+} else {
+  console.log('[MANTENIMIENTO] Metadata vigente. No se requiere mantenimiento.');
 }
 
 // =================== RUTA 404 ===================

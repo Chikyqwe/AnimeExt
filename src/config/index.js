@@ -1,5 +1,6 @@
 require('dotenv').config();
 const path = require('path');
+console.log('JSON_FOLDER =', process.env.JSON_FOLDER);
 
 const PORT = process.env.PORT;
 const BROWSERLESS_ENDPOINT = process.env.BROWSERLESS_ENDPOINT;

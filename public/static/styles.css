@@ -1,0 +1,267 @@
+/* Variables CSS para una fácil personalización */
+:root {
+    --bg-color-dark: #0A0A0A;
+    --bg-color-medium: #1A1A1A;
+    --bg-color-light: #2A2A2A;
+    --text-color: #E0E0E0;
+    --accent-color: #007BFF; /* Un azul vibrante */
+    --accent-color-hover: #0056b3;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Base global */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-color-dark);
+    color: var(--text-color);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+a {
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+a:hover {
+    color: var(--accent-color);
+}
+
+/* -------------------- HEADER -------------------- */
+.main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    background-color: var(--bg-color-medium);
+    border-bottom: 1px solid var(--bg-color-light);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.logo-main { color: var(--text-color); }
+.logo-ext { color: var(--accent-color); }
+
+.main-nav {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-item {
+    font-weight: 600;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.nav-item::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background-color: var(--accent-color);
+    transition: width 0.3s ease;
+}
+
+.nav-item:hover::after, .nav-item.active::after {
+    width: 100%;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-color-light);
+    border-radius: 50px;
+    padding: 0.5rem 1rem;
+    transition: width 0.3s ease;
+}
+
+.search-input {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    outline: none;
+    width: 180px;
+    transition: width 0.3s ease;
+}
+
+.search-input::placeholder {
+    color: #888;
+}
+
+.search-button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    margin-left: 0.5rem;
+    font-size: 1rem;
+}
+
+/* -------------------- CONTENIDO PRINCIPAL -------------------- */
+.layout-container {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: var(--bg-color-medium);
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px var(--shadow-color);
+}
+
+.sidebar-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+}
+
+.sidebar-menu {
+    list-style: none;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.sidebar-link i {
+    margin-right: 1rem;
+    font-size: 1.1rem;
+    color: #888;
+}
+
+.sidebar-link:hover, .sidebar-link.active {
+    background-color: var(--accent-color);
+    color: #fff;
+}
+
+.sidebar-link:hover i, .sidebar-link.active i {
+    color: #fff;
+}
+
+.main-content {
+    flex: 1;
+}
+
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--accent-color);
+    padding-left: 1rem;
+}
+
+.anime-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+}
+
+.anime-card-init {
+    position: relative;
+    background-color: var(--bg-color-medium);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+
+.anime-card-init:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 25px var(--shadow-color);
+}
+
+.card-img {
+    width: 105%;
+    object-fit: cover;
+    display: block;
+}
+
+.card-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-subtitle {
+    font-size: 0.85rem;
+    color: #ccc;
+    margin: 0;
+}
+.main-content {
+    padding-bottom: 70px; /* O el valor que prefieras */
+}
+/* -------------------- RESPONSIVE DESIGN -------------------- */
+@media (max-width: 992px) {
+    .layout-container {
+        flex-direction: column;
+        padding: 1rem;
+    }
+    .sidebar {
+        display: none;
+    }
+    .main-header {
+        flex-wrap: wrap;
+        padding: 1rem;
+    }
+    .main-nav {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        margin-top: 1rem;
+        gap: 1rem;
+    }
+    .search-container {
+        width: 100%;
+        margin-top: 1rem;
+        order: 2;
+    }
+    .search-input {
+        width: 100%;
+    }
+}
+@media (max-width: 576px) {
+    .anime-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+    .card-img {
+        height: 200px;
+    }
+}

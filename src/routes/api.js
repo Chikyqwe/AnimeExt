@@ -24,6 +24,7 @@ const {
   verificarArchivoMega
 } = require('../utils/CheckMega');
 
+const { buildComplexToken } = require('../utils/token');
 const apiQueue = require('../services/queueService');
 
 // --- Helpers ---
@@ -97,7 +98,25 @@ async function filterValidVideos(videos) {
 
 // Listado de animes JSON
 router.post('/anime/list', (req, res) => {
+  const clientToken = req.headers['x-auth-token'];
+  const key1 = req.cookies._K0x1FLVTA0xAA1;
+  const key2 = req.cookies._K0x2FLVTA0xFF2;
+
+  if (!clientToken || !key1 || !key2) {
+    return res.status(401).json({ error: 'Faltan claves o token' });
+  }
+
+  const expectedToken = buildComplexToken(key1, key2);
+
+  if (clientToken !== expectedToken) {
+    return res.status(403).json({ error: 'Token inválido' });
+  }
+
   res.sendFile(getJSONPath('anime_list.json'));
+});
+
+router.get('/anime/last',(req, res) => {
+  res.sendFile(getJSONPath('lastep.json'))
 });
 
 // Proxy para imágenes

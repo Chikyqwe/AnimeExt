@@ -5,10 +5,31 @@ const { getUpdatingStatus, getRequestLog, clearRequestLog } = require('../middle
 
 const router = express.Router();
 
-// Ruta para la página principal
+const { randomKey } = require('../utils/token');
+
 router.get('/', (req, res) => {
-  console.log(`[GET /] Sirviendo index.html`);
-  res.sendFile(path.join(__dirname, '..', '..', 'public', 'index.html'));
+  const key1 = randomKey(8);
+  const key2 = randomKey(8);
+
+  res.cookie('_K0x1FLVTA0xAA1', key1, {
+    httpOnly: false,
+    path: '/',
+    sameSite: 'Lax',  // importante para evitar bloqueos
+    secure: false     // debe ser false si no usas HTTPS
+  });
+  res.cookie('_K0x2FLVTA0xFF2', key2, {
+    httpOnly: false,
+    path: '/',
+    sameSite: 'Lax',
+    secure: false
+  });
+
+  // Desactiva cache para esta respuesta
+  res.setHeader('Cache-Control', 'no-store');
+
+  console.log('Claves enviadas:', { key1, key2 });
+
+  res.sendFile(path.join(__dirname, '..','..', 'public', 'index.html'));
 });
 
 // Ruta para el reproductor

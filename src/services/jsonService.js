@@ -21,6 +21,11 @@ function readRawJson() {
   }
 }
 
+// Devuelve metadata
+function getMetadata() {
+  return readRawJson().metadata || [];
+}
+
 // Devuelve solo la lista de animes
 function readAnimeList() {
   return readRawJson().animes || [];
@@ -65,5 +70,6 @@ module.exports = {
   getAnimeByUnitId,
   buildEpisodeUrl,
   getJsonFiles,
+  getMetadata,
   getJSONPath: (filename) => path.join(JSON_FOLDER, filename)
 };

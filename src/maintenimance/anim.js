@@ -64,7 +64,7 @@ function generarUnitIDExistenteOUnico(slug, usados, existentes) {
 
 // Versión combinada para 3 fuentes
 function combinarJSONPorTituloV3(datosTio, datosFlv, datosFlvOne, outputPath, log = console.log) {
-  const unitIDPath = path.join(__dirname, "jsons", "UnitID.json");
+  const unitIDPath = path.join(__dirname, "..","..","jsons", "UnitID.json");
   let unitIDsExistentes = {};
 
   if (fs.existsSync(unitIDPath)) {
@@ -366,14 +366,14 @@ async function main({ log = console.log } = {}) {
   const outTio = path.join(__dirname, "anime_list_tio.json");
   const outFlv = path.join(__dirname, "anime_list_flv.json");
   //const outFlvOne = path.join(__dirname, "anime_list_flv_one.json");
-  const outFinal = path.join(__dirname, "jsons", "anime_list.json");
-  const outReporte = path.join(__dirname, "jsons", "report_error.json");
+  const outFinal = path.join(__dirname, "..", "..", "jsons", "anime_list.json");
+  const outReporte = path.join(__dirname, "..", "..", "jsons", "report_error.json");
 
   fs.writeFileSync(outTio, JSON.stringify(tio, null, 2), "utf-8");
   fs.writeFileSync(outFlv, JSON.stringify(flv, null, 2), "utf-8");
   //fs.writeFileSync(outFlvOne, JSON.stringify(flvOne, null, 2), "utf-8");
 
-  combinarJSONPorTituloV3(tio, flv, outFinal, log);
+  combinarJSONPorTituloV3(tio, flv, null, outFinal, log);
 
   eliminarArchivo(outTio, log);
   eliminarArchivo(outFlv, log);
@@ -383,7 +383,7 @@ async function main({ log = console.log } = {}) {
     fs.writeFileSync(outReporte, JSON.stringify(erroresReportados, null, 2), "utf-8");
     log(`⚠️ Errores registrados en: ${outReporte}`);
   } else {
-    eliminarArchivo(outReporte, log);d
+    eliminarArchivo(outReporte, log);
   }
 
   log("✅ Scraping y combinación completados.");
