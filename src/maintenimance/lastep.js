@@ -1,3 +1,4 @@
+// scraper.js
 const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
@@ -5,30 +6,26 @@ const path = require('path');
 
 const FUENTE1_URL = 'https://www3.animeflv.net/';
 const FUENTE2_URL = 'https://tioanime.com/';
-const UNITID_PATH = path.join(__dirname, 'jsons', 'UnitID.json');
+const UNITID_PATH = path.join(__dirname, "..", "..",'jsons', 'UnitID.json');
 
-// 🧠 Función para extraer número de episodio
 function extractEpisodeNumber(text) {
   const match = text.match(/(\d+)(?!.*\d)/);
   return match ? parseInt(match[1], 10) : 0;
 }
 
-// 🧠 Limpiar el título (quitar número final)
 function cleanTitle(title) {
   return title.replace(/\s+\d+$/, '').trim();
 }
 
-// 🧠 Convertir título a slug
 function toSlug(text) {
   return text
     .toLowerCase()
-    .normalize('NFD')               // separa letras con acentos
-    .replace(/[\u0300-\u036f]/g, '') // elimina los acentos
-    .replace(/[^a-z0-9]+/g, '-')     // todo lo que no es letra o número → guión
-    .replace(/^-+|-+$/g, '');        // elimina guiones al inicio/final
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
-// 🧠 Unir episodios sin duplicados
 function mergeEpisodios(lista, nuevo) {
   const key = cleanTitle(nuevo.titulo);
   if (!lista[key] || nuevo.episodioNum > lista[key].episodioNum) {
@@ -36,7 +33,6 @@ function mergeEpisodios(lista, nuevo) {
   }
 }
 
-// 🟦 Scraping de AnimeFLV
 async function scrapeAnimeFLV() {
   const episodios = {};
   try {
@@ -61,7 +57,6 @@ async function scrapeAnimeFLV() {
   return episodios;
 }
 
-// 🟨 Scraping de TioAnime
 async function scrapeTioAnime() {
   const episodios = {};
   try {
@@ -86,9 +81,7 @@ async function scrapeTioAnime() {
   return episodios;
 }
 
-// 🧩 Integración principal
-async function main() {
-  // Leer UnitID.json
+async function last() {
   let unitIdMap = {};
   if (fs.existsSync(UNITID_PATH)) {
     try {
@@ -100,13 +93,11 @@ async function main() {
     console.warn('⚠️ No se encontró UnitID.json');
   }
 
-  // Scraping
   const [animeflvData, tioanimeData] = await Promise.all([
     scrapeAnimeFLV(),
     scrapeTioAnime()
   ]);
 
-  // Unir resultados
   const combinados = { ...animeflvData };
   for (const key in tioanimeData) {
     if (!combinados[key] || tioanimeData[key].episodioNum > combinados[key].episodioNum) {
@@ -114,7 +105,6 @@ async function main() {
     }
   }
 
-  // Procesar con slug e id
   const finalList = Object.values(combinados).map(anime => {
     const tituloLimpio = cleanTitle(anime.titulo);
     const slug = toSlug(tituloLimpio);
@@ -127,10 +117,19 @@ async function main() {
     };
   });
 
-  // Guardar archivo
-  fs.writeFileSync('lastep.json', JSON.stringify(finalList, null, 2));
+  const outFinal = path.join(__dirname, "..", "..", "jsons", "lastep.json");
+  fs.writeFileSync(outFinal, JSON.stringify(finalList, null, 2));
   console.log(`✅ ${finalList.length} episodios guardados en lastep.json`);
 }
 
-// Ejecutar
-main();
+// Solo ejecutar main si se corre directamente
+if (require.main === module) {
+  last();
+}
+
+// Exportar funciones
+module.exports = {
+  scrapeAnimeFLV,
+  scrapeTioAnime,
+  last
+};

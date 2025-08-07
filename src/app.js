@@ -81,7 +81,7 @@ app.use(express.json());
 console.log('[MIDDLEWARE] express.json habilitado.');
 
 app.use('/static', express.static(path.join(__dirname, '..', 'public', 'static')));
-app.use('/img', express.static(path.join(__dirname, '..', 'public', 'static', 'img')));
+app.use('/img', express.static(path.join(__dirname, '..', 'public', 'img')));
 
 
 console.log('[INFO] Middleware configurado correctamente.');

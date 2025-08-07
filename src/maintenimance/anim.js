@@ -3,6 +3,7 @@ const cheerio = require("cheerio");
 const fs = require("fs");
 const path = require("path");
 const PQueue = require("p-queue").default;
+const { last } = require('./lastep');
 const vm = require("vm");
 
 const FLV_BASE_URL = "https://www3.animeflv.net";
@@ -379,6 +380,7 @@ async function main({ log = console.log } = {}) {
 
   eliminarArchivo(outTio, log);
   eliminarArchivo(outFlv, log);
+  await last();
 
   if (erroresReportados.length > 0) {
     fs.writeFileSync(outReporte, JSON.stringify(erroresReportados, null, 2), "utf-8");
@@ -386,7 +388,7 @@ async function main({ log = console.log } = {}) {
   } else {
     eliminarArchivo(outReporte, log);
   }
-
+  
   log("✅ Scraping y combinación completados.");
   process.exit(0);
 }

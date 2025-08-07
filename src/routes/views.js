@@ -38,8 +38,14 @@ router.get('/player', (req, res) => {
   res.sendFile(path.join(__dirname, '..', '..', 'public', 'player.html'));
 });
 
+// Ruta para el reproductor
+router.get('/privacy-policy.html', (req, res) => {
+  console.log(`[GET /privacy-policy] Sirviendo privacy-policy.html`);
+  res.sendFile(path.join(__dirname, '..', '..', 'public', 'privacy-policy.html'));
+});
+
 router.get('/anime/list', (req, res) => {
-  console.log(`[GET /player] Sirviendo player.html`);
+  console.log(`[GET /list]`);
   res.sendFile(path.join(__dirname, '..', '..', 'public', 'list.html'));
 });
 

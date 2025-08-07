@@ -1,5 +1,145 @@
 [
   {
+    "titulo": "Futari Solo Camp",
+    "episodio": "Episodio 5",
+    "episodioNum": 5,
+    "url": "https://www3.animeflv.net/ver/futari-solo-camp-5",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4221.jpg",
+    "alt": "Futari Solo Camp",
+    "slug": "futari-solo-camp",
+    "id": 5330
+  },
+  {
+    "titulo": "Dandadan 2nd Season",
+    "episodio": "Episodio 6",
+    "episodioNum": 6,
+    "url": "https://www3.animeflv.net/ver/dandadan-2nd-season-6",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4188.jpg",
+    "alt": "Dandadan 2nd Season",
+    "slug": "dandadan-2nd-season",
+    "id": 4038
+  },
+  {
+    "titulo": "Tsuihousha Shokudou e Youkoso!",
+    "episodio": "Episodio 6",
+    "episodioNum": 6,
+    "url": "https://www3.animeflv.net/ver/tsuihousha-shokudou-e-youkoso-6",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4187.jpg",
+    "alt": "Tsuihousha Shokudou e Youkoso!",
+    "slug": "tsuihousha-shokudou-e-youkoso",
+    "id": 4446
+  },
+  {
+    "titulo": "Dr. Stone: Science Future",
+    "episodio": "Episodio 17",
+    "episodioNum": 17,
+    "url": "https://www3.animeflv.net/ver/dr-stone-science-future-17",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4116.jpg",
+    "alt": "Dr. Stone: Science Future",
+    "slug": "dr-stone-science-future",
+    "id": 1148
+  },
+  {
+    "titulo": "Karaoke Iko!",
+    "episodio": "Episodio 3",
+    "episodioNum": 3,
+    "url": "https://www3.animeflv.net/ver/karaoke-iko-3",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4225.jpg",
+    "alt": "Karaoke Iko!",
+    "slug": "karaoke-iko",
+    "id": 8691
+  },
+  {
+    "titulo": "Tsuyokute New Saga",
+    "episodio": "Episodio 6",
+    "episodioNum": 6,
+    "url": "https://www3.animeflv.net/ver/tsuyokute-new-saga-6",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4185.jpg",
+    "alt": "Tsuyokute New Saga",
+    "slug": "tsuyokute-new-saga",
+    "id": 7276
+  },
+  {
+    "titulo": "Jigoku Sensei Nube (2025)",
+    "episodio": "Episodio 6",
+    "episodioNum": 6,
+    "url": "https://www3.animeflv.net/ver/jigoku-sensei-nube-2025-6",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4186.jpg",
+    "alt": "Jigoku Sensei Nube (2025)",
+    "slug": "jigoku-sensei-nube-2025",
+    "id": 7505
+  },
+  {
+    "titulo": "Uchuujin MuuMuu",
+    "episodio": "Episodio 18",
+    "episodioNum": 18,
+    "url": "https://www3.animeflv.net/ver/uchuujin-muumuu-18",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4168.jpg",
+    "alt": "Uchuujin MuuMuu",
+    "slug": "uchuujin-muumuu",
+    "id": 3379
+  },
+  {
+    "titulo": "Onmyou Kaiten Re:Birth",
+    "episodio": "Episodio 6",
+    "episodioNum": 6,
+    "url": "https://www3.animeflv.net/ver/onmyou-kaiten-rebirth-6",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4184.jpg",
+    "alt": "Onmyou Kaiten Re:Birth",
+    "slug": "onmyou-kaiten-re-birth",
+    "id": null
+  },
+  {
+    "titulo": "Mikadono Sanshimai wa Angai, Choroi.",
+    "episodio": "Episodio 6",
+    "episodioNum": 6,
+    "url": "https://www3.animeflv.net/ver/mikadono-sanshimai-wa-angai-choroi-6",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4220.jpg",
+    "alt": "Mikadono Sanshimai wa Angai, Choroi.",
+    "slug": "mikadono-sanshimai-wa-angai-choroi",
+    "id": 9083
+  },
+  {
+    "titulo": "Tensei shitara Dainana Ouji Datta node, Kimama ni Majutsu wo Kiwamemasu",
+    "episodio": "Episodio 17",
+    "episodioNum": 17,
+    "url": "https://www3.animeflv.net/ver/tensei-shitara-dainana-ouji-datta-node-kimama-ni-majutsu-wo-kiwamemasu-17",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/3956.jpg",
+    "alt": "Tensei shitara Dainana Ouji Datta node, Kimama ni Majutsu wo Kiwamemasu",
+    "slug": "tensei-shitara-dainana-ouji-datta-node-kimama-ni-majutsu-wo-kiwamemasu",
+    "id": 1499
+  },
+  {
+    "titulo": "Jidou Hanbaiki ni Umarekawatta Ore wa Meikyuu wo Samayou 2nd Season",
+    "episodio": "Episodio 6",
+    "episodioNum": 6,
+    "url": "https://www3.animeflv.net/ver/jidou-hanbaiki-ni-umarekawatta-ore-wa-meikyuu-wo-samayou-2nd-season-6",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4183.jpg",
+    "alt": "Jidou Hanbaiki ni Umarekawatta Ore wa Meikyuu wo Samayou 2nd Season",
+    "slug": "jidou-hanbaiki-ni-umarekawatta-ore-wa-meikyuu-wo-samayou-2nd-season",
+    "id": 7881
+  },
+  {
+    "titulo": "Tate no Yuusha no Nariagari Season 4",
+    "episodio": "Episodio 5",
+    "episodioNum": 5,
+    "url": "https://www3.animeflv.net/ver/tate-no-yuusha-no-nariagari-season-4-5",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4219.jpg",
+    "alt": "Tate no Yuusha no Nariagari Season 4",
+    "slug": "tate-no-yuusha-no-nariagari-season",
+    "id": null
+  },
+  {
+    "titulo": "Clevatess: Majuu no Ou to Akago to Shikabane no Yuusha",
+    "episodio": "Episodio 6",
+    "episodioNum": 6,
+    "url": "https://www3.animeflv.net/ver/clevatess-majuu-no-ou-to-akago-to-shikabane-no-yuusha-6",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4182.jpg",
+    "alt": "Clevatess: Majuu no Ou to Akago to Shikabane no Yuusha",
+    "slug": "clevatess-majuu-no-ou-to-akago-to-shikabane-no-yuusha",
+    "id": 3515
+  },
+  {
     "titulo": "Turkey!",
     "episodio": "Episodio 5",
     "episodioNum": 5,
@@ -60,144 +200,14 @@
     "id": 3018
   },
   {
-    "titulo": "Watashi ga Koibito ni Nareru Wake Nai jan, Muri Muri! (※Muri ja Nakatta!?)",
+    "titulo": "Tate no Yuusha no Nariagari Season 4 5",
     "episodio": "Episodio 5",
     "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/watashi-ga-koibito-ni-nareru-wake-nai-jan-muri-muri-muri-ja-nakatta-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4215.jpg",
-    "alt": "Watashi ga Koibito ni Nareru Wake Nai jan, Muri Muri! (※Muri ja Nakatta!?)",
-    "slug": "watashi-ga-koibito-ni-nareru-wake-nai-jan-muri-muri-muri-ja-nakatta",
-    "id": 7795
-  },
-  {
-    "titulo": "Grand Blue Season 2",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/grand-blue-season-2-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4214.jpg",
-    "alt": "Grand Blue Season 2",
-    "slug": "grand-blue-season",
-    "id": null
-  },
-  {
-    "titulo": "Kijin Gentoushou",
-    "episodio": "Episodio 17",
-    "episodioNum": 17,
-    "url": "https://www3.animeflv.net/ver/kijin-gentoushou-17",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4133.jpg",
-    "alt": "Kijin Gentoushou",
-    "slug": "kijin-gentoushou",
-    "id": 6388
-  },
-  {
-    "titulo": "Sakamoto Days",
-    "episodio": "Episodio 16",
-    "episodioNum": 16,
-    "url": "https://www3.animeflv.net/ver/sakamoto-days-16",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4125.jpg",
-    "alt": "Sakamoto Days",
-    "slug": "sakamoto-days",
-    "id": 9953
-  },
-  {
-    "titulo": "Summer Pockets",
-    "episodio": "Episodio 18",
-    "episodioNum": 18,
-    "url": "https://www3.animeflv.net/ver/summer-pockets-18",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4162.jpg",
-    "alt": "Summer Pockets",
-    "slug": "summer-pockets",
-    "id": 9657
-  },
-  {
-    "titulo": "Food Court de, Mata Ashita.",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/food-court-de-mata-ashita-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4213.jpg",
-    "alt": "Food Court de, Mata Ashita.",
-    "slug": "food-court-de-mata-ashita",
-    "id": 1726
-  },
-  {
-    "titulo": "City The Animation",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/city-the-animation-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4212.jpg",
-    "alt": "City The Animation",
-    "slug": "city-the-animation",
-    "id": 5703
-  },
-  {
-    "titulo": "One Piece",
-    "episodio": "Episodio 1138",
-    "episodioNum": 1138,
-    "url": "https://www3.animeflv.net/ver/one-piece-tv-1138",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/7.jpg",
-    "alt": "One Piece",
-    "slug": "one-piece",
-    "id": null
-  },
-  {
-    "titulo": "Hotel Inhumans",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/hotel-inhumans-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4211.jpg",
-    "alt": "Hotel Inhumans",
-    "slug": "hotel-inhumans",
-    "id": 1654
-  },
-  {
-    "titulo": "Busamen Gachi Fighter",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/busamen-gachi-fighter-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4210.jpg",
-    "alt": "Busamen Gachi Fighter",
-    "slug": "busamen-gachi-fighter",
-    "id": 1126
-  },
-  {
-    "titulo": "Gachiakuta",
-    "episodio": "Episodio 4",
-    "episodioNum": 4,
-    "url": "https://www3.animeflv.net/ver/gachiakuta-4",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4209.jpg",
-    "alt": "Gachiakuta",
-    "slug": "gachiakuta",
-    "id": 9237
-  },
-  {
-    "titulo": "Game Center Shoujo to Ibunka Kouryuu",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/game-center-shoujo-to-ibunka-kouryuu-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4208.jpg",
-    "alt": "Game Center Shoujo to Ibunka Kouryuu",
-    "slug": "game-center-shoujo-to-ibunka-kouryuu",
-    "id": 1971
-  },
-  {
-    "titulo": "Nyaight of the Living Cat",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/nyaight-of-the-living-cat-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4207.jpg",
-    "alt": "Nyaight of the Living Cat",
-    "slug": "nyaight-of-the-living-cat",
-    "id": 9767
-  },
-  {
-    "titulo": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4206.jpg",
-    "alt": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
-    "slug": "isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku",
-    "id": 9166
+    "url": "https://tioanime.com/ver/tate-no-yuusha-no-nariagari-season-4-5",
+    "imagen": "https://tioanime.com/uploads/thumbs/4256.jpg",
+    "alt": "Tate no Yuusha no Nariagari Season 4 5",
+    "slug": "tate-no-yuusha-no-nariagari-season-4",
+    "id": 8233
   },
   {
     "titulo": "Kakkou no Iinazuke Season 2 5",
@@ -208,15 +218,5 @@
     "alt": "Kakkou no Iinazuke Season 2 5",
     "slug": "kakkou-no-iinazuke-season-2",
     "id": 7671
-  },
-  {
-    "titulo": "Grand Blue Season 2 5",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://tioanime.com/ver/grand-blue-season-2-5",
-    "imagen": "https://tioanime.com/uploads/thumbs/4251.jpg",
-    "alt": "Grand Blue Season 2 5",
-    "slug": "grand-blue-season-2",
-    "id": 3400
   }
 ]

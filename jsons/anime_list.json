@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "creado_en": "2025-08-06T21:03:28.162Z",
+    "creado_en": "2025-08-07T18:04:04.412Z",
     "total_animes": 4260
   },
   "animes": [
@@ -8,9 +8,9 @@
       "title": "Karaoke Iko!",
       "slug": "karaoke-iko",
       "image": "https://animeflv.net/uploads/animes/covers/4225.jpg",
-      "episodes_count": 2,
+      "episodes_count": 3,
       "status": "En emisión",
-      "next_episode_date": "2025-08-07",
+      "next_episode_date": "2025-08-14",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/karaoke-iko",
         "TIO": "https://tioanime.com/anime/karaoke-iko",
@@ -68,9 +68,9 @@
       "title": "Futari Solo Camp",
       "slug": "futari-solo-camp",
       "image": "https://animeflv.net/uploads/animes/covers/4221.jpg",
-      "episodes_count": 4,
+      "episodes_count": 5,
       "status": "En emisión",
-      "next_episode_date": "2025-08-07",
+      "next_episode_date": "2025-08-14",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/futari-solo-camp",
         "TIO": "https://tioanime.com/anime/futari-solo-camp",
@@ -563,9 +563,9 @@
       "title": "Tsuihousha Shokudou e Youkoso!",
       "slug": "tsuihousha-shokudou-e-youkoso",
       "image": "https://animeflv.net/uploads/animes/covers/4187.jpg",
-      "episodes_count": 5,
+      "episodes_count": 6,
       "status": "En emisión",
-      "next_episode_date": "2025-08-07",
+      "next_episode_date": "2025-08-14",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/tsuihousha-shokudou-e-youkoso",
         "TIO": "https://tioanime.com/anime/60523",
@@ -578,9 +578,9 @@
       "title": "Dandadan 2nd Season",
       "slug": "dandadan-2nd-season",
       "image": "https://animeflv.net/uploads/animes/covers/4188.jpg",
-      "episodes_count": 5,
+      "episodes_count": 6,
       "status": "En emisión",
-      "next_episode_date": "2025-08-07",
+      "next_episode_date": "2025-08-14",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/dandadan-2nd-season",
         "TIO": "https://tioanime.com/anime/60543",
@@ -1628,9 +1628,9 @@
       "title": "Dr. Stone: Science Future",
       "slug": "dr-stone-science-future",
       "image": "https://animeflv.net/uploads/animes/covers/4116.jpg",
-      "episodes_count": 16,
+      "episodes_count": 17,
       "status": "En emisión",
-      "next_episode_date": "2025-08-07",
+      "next_episode_date": "2025-08-14",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/dr-stone-science-future",
         "TIO": "https://tioanime.com/anime/dr-stone-science-future",
