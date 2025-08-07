@@ -114,12 +114,14 @@ a:hover {
 /* -------------------- CONTENIDO PRINCIPAL -------------------- */
 .layout-container {
     display: flex;
+    align-items: flex-start; /* 👈 esto permite que los hijos usen su propia altura */
     gap: 2rem;
     padding: 2rem;
 }
 
 .sidebar {
     width: 250px;
+    height: auto;
     background-color: var(--bg-color-medium);
     border-radius: 10px;
     padding: 2rem;
@@ -135,6 +137,7 @@ a:hover {
 
 .sidebar-menu {
     list-style: none;
+    padding-left: 0;
 }
 
 .sidebar-link {
@@ -160,7 +163,16 @@ a:hover {
 .sidebar-link:hover i, .sidebar-link.active i {
     color: #fff;
 }
+.sidebar-menu .anime-link {
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
 
+.sidebar-menu .anime-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    text-decoration: none;
+}
 .main-content {
     flex: 1;
 }
@@ -227,6 +239,12 @@ a:hover {
 .main-content {
     padding-bottom: 70px; /* O el valor que prefieras */
 }
+
+.text-danger {
+  --bs-text-opacity: 1;
+  color: rgb(0, 191, 255) !important;
+}
+
 /* -------------------- RESPONSIVE DESIGN -------------------- */
 @media (max-width: 992px) {
     .layout-container {

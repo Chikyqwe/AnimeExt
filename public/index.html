@@ -160,7 +160,7 @@
                 if (!Array.isArray(data)) return;
                 data.forEach(anime => {
                     const cardHtml = `
-                        <div class="anime-card-init" onclick="window.location.href='${anime.url}'">
+                        <div class="anime-card-init" onclick="window.location.href='/player?uid=${anime.id}&ep=${anime.episodioNum}'">
                             <img src="${anime.imagen}" alt="${anime.alt || anime.titulo}" class="card-img">
                             <div class="card-content">
                                 <h4 class="card-title">${anime.titulo}</h4>
@@ -225,8 +225,53 @@
         cerrarOverlay('menuOverlay');
         document.getElementById('adsOverlay').classList.remove('d-none');
     }
-</script>
 
+    function findAnimeByUId(id) {
+        // Verificar si el ID es un número válido
+        if (typeof id !== 'number' || id <= 0) {
+            console.error("El ID proporcionado no es un número válido.");
+            return null;
+        }
+        const animeEncontrado = fullAnimeList.find(anime => anime.id === id);
+
+        // Retornar el anime encontrado o null si no existe
+        return animeEncontrado || null;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const sidebarList = document.querySelector(".sidebar-menu");
+
+        const checkInterval = setInterval(() => {
+            if (Array.isArray(fullAnimeList) && fullAnimeList.length > 0) {
+                clearInterval(checkInterval); // Ya cargó, dejamos de checar
+
+                const animesEnEmision = fullAnimeList.filter(anime => anime.status === "En emisión").slice(0, 15); // Limita a 15 animes
+
+                animesEnEmision.forEach(anime => {
+                    const li = document.createElement("li");
+                    li.classList.add("mb-2");
+                    li.style.cursor = "pointer";
+
+                    li.innerHTML = `
+                        <div class="text-white text-decoration-none d-flex align-items-center anime-link">
+                            <i class="fa fa-play me-2 text-danger"></i>
+                            <span class="text-truncate">${anime.title}</span>
+                        </div>
+                    `;
+
+                    li.addEventListener('click', () => {
+                        console.log(anime.id)
+                        const dataAnime = findAnimeByUId(anime.id); // usa el id (1, 2, etc.)
+                        console.log(dataAnime)
+                        openModal(dataAnime, anime.title);
+                    });
+
+                    sidebarList.appendChild(li);
+                });
+            }
+        }, 300); // Intenta cada 300 ms
+    });
+</script>
 <script src="/static/index.js"></script>
 <script src="/static/functions_index.js"></script>
 </body>

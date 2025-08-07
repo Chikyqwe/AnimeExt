@@ -48,7 +48,7 @@ router.get('/api/player', (req, res) => {
 
     const ver_url = buildEpisodeUrl(anime_data, ep);
     if (!ver_url) {
-      return res.status(500).json({ error: 'No se pudo construir la URL del episodio' });
+      const ver_url = buildEpisodeUrl(anime_data, ep, 2);
     }
 
     const current_url = { base_url: ver_url };

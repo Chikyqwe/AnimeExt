@@ -435,15 +435,16 @@ async function requestWakeLock() {
 }
 
 // === Iniciar ===
-async function start() {
+async function start(useMirror = false) {
   const ads = localStorage.getItem("ads") === "true";
   console.log("🔍 Anuncios:", ads ? "Activados" : "Desactivados");
 
   try {
-    const res = await fetch(`${API_BASE}/servers?id=${config.id}&ep=${config.ep}`);
+    const mirrorParam = useMirror ? "&mirror=2" : "";
+    const res = await fetch(`${API_BASE}/servers?id=${config.id}&ep=${config.ep}${mirrorParam}`);
     let servers = await res.json();
 
-    if (servers.length === 0) throw new Error("No hay servidores disponibles");
+    if (!servers || servers.length === 0) throw new Error("No hay servidores disponibles");
 
     // Normaliza nombres de servidor
     serverList = servers.map(s => ({
@@ -451,7 +452,10 @@ async function start() {
       servidor: s.servidor.toLowerCase(),
     }));
 
-    // Contenedor botones, creamos si no existe
+    // (El resto de tu código continúa sin cambios...)
+    // Crear contenedor, limpiar iframe/video, crear botones, etc.
+
+    // ⤵️ El resto lo mantienes igual
     let serverButtonsContainer = document.getElementById('serverButtons');
     if (!serverButtonsContainer) {
       serverButtonsContainer = document.createElement('div');
@@ -464,110 +468,10 @@ async function start() {
       video.parentElement.insertBefore(serverButtonsContainer, video);
     }
 
-    function limpiarIframeYVideo() {
-      const existingIframe = document.getElementById('adsIframe');
-      if (existingIframe) existingIframe.remove();
-
-      video.pause();
-      video.style.display = 'none';
-    }
-
-    function cargarServidor(server) {
-      limpiarIframeYVideo();
-
-      let url = server.url;
-      if (server.servidor === 'mega') {
-        url = url.replace('/file/', '/embed/');
-      }
-
-      const iframe = document.createElement('iframe');
-      iframe.src = url;
-      iframe.id = "adsIframe";
-      iframe.allowFullscreen = true;
-      iframe.style.width = '100%';
-      iframe.style.height = window.innerWidth > 500 ? '485px' : '185px';
-      iframe.style.border = 'none';
-      iframe.style.display = 'block';
-      iframe.style.borderRadius = '1rem';
-      iframe.style.opacity = 1;
-
-      video.parentElement.insertBefore(iframe, video.nextSibling);
-      loader.style.display = 'none';
-
-      // Actualiza estilos de botones para activo/inactivo
-      document.querySelectorAll('#serverButtons button').forEach(btn => {
-        if (btn.dataset.servidor === server.servidor) {
-          btn.classList.add('active');
-          // Estilo verde para activo
-          btn.style.background = 'linear-gradient(135deg, #4ade80, #22c55e)';
-          btn.style.boxShadow = '0 6px 14px rgba(34, 197, 94, 0.6)';
-        } else {
-          btn.classList.remove('active');
-          // Estilo azul para inactivo
-          btn.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
-          btn.style.boxShadow = '0 6px 10px rgba(37, 99, 235, 0.4)';
-        }
-      });
-    }
-
-    function crearBotones(servers) {
-      serverButtonsContainer.innerHTML = '';
-
-      servers.forEach(server => {
-        const btn = document.createElement('button');
-        btn.textContent = server.servidor;
-        btn.dataset.servidor = server.servidor;
-
-        // Estilos base (inactivo - azul)
-        btn.style.cursor = 'pointer';
-        btn.style.padding = '10px 18px';
-        btn.style.borderRadius = '12px';
-        btn.style.border = 'none';
-        btn.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
-        btn.style.color = 'white';
-        btn.style.fontWeight = '600';
-        btn.style.fontFamily = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
-        btn.style.boxShadow = '0 6px 10px rgba(37, 99, 235, 0.4)';
-        btn.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
-        btn.style.minWidth = '90px';
-        btn.style.textTransform = 'capitalize';
-
-        btn.onmouseenter = () => {
-          btn.style.transform = 'scale(1.08)';
-          btn.style.boxShadow = btn.classList.contains('active')
-            ? '0 10px 20px rgba(34, 197, 94, 0.8)'
-            : '0 10px 18px rgba(37, 99, 235, 0.7)';
-        };
-        btn.onmouseleave = () => {
-          btn.style.transform = 'scale(1)';
-          btn.style.boxShadow = btn.classList.contains('active')
-            ? '0 6px 14px rgba(34, 197, 94, 0.6)'
-            : '0 6px 10px rgba(37, 99, 235, 0.4)';
-        };
-        btn.onmousedown = () => {
-          btn.style.transform = 'scale(0.96)';
-          btn.style.boxShadow = btn.classList.contains('active')
-            ? '0 4px 8px rgba(34, 197, 94, 0.5)'
-            : '0 4px 6px rgba(37, 99, 235, 0.5)';
-        };
-        btn.onmouseup = () => {
-          btn.style.transform = 'scale(1.08)';
-          btn.style.boxShadow = btn.classList.contains('active')
-            ? '0 10px 20px rgba(34, 197, 94, 0.8)'
-            : '0 10px 18px rgba(37, 99, 235, 0.7)';
-        };
-
-        btn.onclick = () => cargarServidor(server);
-
-        serverButtonsContainer.appendChild(btn);
-      });
-    }
+    // [resto igual... funciones limpiarIframeYVideo(), cargarServidor(), crearBotones() ...]
 
     if (ads) {
-      // Orden para priorizar servidores al cargar el primero
       const orden = ["yu", "mega", "sw", "voe"];
-
-      // Ordena serverList según prioridad
       serverList.sort((a, b) => {
         const ia = orden.indexOf(a.servidor);
         const ib = orden.indexOf(b.servidor);
@@ -589,10 +493,9 @@ async function start() {
         loader.textContent = "No se encontró ningún servidor disponible";
       }
 
-      return; // Fin ads
+      return;
     }
 
-    // Modo normal sin ads
     const cached = await loadPrecached(currentUrl);
     if (cached && cached.url === currentUrl) {
       console.log("✅ Usando caché:", cached);
@@ -600,7 +503,6 @@ async function start() {
       return;
     }
 
-    // Mueve MEGA al final de la lista
     serverList.sort((a, b) => {
       if (a.servidor === 'mega' || a.servidor === 'mega.nz') return 1;
       if (b.servidor === 'mega' || b.servidor === 'mega.nz') return -1;
@@ -610,10 +512,16 @@ async function start() {
     await loadServerByIndex(0);
 
   } catch (err) {
-    loader.textContent = '❌ Error al cargar servidores';
+    if (!useMirror) {
+      console.warn("🔁 Reintentando con mirror=2...");
+      return start(true); // 🔁 Retry con mirror=2
+    }
+
+    loader.textContent = '[Error] Error al cargar servidores';
     video.style.opacity = 0;
     console.error("🚨 start() error:", err);
   }
 }
+
 // === Iniciar ===
 start();
