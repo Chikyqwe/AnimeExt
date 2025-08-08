@@ -17,4 +17,4 @@ video{width:100%;height:485px;border-radius:16px;background:#000;opacity:0;trans
 .episode-btn:hover{background:#009e87!important}body.light-theme .episode-btn:hover{background:#009e87!important}
 .episode-btn.active{background:#fff!important;color:#121212!important;box-shadow:0 0 8px #00bfa5}body.light-theme .episode-btn.active{background:#121212!important;color:#fff!important}
 .episode-btn,.episode-btn.active,.nav-buttons button{transition:background-color .6s ease,color .6s ease,box-shadow .4s ease}
-@media(max-width:600px){.video{height: 200px; width: 100%;}}
+@media (max-width: 400px) {video{height: 200px !important;width: 100% !important;}}

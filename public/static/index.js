@@ -9,6 +9,8 @@ const mainContent = document.getElementById('main-content');
 const recolectForm = document.getElementById('recolect-form');
 const pageTitle = document.getElementById('page-title');
 const suggestionBox = document.getElementById('search-suggestions');
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const mobileDropdownMenu = document.getElementById('mobileDropdownMenu');
 
 const DB_NAME = 'FavoritosDB';
 const DB_VERSION = 1;
@@ -26,7 +28,142 @@ let fullAnimeList = [];
  * Eventos principales que se ejecutan al cargar la página.
  */
 
-// Evento de carga de la ventana (window.onload)
+document.addEventListener("DOMContentLoaded", () => {
+    fetch("/anime/last")
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById("anime-list");
+            if (!Array.isArray(data)) return;
+            data.forEach(anime => {
+                const cardHtml = `
+                        <div class="anime-card-init" onclick="window.location.href='/player?uid=${anime.id}&ep=${anime.episodioNum}'">
+                            <img src="${anime.imagen}" alt="${anime.alt || anime.titulo}" class="card-img">
+                            <div class="card-content">
+                                <h4 class="card-title">${anime.titulo}</h4>
+                                <p class="card-subtitle">${anime.episodio}</p>
+                            </div>
+                        </div>`;
+                container.innerHTML += cardHtml;
+            });
+        })
+        .catch(error => console.error("Error al obtener datos:", error));
+});
+
+function searchAnime(e) {
+    e.preventDefault();
+    const query = document.getElementById("searchInput").value;
+    if (query) alert("Buscando: " + query);
+}
+
+// Funciones modificadas para mostrar/ocultar elementos
+function mostrarInicio(e) {
+    showLoader();
+    e.preventDefault();
+
+    // Mostrar sección y ocultar la otra
+    document.getElementById("anime-section").classList.remove("d-none");
+    document.getElementById("directory-section").classList.add("d-none");
+
+    // Actualizar clases active en ambos menús
+    setActiveMenu('mobileNavInicio');
+
+    // Mostrar barra lateral y ocultar paginación
+    document.querySelector('.sidebar').classList.remove('d-none');
+    document.getElementById("pagination-controls").classList.add("d-none");
+
+    // Esperar 1 segundo para cerrar loader
+    setTimeout(() => {
+        hideLoader();
+    }, 1000);
+}
+
+function mostrarDirectorio(e) {
+    showLoader();
+    e.preventDefault();
+
+    // Mostrar sección y ocultar la otra
+    document.getElementById("anime-section").classList.add("d-none");
+    document.getElementById("directory-section").classList.remove("d-none");
+
+    // Actualizar clases active en ambos menús
+    setActiveMenu('mobileNavDirectorio');
+
+    // Ocultar barra lateral y mostrar paginación
+    document.querySelector('.sidebar').classList.add('d-none');
+    document.getElementById("pagination-controls").classList.remove("d-none");
+
+    // Esperar 1 segundo para cerrar loader
+    setTimeout(() => {
+        hideLoader();
+    }, 1000);
+}
+function abrirMenuOpciones() {
+    const overlay = document.getElementById('menuOverlay');
+    overlay.classList.remove('d-none');
+    setTimeout(() => overlay.classList.add('show'), 10);
+}
+
+function cerrarOverlay(id) {
+    const overlay = document.getElementById(id);
+    overlay.classList.remove('show');
+    setTimeout(() => overlay.classList.add('d-none'), 300);
+}
+
+function verPolitica() {
+    cerrarOverlay('menuOverlay');
+    initPolicyModal();
+}
+
+function verAds() {
+    cerrarOverlay('menuOverlay');
+    document.getElementById('adsOverlay').classList.remove('d-none');
+}
+
+function findAnimeByUId(id) {
+    // Verificar si el ID es un número válido
+    if (typeof id !== 'number' || id <= 0) {
+        console.error("El ID proporcionado no es un número válido.");
+        return null;
+    }
+    const animeEncontrado = fullAnimeList.find(anime => anime.id === id);
+
+    // Retornar el anime encontrado o null si no existe
+    return animeEncontrado || null;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const sidebarList = document.querySelector(".sidebar-menu");
+
+    const checkInterval = setInterval(() => {
+        if (Array.isArray(fullAnimeList) && fullAnimeList.length > 0) {
+            clearInterval(checkInterval); // Ya cargó, dejamos de checar
+
+            const animesEnEmision = fullAnimeList.filter(anime => anime.status === "En emisión").slice(0, 15); // Limita a 15 animes
+
+            animesEnEmision.forEach(anime => {
+                const li = document.createElement("li");
+                li.classList.add("mb-2");
+                li.style.cursor = "pointer";
+
+                li.innerHTML = `
+                        <div class="text-white text-decoration-none d-flex align-items-center anime-link">
+                            <i class="fa fa-play me-2 text-danger"></i>
+                            <span class="text-truncate">${anime.title}</span>
+                        </div>
+                    `;
+
+                li.addEventListener('click', () => {
+                    console.log(anime.id)
+                    const dataAnime = findAnimeByUId(anime.id); // usa el id (1, 2, etc.)
+                    console.log(dataAnime)
+                    openModal(dataAnime, anime.title);
+                });
+
+                sidebarList.appendChild(li);
+            });
+        }
+    }, 300); // Intenta cada 300 ms
+});
 window.addEventListener('load', async () => {
     const loader = document.getElementById('loader');
     const MIN_LOADING_TIME = 3000;
@@ -118,6 +255,64 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+/**
+ * =======================================================
+ * MENU HAMBURGUESA
+ * =======================================================
+ */
+function toggleMobileMenu(show) {
+    if (show === undefined) {
+        // toggle
+        const isVisible = mobileDropdownMenu.classList.contains('show');
+        mobileDropdownMenu.classList.toggle('show', !isVisible);
+        mobileDropdownMenu.setAttribute('aria-hidden', isVisible ? 'true' : 'false');
+    } else if (show) {
+        mobileDropdownMenu.classList.add('show');
+        mobileDropdownMenu.setAttribute('aria-hidden', 'false');
+    } else {
+        mobileDropdownMenu.classList.remove('show');
+        mobileDropdownMenu.setAttribute('aria-hidden', 'true');
+    }
+}
+
+hamburgerBtn.addEventListener('click', () => {
+    toggleMobileMenu();
+});
+
+// Cerrar menú si haces click fuera
+document.addEventListener('click', (e) => {
+    if (!mobileDropdownMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+        toggleMobileMenu(false);
+    }
+});
+
+// Cerrar menú al hacer scroll
+window.addEventListener('scroll', () => {
+    toggleMobileMenu(false);
+});
+
+// Función para establecer la clase active en ambos menús
+function setActiveMenu(idActivo) {
+    // Menú principal
+    const mainLinks = document.querySelectorAll('nav.main-nav a.nav-item');
+    mainLinks.forEach(link => {
+        if (link.id === idActivo.replace('mobile', '')) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
+
+    // Menú móvil
+    const mobileLinks = document.querySelectorAll('#mobileDropdownMenu a');
+    mobileLinks.forEach(link => {
+        if (link.id === idActivo) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
+}
 
 /**
  * =======================================================
@@ -131,6 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * Función para cargar la lista de animes desde el servidor.
  * Utiliza un token de autenticación generado dinámicamente.
  */
+
 async function fetchJsonList() {
     const key1 = window.getCookieByName('_K0x1FLVTA0xAA1');
     const key2 = window.getCookieByName('_K0x2FLVTA0xFF2');
@@ -830,15 +1026,15 @@ async function agregarBotonFavoritoEnCardsIndexed() {
  * Código ofuscado para la generación de tokens. No se modifica
  * ya que su estructura es intencional.
  */
-(function(){
+(function () {
     const _0x5c6b = ['split', 'length', 'from', 'charCodeAt', 'map', 'push', 'slice', 'concat', 'toString', 'padStart', 'join', 'reduce', 'cookie', 'log', 'shift', 'get'];
-    const _0x1f45 = function(_0x4371e1, _0x27160e) {
+    const _0x1f45 = function (_0x4371e1, _0x27160e) {
         _0x4371e1 = _0x4371e1 - 0x0;
         let _0x4bcda9 = _0x5c6b[_0x4371e1];
         return _0x4bcda9;
     };
 
-    window[_0x1f45('0xf') + 'CookieByName'] = function(_0x370a0d) {
+    window[_0x1f45('0xf') + 'CookieByName'] = function (_0x370a0d) {
         const _0x4928f3 = document[_0x1f45('0xc')] ? document[_0x1f45('0xc')]['split']('; ') : [];
         for (let _0x24e2b1 = 0x0; _0x24e2b1 < _0x4928f3[_0x1f45('0x1')]; _0x24e2b1++) {
             const _0x15e3a1 = _0x4928f3[_0x24e2b1][_0x1f45('0x0')]('=');
@@ -849,63 +1045,63 @@ async function agregarBotonFavoritoEnCardsIndexed() {
         return null;
     };
 
-    function _0x4ffcb8(_0x3766cd){
-        if(typeof _0x3766cd!=='string') return[];
-        return Array[_0x1f45('0x2')](_0x3766cd)[_0x1f45('0x4')](_0x38c360=>_0x38c360[_0x1f45('0x3')](0x0));
+    function _0x4ffcb8(_0x3766cd) {
+        if (typeof _0x3766cd !== 'string') return [];
+        return Array[_0x1f45('0x2')](_0x3766cd)[_0x1f45('0x4')](_0x38c360 => _0x38c360[_0x1f45('0x3')](0x0));
     }
 
-    function _0x51d7c9(_0x5f35d4,_0x1685c2){
-        if(!Array['isArray'](_0x5f35d4)||!Array['isArray'](_0x1685c2)){
-            console[_0x1f45('0xd')]('XOR inputs invalid',_0x5f35d4,_0x1685c2);
-            return[];
+    function _0x51d7c9(_0x5f35d4, _0x1685c2) {
+        if (!Array['isArray'](_0x5f35d4) || !Array['isArray'](_0x1685c2)) {
+            console[_0x1f45('0xd')]('XOR inputs invalid', _0x5f35d4, _0x1685c2);
+            return [];
         }
-        const _0x1a4e38=Math['min'](_0x5f35d4[_0x1f45('0x1')],_0x1685c2[_0x1f45('0x1')]);
-        let _0x26db97=[];
-        for(let _0x59cc3b=0x0;_0x59cc3b<_0x1a4e38;_0x59cc3b++)_0x26db97[_0x1f45('0x5')](_0x5f35d4[_0x59cc3b]^_0x1685c2[_0x59cc3b]);
+        const _0x1a4e38 = Math['min'](_0x5f35d4[_0x1f45('0x1')], _0x1685c2[_0x1f45('0x1')]);
+        let _0x26db97 = [];
+        for (let _0x59cc3b = 0x0; _0x59cc3b < _0x1a4e38; _0x59cc3b++)_0x26db97[_0x1f45('0x5')](_0x5f35d4[_0x59cc3b] ^ _0x1685c2[_0x59cc3b]);
         return _0x26db97;
     }
 
-    function _0x24506b(_0x175b38,_0x1d2020){
-        if(!Array['isArray'](_0x175b38)){
-            console[_0x1f45('0xd')]('rotateArray: argument is not an array:',_0x175b38);
-            return[];
+    function _0x24506b(_0x175b38, _0x1d2020) {
+        if (!Array['isArray'](_0x175b38)) {
+            console[_0x1f45('0xd')]('rotateArray: argument is not an array:', _0x175b38);
+            return [];
         }
-        const _0x227863=_0x175b38[_0x1f45('0x1')];
-        if(_0x227863===0x0) return[];
-        _0x1d2020=_0x1d2020%_0x227863;
-        return _0x175b38[_0x1f45('0x6')](_0x1d2020)[_0x1f45('0x7')](_0x175b38[_0x1f45('0x6')](0x0,_0x1d2020));
+        const _0x227863 = _0x175b38[_0x1f45('0x1')];
+        if (_0x227863 === 0x0) return [];
+        _0x1d2020 = _0x1d2020 % _0x227863;
+        return _0x175b38[_0x1f45('0x6')](_0x1d2020)[_0x1f45('0x7')](_0x175b38[_0x1f45('0x6')](0x0, _0x1d2020));
     }
 
-    function _0x328e7f(_0x3f406c){
-        return _0x3f406c[_0x1f45('0x4')](_0x4a1e56=>_0x4a1e56[_0x1f45('0x8')](0x10)[_0x1f45('0x9')](2,'0'))[_0x1f45('0xa')]('');
+    function _0x328e7f(_0x3f406c) {
+        return _0x3f406c[_0x1f45('0x4')](_0x4a1e56 => _0x4a1e56[_0x1f45('0x8')](0x10)[_0x1f45('0x9')](2, '0'))[_0x1f45('0xa')]('');
     }
 
-    function _0x1f98a4(_0x28af81){
-        if(!Array['isArray'](_0x28af81)||_0x28af81[_0x1f45('0x1')]===0x0){
-            console[_0x1f45('0xd')]('simpleHash: invalid or empty array',_0x28af81);
+    function _0x1f98a4(_0x28af81) {
+        if (!Array['isArray'](_0x28af81) || _0x28af81[_0x1f45('0x1')] === 0x0) {
+            console[_0x1f45('0xd')]('simpleHash: invalid or empty array', _0x28af81);
             return 0x0;
         }
-        return _0x28af81[_0x1f45('0xb')]((_0x1f5514,_0x4f6a6e)=>(_0x1f5514+_0x4f6a6e)%0x100,0x0);
+        return _0x28af81[_0x1f45('0xb')]((_0x1f5514, _0x4f6a6e) => (_0x1f5514 + _0x4f6a6e) % 0x100, 0x0);
     }
 
-    function generateToken(_0x4b91db,_0x1d2b94){
-        const _0x11f4a9=_0x4ffcb8(_0x4b91db);
-        const _0x20ec3c=_0x4ffcb8(_0x1d2b94);
-        if(_0x11f4a9[_0x1f45('0x1')]===0x0||_0x20ec3c[_0x1f45('0x1')]===0x0){
-            console[_0x1f45('0xd')]('Empty or invalid input strings',_0x4b91db,_0x1d2b94);
-            return'';
+    function generateToken(_0x4b91db, _0x1d2b94) {
+        const _0x11f4a9 = _0x4ffcb8(_0x4b91db);
+        const _0x20ec3c = _0x4ffcb8(_0x1d2b94);
+        if (_0x11f4a9[_0x1f45('0x1')] === 0x0 || _0x20ec3c[_0x1f45('0x1')] === 0x0) {
+            console[_0x1f45('0xd')]('Empty or invalid input strings', _0x4b91db, _0x1d2b94);
+            return '';
         }
-        let _0x3c0927=_0x51d7c9(_0x11f4a9,_0x20ec3c);
-        if(!Array['isArray'](_0x3c0927)||_0x3c0927[_0x1f45('0x1')]===0x0){
-            console[_0x1f45('0xd')]('Invalid XOR result',_0x3c0927);
-            return'';
+        let _0x3c0927 = _0x51d7c9(_0x11f4a9, _0x20ec3c);
+        if (!Array['isArray'](_0x3c0927) || _0x3c0927[_0x1f45('0x1')] === 0x0) {
+            console[_0x1f45('0xd')]('Invalid XOR result', _0x3c0927);
+            return '';
         }
-        const _0x24e10e=(_0x11f4a9[_0x1f45('0xb')]((_0x5e92f1,_0x56b58e)=>_0x5e92f1+_0x56b58e,0x0)+_0x20ec3c[_0x1f45('0xb')]((_0x238a64,_0x4e313d)=>_0x238a64+_0x4e313d,0x0))%_0x3c0927[_0x1f45('0x1')];
-        _0x3c0927=_0x24506b(_0x3c0927,_0x24e10e);
-        const _0x11a32f=_0x1f98a4(_0x3c0927);
+        const _0x24e10e = (_0x11f4a9[_0x1f45('0xb')]((_0x5e92f1, _0x56b58e) => _0x5e92f1 + _0x56b58e, 0x0) + _0x20ec3c[_0x1f45('0xb')]((_0x238a64, _0x4e313d) => _0x238a64 + _0x4e313d, 0x0)) % _0x3c0927[_0x1f45('0x1')];
+        _0x3c0927 = _0x24506b(_0x3c0927, _0x24e10e);
+        const _0x11a32f = _0x1f98a4(_0x3c0927);
         _0x3c0927[_0x1f45('0x5')](_0x11a32f);
         return _0x328e7f(_0x3c0927);
     }
 
-    window['generateToken']=generateToken;
+    window['generateToken'] = generateToken;
 })();
