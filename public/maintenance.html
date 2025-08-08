@@ -43,5 +43,33 @@
             <p>&copy; 2025 Anime Ext. Todos los derechos reservados.</p>
         </div>
     </div>
+<script>
+function notifyParent() {
+  if (window.parent !== window) {
+    window.parent.postMessage({ path: window.location.pathname }, '*');
+  }
+}
+
+notifyParent();
+
+window.addEventListener('popstate', notifyParent);
+
+// Hook para pushState y replaceState
+(function(history){
+  const pushState = history.pushState;
+  history.pushState = function() {
+    const ret = pushState.apply(history, arguments);
+    notifyParent();
+    return ret;
+  };
+  const replaceState = history.replaceState;
+  history.replaceState = function() {
+    const ret = replaceState.apply(history, arguments);
+    notifyParent();
+    return ret;
+  };
+})(window.history);
+</script>
+
 </body>
 </html>
