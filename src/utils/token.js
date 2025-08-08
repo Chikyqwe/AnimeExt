@@ -1,4 +1,4 @@
-// utils/token.js (opcional, para reusar luego)
+// utils/token.js
 function randomKey(length = 8) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -8,7 +8,6 @@ function randomKey(length = 8) {
   return result;
 }
 
-// utils/token.js (agrega esta función junto a randomKey)
 function buildComplexToken(key1, key2) {
   function stringToCharCodes(str) {
     return Array.from(str).map(c => c.charCodeAt(0));

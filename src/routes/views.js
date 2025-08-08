@@ -14,13 +14,13 @@ router.get('/', (req, res) => {
   res.cookie('_K0x1FLVTA0xAA1', key1, {
     httpOnly: false,
     path: '/',
-    sameSite: 'Lax',  // importante para evitar bloqueos
+    sameSite: 'Secure',  // importante para evitar bloqueos
     secure: false     // debe ser false si no usas HTTPS
   });
   res.cookie('_K0x2FLVTA0xFF2', key2, {
     httpOnly: false,
     path: '/',
-    sameSite: 'Lax',
+    sameSite: 'Secure',
     secure: false
   });
 
