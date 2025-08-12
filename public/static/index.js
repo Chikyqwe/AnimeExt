@@ -49,12 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(error => console.error("Error al obtener datos:", error));
 });
 
-function searchAnime(e) {
-    e.preventDefault();
-    const query = document.getElementById("searchInput").value;
-    if (query) alert("Buscando: " + query);
-}
-
 // Funciones modificadas para mostrar/ocultar elementos
 function mostrarInicio(e) {
     showLoader();
@@ -80,6 +74,25 @@ function mostrarInicio(e) {
 function mostrarDirectorio(e) {
     showLoader();
     e.preventDefault();
+
+    // Mostrar sección y ocultar la otra
+    document.getElementById("anime-section").classList.add("d-none");
+    document.getElementById("directory-section").classList.remove("d-none");
+
+    // Actualizar clases active en ambos menús
+    setActiveMenu('mobileNavDirectorio');
+
+    // Ocultar barra lateral y mostrar paginación
+    document.querySelector('.sidebar').classList.add('d-none');
+    document.getElementById("pagination-controls").classList.remove("d-none");
+
+    // Esperar 1 segundo para cerrar loader
+    setTimeout(() => {
+        hideLoader();
+    }, 1000);
+}
+function mostrarDirectorio_S() {
+    showLoader();
 
     // Mostrar sección y ocultar la otra
     document.getElementById("anime-section").classList.add("d-none");
@@ -170,11 +183,37 @@ window.addEventListener('load', async () => {
     const startTime = performance.now();
 
     try {
-        await fetchJsonList();
+        await fetchJsonList(); // Espera a que se cargue la lista completa
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchTerm = urlParams.get('s');
+
+        // Si existe el parámetro 's', ejecuta la búsqueda.
+        if (searchTerm) {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = searchTerm;
+            }
+            searchAnime(null, searchTerm);
+        } else {
+            // Si no hay parámetro 's', muestra la paginación normal.
+            const page = getPageParam();
+            const paginated = paginate(fullAnimeList, page);
+            clearCards();
+            for (const anime of paginated) {
+                createCard(anime, anime.title);
+            }
+            createPagination(fullAnimeList.length, page);
+        }
+
+        // Espera a que las imágenes sean visibles (esto es crucial).
         await waitForVisibleImages('.anime-card img');
+        
     } catch (e) {
         console.error("Error al cargar los datos:", e);
     } finally {
+        // Esta sección se ejecutará después de que TODO lo anterior haya finalizado
+        // (incluida la búsqueda y la espera de las imágenes).
         const elapsed = performance.now() - startTime;
         const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
         setTimeout(() => {
@@ -183,6 +222,7 @@ window.addEventListener('load', async () => {
         }, remainingTime);
     }
 });
+
 
 // Evento para el historial de navegación (back/forward)
 window.addEventListener('popstate', () => {
@@ -584,15 +624,36 @@ document.addEventListener('click', e => {
     }
 });
 
+
 /**
  * Filtra y muestra los animes basándose en la búsqueda del usuario.
- * @param {Event} event - El evento del formulario.
+ * @param {Event | null} event - El evento del formulario (puede ser nulo si se llama desde la carga).
+ * @param {string} [term=null] - El término de búsqueda opcional para usar en lugar del input.
  */
-function searchAnime(event) {
-    if (event.preventDefault) event.preventDefault();
-
-    const input = document.getElementById('searchInput').value;
+function searchAnime(event = null, term = null) {
+    if (event && event.preventDefault) {
+        event.preventDefault();
+        mostrarDirectorio(event);
+    }
+    if (term) {mostrarDirectorio_S();}
+    const input = term || document.getElementById('searchInput').value;
     const inputNormalized = normalizeText(input);
+
+    const url = new URL(window.location);
+
+    // Si hay una búsqueda, agrega el parámetro 's' a la URL.
+    // Si no hay búsqueda, lo elimina.
+    if (inputNormalized) {
+        url.searchParams.set('s', inputNormalized);
+    } else {
+        url.searchParams.delete('s');
+    }
+
+    // Actualiza la URL sin recargar la página si no hay término inicial.
+    // Si la función se llama desde la carga, no es necesario hacer pushState.
+    if (!term) {
+        window.history.pushState({}, '', url);
+    }
 
     if (!inputNormalized) {
         const page = getPageParam();
@@ -618,8 +679,6 @@ function searchAnime(event) {
     const pagination = document.getElementById('pagination');
     if (pagination) pagination.innerHTML = '';
 }
-
-
 /**
  * =======================================================
  * MODAL Y FAVORITOS

@@ -5,8 +5,6 @@ const { http, https } = require('follow-redirects');
 
 // Funci�n para el proxy de im�genes
 async function proxyImage(url, res) {
-  console.log(`[PROXY IMAGE] Solicitud de imagen para URL: ${url} `);
-
   if (!url) {
     console.warn('[PROXY IMAGE] Parámetro url faltante');
     return res.status(400).send('URL faltante');
@@ -19,7 +17,6 @@ async function proxyImage(url, res) {
     res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
     res.setHeader('Cache-Control', 'no-store');
     
-    console.log(`[PROXY IMAGE] Imagen obtenida con status: ${response.status}`);
     response.data.pipe(res);
   } catch (err) {
     console.error(`[PROXY IMAGE] Error al obtener imagen: ${err.message}`);

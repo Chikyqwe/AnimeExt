@@ -95,94 +95,191 @@ async function extractAllVideoLinks(pageUrl) {
   const $ = cheerio.load(html);
   let videos = [];
 
-  $('script').each((_, el) => {
-    const scriptContent = $(el).html();
-    const match =
-      scriptContent && scriptContent.match(/var\s+videos\s*=\s*(\[.*?\]|\{[\s\S]*?\});/s);
-    if (!match) return;
-
+  function transformObeywish(url) {
     try {
-      const rawJson = match[1].replace(/\\\//g, '/');
-      const parsed = JSON.parse(rawJson);
-
-      if (parsed.SUB) {
-        videos = parsed.SUB.map((v) => ({
-          servidor: v.server || v[0],
-          url: v.url || v.code || v[1]
-        }));
-      } else if (Array.isArray(parsed) && parsed[0]?.length >= 2) {
-        videos = parsed.map((v) => ({ servidor: v[0], url: v[1] }));
+      const u = new URL(url);
+      if (u.hostname.includes('obeywish.com')) {
+        u.hostname = 'asnwish.com';
+        return u.toString();
       }
-    } catch (err) {
-      console.error('[EXTRACTOR] Error parseando videos:', err);
+      return url;
+    } catch {
+      return url;
     }
-  });
+  }
+
+  if (/animeid/i.test(pageUrl)) {
+    // Método especial para AnimeID
+    $('#partes .parte').each((_, el) => {
+      let rawData = $(el).attr('data');
+
+      try {
+        rawData = rawData.replace(/'/g, '"'); // comillas simples a dobles
+        const parsed = JSON.parse(rawData);
+
+        if (parsed.v) {
+          const iframeHtml = parsed.v
+            .replace(/\\u003C/g, '<')
+            .replace(/\\u003E/g, '>')
+            .replace(/\\u002F/g, '/');
+          const match = iframeHtml.match(/src="([^"]+)"/i);
+          if (match) {
+            const finalUrl = transformObeywish(match[1]);
+            videos.push({
+              servidor: new URL(finalUrl).hostname,
+              url: finalUrl
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error parseando parte:', err);
+      }
+    });
+  } else {
+    // Método genérico original
+    $('script').each((_, el) => {
+      const scriptContent = $(el).html();
+      const match =
+        scriptContent &&
+        scriptContent.match(/var\s+videos\s*=\s*(\[.*?\]|\{[\s\S]*?\});/s);
+      if (!match) return;
+
+      try {
+        const rawJson = match[1].replace(/\\\//g, '/');
+        const parsed = JSON.parse(rawJson);
+
+        if (parsed.SUB) {
+          videos = parsed.SUB.map((v) => {
+            const url = v.url || v.code || v[1];
+            const finalUrl = transformObeywish(url);
+            return {
+              servidor: v.server || v[0],
+              url: finalUrl
+            };
+          });
+        } else if (Array.isArray(parsed) && parsed[0]?.length >= 2) {
+          videos = parsed.map((v) => {
+            const finalUrl = transformObeywish(v[1]);
+            return {
+              servidor: v[0],
+              url: finalUrl
+            };
+          });
+        }
+      } catch (err) {
+        console.error('[EXTRACTOR] Error parseando videos:', err);
+      }
+    });
+  }
 
   console.log(`[EXTRACTOR] Videos extraídos: ${videos.length}`);
   return videos;
 }
 
-async function extractFromSW(swiftUrl) {
-  const browser = await getPlaywrightBrowser();
-  const context = await browser.newContext({ userAgent: UA_FIREFOX });
+async function extractM3u8(m3u8Url, maxBrowserRetries = 3) {
+  const maxTabs = 3;
 
-  await context.route(/\.(png|jpg|gif|css|woff|woff2|ttf)$/i, (route) => route.abort());
+  for (let browserAttempt = 1; browserAttempt <= maxBrowserRetries; browserAttempt++) {
+    let browser;
+    try {
+      console.log(`Intento de navegador ${browserAttempt} de ${maxBrowserRetries}`);
+      browser = await getPlaywrightBrowser();
+      const context = await browser.newContext({ userAgent: UA_FIREFOX });
+      await context.route(/\.(png|jpg|gif|css|woff|woff2|ttf)$/i, route => route.abort());
 
-  const page = await context.newPage();
-  let masterM3u8Url;
+      let indexM3u8Url;
+      let pageWithContent;
 
-  page.on('response', (res) => {
-    const url = res.url();
-    if (url.includes('m3u8') && url.endsWith('master.m3u8')) {
-      masterM3u8Url = url;
+      // 1. Primer intento en la pestaña inicial
+      const initialPage = await context.newPage();
+      initialPage.on('response', (res) => {
+        const url = res.url();
+        console.log(url);
+        if (/index-[^/]+\.m3u8$/i.test(url)) {
+          console.log("Found index m3u8:", url);
+          indexM3u8Url = url;
+        }
+      });
+      await initialPage.goto(m3u8Url, { waitUntil: 'networkidle', timeout: 20000 });
+
+      const timeout = 6000;
+      const pollingInterval = 250;
+      const start = Date.now();
+      while (!indexM3u8Url && Date.now() - start < timeout) {
+        await initialPage.waitForTimeout(pollingInterval);
+      }
+
+      // Si se encuentra el m3u8 en la primera pestaña, se salta el resto de la lógica
+      if (indexM3u8Url) {
+        pageWithContent = initialPage;
+      } else {
+        console.warn("No se encontró index.m3u8 en el primer intento. Abriendo nuevas pestañas.");
+        await initialPage.close();
+
+        // 2. Lógica para abrir múltiples pestañas si el primer intento falla
+        for (let tabAttempt = 1; tabAttempt <= maxTabs; tabAttempt++) {
+          console.log(`Abriendo pestaña ${tabAttempt} de ${maxTabs}`);
+          const page = await context.newPage();
+          page.on('response', (res) => {
+            const url = res.url();
+            console.log(url);
+            if (/index-[^/]+\.m3u8$/i.test(url)) {
+              console.log("Found index m3u8:", url);
+              indexM3u8Url = url;
+            }
+          });
+
+          await page.goto(m3u8Url, { waitUntil: 'networkidle', timeout: 20000 });
+          await page.waitForTimeout(timeout); // Esperar un tiempo para ver si aparece el m3u8
+
+          if (indexM3u8Url) {
+            console.log(`¡Index m3u8 encontrado en la pestaña ${tabAttempt}!`);
+            pageWithContent = page;
+            break; // Salir del bucle de pestañas
+          } else {
+            console.warn(`No se encontró index.m3u8 en la pestaña ${tabAttempt}.`);
+            await page.close();
+          }
+        }
+      }
+
+      if (!pageWithContent) {
+        console.warn(`No se pudo encontrar index.m3u8 en ninguna de las ${maxTabs} pestañas. Intentando con una nueva instancia del navegador.`);
+        await browser.close();
+        continue; // Pasar al siguiente intento del bucle de navegadores
+      }
+      
+      // Si se encontró el m3u8 en cualquier intento, se procede a descargar el contenido
+      async function fetchTextInPage(url) {
+        return withRetries(() =>
+          pageWithContent.evaluate(async (u) => {
+            const r = await fetch(u);
+            if (!r.ok) throw new Error(r.status);
+            return await r.text();
+          }, url)
+        );
+      }
+
+      const indexContent = await fetchTextInPage(indexM3u8Url);
+
+      await context.close();
+      await browser.close();
+
+      return [{ url: indexM3u8Url, content: indexContent }];
+
+    } catch (error) {
+      console.error(`Error en intento de navegador ${browserAttempt}:`, error);
+      if (browser) {
+        try {
+          await browser.close();
+        } catch (_) {}
+      }
+      if (browserAttempt === maxBrowserRetries) {
+        console.error('Se agotaron los intentos de navegador.');
+        return [];
+      }
     }
-  });
-
-  await page.goto(swiftUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
-
-  const timeout = 6000;
-  const pollingInterval = 250;
-  const start = Date.now();
-  while (!masterM3u8Url && Date.now() - start < timeout) {
-    await page.waitForTimeout(pollingInterval);
   }
-
-  if (!masterM3u8Url) {
-    await context.close();
-    return [];
-  }
-
-  async function fetchTextInPage(url) {
-    return withRetries(() =>
-      page.evaluate(async (u) => {
-        const r = await fetch(u);
-        if (!r.ok) throw new Error(r.status);
-        return await r.text();
-      }, url)
-    );
-  }
-
-  const masterContent = await fetchTextInPage(masterM3u8Url);
-
-  const base = new URL(masterM3u8Url);
-  const childUrls = masterContent
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l && !l.startsWith('#'))
-    .map((l) => (l.startsWith('http') ? l : new URL(l, base).href));
-
-  const children = await Promise.allSettled(
-    childUrls.map(async (u) => {
-      const content = await fetchTextInPage(u);
-      return { url: u, content };
-    })
-  );
-
-  await context.close();
-  return [
-    { url: masterM3u8Url, content: masterContent },
-    ...children.filter((r) => r.status === 'fulfilled').map((r) => r.value)
-  ];
 }
 
 async function interceptPuppeteer(pageUrl, fileRegex) {
@@ -220,11 +317,12 @@ function pass() {
 const extractors = {
   yourupload: (u) => interceptPuppeteer(u, /\.mp4$/),
   yu: (u) => interceptPuppeteer(u, /\.mp4$/),
-  streamwish: extractFromSW,
-  sw: extractFromSW,
-  swiftplayers: extractFromSW,
+  streamwish: extractM3u8,
+  sw: extractM3u8,
+  swiftplayers: extractM3u8,
   'mega.nz': pass,
-  mega: pass
+  mega: pass,
+  obeywish: extractM3u8
 };
 
 function getExtractor(name) {

@@ -37,9 +37,17 @@ const apiQueue = require('../services/queueService');
 function normalizeServerName(name) {
   if (!name) return '';
   const n = name.toLowerCase();
-  if (['yourupload', 'your-up', 'yourup', 'yu'].some(sub => n.includes(sub))) return 'yu';
+
+  if (['yourupload', 'your-up', 'yourup', 'yu'].some(sub => n.includes(sub))) {
+    return 'yu';
+  }
+  if (['asnwish','obeywish'].some(sub => n.includes(sub))) {
+    return 'sw';
+  }
+
   return n;
 }
+
 
 /**
  * Valida y construye URL a partir de parámetros id y ep, devuelve error si no válido
@@ -161,6 +169,8 @@ router.get('/api/servers', async (req, res) => {
       source = 'TIO';
     } else if (pageUrl.includes('animeflv')) {
       source = 'FLV';
+    } else if (pageUrl.includes('animeid')) {
+      source = 'AID';
     }
   }
 
@@ -180,6 +190,7 @@ router.get('/api/servers', async (req, res) => {
 });
 
 
+// API principal para obtener enlace de video según servidor
 // API principal para obtener enlace de video según servidor
 router.get('/api', async (req, res) => {
   const animeId = parseInt(req.query.id);

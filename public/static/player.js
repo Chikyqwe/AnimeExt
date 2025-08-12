@@ -262,34 +262,38 @@ let currentMirror = 1;
 
 async function loadServerByIndex(index) {
   function buildApiUrl(baseUrl) {
-    return currentMirror === 2 ? `${baseUrl}&mirror=2` : baseUrl;
+    if (currentMirror === 2) return `${baseUrl}&mirror=2`;
+    if (currentMirror === 3) return `${baseUrl}&mirror=3`;
+    return baseUrl; // mirror 1 por defecto
   }
 
   if (index >= serverList.length) {
-    if (currentMirror === 1) {
-      currentMirror = 2;
+    // Cambiar mirror solo si no es el último mirror (3)
+    if (currentMirror < 3) {
+      currentMirror++; // Avanza al siguiente mirror
 
       try {
-        const res = await fetch(`/api/servers?id=${config.id}&ep=${config.ep}&mirror=2`);
-        if (!res.ok) throw new Error('No se pudo cargar el mirror 2');
+        const res = await fetch(`/api/servers?id=${config.id}&ep=${config.ep}&mirror=${currentMirror}`);
+        if (!res.ok) throw new Error(`No se pudo cargar el mirror ${currentMirror}`);
 
         const newList = await res.json();
         if (!Array.isArray(newList) || newList.length === 0) {
-          throw new Error('Mirror 2 sin servidores');
+          throw new Error(`Mirror ${currentMirror} sin servidores`);
         }
 
         serverList = newList;
-        console.log(`[Player] Cambiado a mirror=2 con ${serverList.length} servidores`);
-        loadServerByIndex(0);
+        console.log(`[Player] Cambiado a mirror=${currentMirror} con ${serverList.length} servidores`);
+        await loadServerByIndex(0);
         return;
 
       } catch (err) {
-        console.error('[Player] Falló la carga del mirror 2:', err.message);
+        console.error(`[Player] Falló la carga del mirror ${currentMirror}:`, err.message);
         loader.style.display = 'none';
         return;
       }
     }
 
+    // Si ya agotaste todos los mirrors
     console.error('Todos los mirrors fallaron');
     loader.style.display = 'none';
     return;
@@ -301,62 +305,84 @@ async function loadServerByIndex(index) {
   video.style.opacity = 0;
 
   let success = false;
-
+  const swUrls = [
+    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=1`,
+    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=2`, // URL alternativa 1
+    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=3`  // URL alternativa 2
+  ];
+  const yuUrls = [
+    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=1`,
+    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=2`, // URL alternativa 1
+    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=3`  // URL alternativa 2
+  ];
   try {
     // --- SW ---
     if (server === "sw") {
-      const res = await fetch(buildApiUrl(`/api?id=${config.id}&ep=${config.ep}&server=sw`));
-      if (!res.ok) throw new Error("SW: respuesta no OK");
-      const m3u8Text = await res.text();
-      if (!m3u8Text || m3u8Text.includes("error")) throw new Error("SW: m3u8 inválido");
+      let lastError;
 
-      loadStreamDirect(currentUrl, m3u8Text);
-      await savePrecached(currentUrl, {
-        url: currentUrl,
-        server: "sw",
-        stream: currentUrl,
-        m3u8Content: m3u8Text,
-        timestamp: Date.now()
-      });
+      for (const url of swUrls) {
+        try {
+          const res = await fetch(buildApiUrl(url));
+          if (!res.ok) throw new Error("SW: respuesta no OK");
+          
+          const m3u8Text = await res.text();
+          if (!m3u8Text || m3u8Text.includes("error")) throw new Error("SW: m3u8 inválido");
 
-      success = true;
+          loadStreamDirect(currentUrl, m3u8Text);
+          await savePrecached(currentUrl, {
+            url: currentUrl,
+            server: "sw",
+            stream: currentUrl,
+            m3u8Content: m3u8Text,
+            timestamp: Date.now()
+          });
+
+          success = true;
+          break; // Si tiene éxito, sale del bucle
+        } catch (error) {
+          console.error(`Intento fallido con la URL: ${url}`, error);
+          lastError = error;
+        }
+      }
+
+      if (!success) {
+        throw new Error(`SW: todos los intentos fallaron. Último error: ${lastError.message}`);
+      }
     }
-
     // --- YOURUPLOAD ---
     else if (server === "yu" || server === "yourupload") {
-      const res = await fetch(buildApiUrl(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=yu`));
-      if (!res.ok) throw new Error("YU: respuesta no OK");
-      const json = await res.json();
-      if (!json.url) throw new Error("YU: URL vacía");
+      let lastError;
 
-      const streamUrl = `/api/stream?videoUrl=${encodeURIComponent(json.url)}`;
-      loadStreamDirect(streamUrl);
-      await savePrecached(currentUrl, {
-        url: currentUrl,
-        server: "yu",
-        stream: streamUrl,
-        m3u8Content: null,
-        timestamp: Date.now()
-      });
+      for (const url of yuUrls) { // Asume que existe un array 'yuUrls'
+        try {
+          const res = await fetch(buildApiUrl(url));
+          if (!res.ok) throw new Error("YU: respuesta no OK");
+          
+          const json = await res.json();
+          if (!json.url) throw new Error("YU: URL vacía");
 
-      success = true;
+          const streamUrl = `/api/stream?videoUrl=${encodeURIComponent(json.url)}`;
+          loadStreamDirect(streamUrl);
+          await savePrecached(currentUrl, {
+            url: currentUrl,
+            server: "yu",
+            stream: streamUrl,
+            m3u8Content: null,
+            timestamp: Date.now()
+          });
+
+          success = true;
+          break; // Si tiene éxito, sale del bucle
+        } catch (error) {
+          console.error(`Intento fallido con la URL: ${url}`, error);
+          lastError = error;
+        }
+      }
+
+      if (!success) {
+        throw new Error(`YU: todos los intentos fallaron. Último error: ${lastError.message}`);
+      }
     }
-
-    // --- VOE ---
-    else if (server === "voe") {
-      const streamUrl = buildApiUrl(`/api?id=${config.id}&ep=${config.ep}&server=voe`);
-      loadStreamDirect(streamUrl);
-      await savePrecached(currentUrl, {
-        url: currentUrl,
-        server: "voe",
-        stream: streamUrl,
-        m3u8Content: null,
-        timestamp: Date.now()
-      });
-
-      success = true;
-    }
-
     // --- MEGA ---
     else if (server === "mega") {
       const megaUrl = serverList[index].url || "";
@@ -394,7 +420,6 @@ async function loadServerByIndex(index) {
 
       success = true;
     }
-
     // --- CUALQUIER OTRO ---
     else {
       const res = await fetch(buildApiUrl(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=${server}`));
@@ -413,17 +438,17 @@ async function loadServerByIndex(index) {
 
       success = true;
     }
-
   } catch (err) {
     console.warn(`Fallo servidor "${server}":`, err.message || err);
   }
 
   if (!success) {
-    loadServerByIndex(index + 1);
+    await loadServerByIndex(index + 1);
+  } else {
+    loader.style.display = 'none';
+    video.style.opacity = 1;
   }
 }
-
-
 
 
 // === Wake Lock ===
@@ -438,12 +463,12 @@ async function requestWakeLock() {
 }
 
 // === Iniciar ===
-async function start(useMirror = false) {
+async function start(mirrorNumber = 1) {
   const ads = localStorage.getItem("ads") === "true";
   console.info("[INFO] Anuncios:", ads ? "Activados" : "Desactivados");
 
   try {
-    const mirrorParam = useMirror ? "&mirror=2" : "";
+    const mirrorParam = mirrorNumber > 1 ? `&mirror=${mirrorNumber}` : "";
     const res = await fetch(`${API_BASE}/servers?id=${config.id}&ep=${config.ep}${mirrorParam}`);
     let servers = await res.json();
 
@@ -502,12 +527,10 @@ async function start(useMirror = false) {
       document.querySelectorAll('#serverButtons button').forEach(btn => {
         if (btn.dataset.servidor === server.servidor) {
           btn.classList.add('active');
-          // Estilo verde para activo
           btn.style.background = 'linear-gradient(135deg, #4ade80, #22c55e)';
           btn.style.boxShadow = '0 6px 14px rgba(34, 197, 94, 0.6)';
         } else {
           btn.classList.remove('active');
-          // Estilo azul para inactivo
           btn.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
           btn.style.boxShadow = '0 6px 10px rgba(37, 99, 235, 0.4)';
         }
@@ -522,7 +545,6 @@ async function start(useMirror = false) {
         btn.textContent = server.servidor;
         btn.dataset.servidor = server.servidor;
 
-        // Estilos base (inactivo - azul)
         btn.style.cursor = 'pointer';
         btn.style.padding = '10px 18px';
         btn.style.borderRadius = '12px';
@@ -593,13 +615,7 @@ async function start(useMirror = false) {
       return;
     }
 
-    const cached = await loadPrecached(currentUrl);
-    if (cached && cached.url === currentUrl) {
-      console.info("[INFO] Usando caché:", cached);
-      await loadStreamDirect(cached.stream, cached.m3u8Content || null);
-      return;
-    }
-
+    // Aquí el orden para no ads
     serverList.sort((a, b) => {
       if (a.servidor === 'mega' || a.servidor === 'mega.nz') return 1;
       if (b.servidor === 'mega' || b.servidor === 'mega.nz') return -1;
@@ -609,9 +625,9 @@ async function start(useMirror = false) {
     await loadServerByIndex(0);
 
   } catch (err) {
-    if (!useMirror) {
-      console.warn("🔁 Reintentando con mirror=2...");
-      return start(true); // 🔁 Retry con mirror=2
+    if (mirrorNumber < 3) {
+      console.warn(`🔁 Reintentando con mirror=${mirrorNumber + 1}...`);
+      return start(mirrorNumber + 1); // 🔁 Retry con siguiente mirror
     }
 
     loader.textContent = '[Error] Error al cargar servidores';

@@ -4,8 +4,6 @@ const path = require('path');
 const { setUpdatingStatus } = require('../middleware/maintenanceBlock');
 
 async function iniciarMantenimiento() {
-  // Aqui se verifica si ya se está ejecutando el mantenimiento y se evita iniciar otro si ya hay uno en curso.
-  // setUpdatingStatus devuelve el estado anterior, por lo que si es true, significa que ya hay un mantenimiento en curso.
   console.log(`[MANTENIMIENTO] Verificando estado de mantenimiento...`);
   if (setUpdatingStatus(true)) { // setUpdatingStatus devuelve el estado anterior
     console.log(`[MANTENIMIENTO] Ya se esta ejecutando mantenimiento, ignorando nueva solicitud`);

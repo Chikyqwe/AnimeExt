@@ -38,7 +38,6 @@ function getAnimeById(id) {
 function getAnimeByUnitId(unitId) {
   return readAnimeList().find(anime => anime.unit_id === parseInt(unitId, 10));
 }
-
 function buildEpisodeUrl(anime, ep, mirror = 1) {
   if (!anime?.sources || !ep) return null;
 
@@ -47,12 +46,18 @@ function buildEpisodeUrl(anime, ep, mirror = 1) {
     baseUrl = anime.sources.FLV.replace('/anime/', '/ver/') + `-${ep}`;
   } else if (mirror === 2 && anime.sources.TIO) {
     baseUrl = anime.sources.TIO.replace('/anime/', '/ver/') + `-${ep}`;
+  } else if (mirror === 3 && anime.sources.ANIMEID) {
+    // Para ANIMEID hacemos transformación con URL
+    const urlObj = new URL(anime.sources.ANIMEID);
+    // Construir nueva ruta: /v + pathname + -ep
+    baseUrl = `${urlObj.origin}/v${urlObj.pathname}-${ep}`;
   } else {
     return null;
   }
 
   return baseUrl;
 }
+
 
 function getJsonFiles() {
   try {

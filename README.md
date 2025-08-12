@@ -43,10 +43,10 @@ Uso básico
 ==========
 
 - Accede al home `/` para explorar las vistas disponibles.
-- Consulta `/api/servers` para obtener la lista de servidores de una url.
-- Use `/api?url=` para obtener los enlaces a videos.
-- Usa `/proxy-image?url=` para mostrar imágenes sin exponer dominios externos.
-- Supervisa la cola de scraping desde `/queue-status`.
+- Consulta `/api/servers?id&ep=` para obtener la lista de servidores de un id.
+- Use `/api?id=&ep=` para obtener los enlaces a videos.
+- Usa `/image?url=` para mostrar imágenes sin exponer dominios externos.
+- Supervisa la cola de scraping desde `/api/queue/status`.
 - Use `/status` para obtener informacion del status.
 
 Consideraciones
