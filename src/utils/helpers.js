@@ -219,7 +219,7 @@ function toHex(arr) {
 }
 
 async function urlEpAX(urlPagina, capNum) {
-  console.log(`[URL EPAX] Buscando episodio ${capNum} usando aes.js`);
+  console.log(`[URL EPAX] Buscando episodio ${capNum} en ${urlPagina}`);
 
   const apiUrl = `https://animeext.xo.je/get_vid.php?url=${encodeURIComponent(urlPagina)}&ep=${encodeURIComponent(capNum)}`;
 

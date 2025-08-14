@@ -10,6 +10,7 @@ const {
   BROWSERLESS_ENDPOINT,
   BROWSERLESS_ENDPOINT_FIREFOX_PLAYWRIGHT
 } = require('../config');
+const { slowAES } = require('../utils/aes'); // aes.js en CommonJS
 
 const UA_FIREFOX =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0';
@@ -58,151 +59,133 @@ async function getPlaywrightBrowser() {
   }
 }
 
-async function getPuppeteerBrowser() {
-  try {
-    const isDisconnected =
-      !puppeteerBrowser ||
-      (typeof puppeteerBrowser.isConnected === 'function' && !puppeteerBrowser.isConnected?.());
+// Funciones auxiliares
+function toNumbers(d) {
+  const e = [];
+  d.replace(/(..)/g, (m) => e.push(parseInt(m, 16)));
+  return e;
+}
 
-    if (isDisconnected) {
-      console.log('[Puppeteer] Conectando a Browserless Chromium…');
-      puppeteerBrowser = await puppeteer.connect({
-        browserWSEndpoint: BROWSERLESS_ENDPOINT,
-        timeout: 20_000
-      });
+function toHex(arr) {
+  return arr.map(v => (v < 16 ? '0' : '') + v.toString(16)).join('').toLowerCase();
+}
+
+function transformObeywish(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('obeywish.com')) {
+      u.hostname = 'asnwish.com';
+      return u.toString();
     }
-    return puppeteerBrowser;
-  } catch (err) {
-    console.error('[Puppeteer] Error al conectar:', err.message);
-    puppeteerBrowser = null;
-    throw err;
+    return url;
+  } catch {
+    return url;
   }
 }
 
-function base64Decode(str) {
-  return Buffer.from(str, 'base64').toString('utf-8');
-}
-
+// Función principal
 async function extractAllVideoLinks(pageUrl) {
   console.log(`[EXTRACTOR] Extrayendo videos desde: ${pageUrl}`);
-
-  const { data: html } = await withRetries(() =>
-    axios.get(pageUrl, {
-      headers: {
-        'Accept-Encoding': 'gzip, deflate, br',
-        'User-Agent': UA_FIREFOX,
-      },
-      decompress: true,
-      timeout: 8000,
-    })
-  );
-
-  const $ = cheerio.load(html);
   let videos = [];
 
-  function transformObeywish(url) {
-    try {
-      const u = new URL(url);
-      if (u.hostname.includes('obeywish.com')) {
-        u.hostname = 'asnwish.com';
-        return u.toString();
-      }
-      return url;
-    } catch {
-      return url;
-    }
-  }
-
+  // 🎯 AnimeYTX: usar la API PHP
   if (pageUrl.includes('animeytx')) {
-    // Método especial para animeytx: buscar en <select class="mirror">
-    $('select.mirror option').each((_, el) => {
-      const base64Val = $(el).attr('value');
-      if (!base64Val) return;
+    try {
+      // 1️⃣ Obtener HTML inicial para extraer script de cookie
+      const apiUrl = `https://animeext.xo.je/get_vid_severs.php?url=${encodeURIComponent(pageUrl)}`;
+      const { data: html } = await axios.get(apiUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html' },
+        timeout: 8000,
+      });
 
-      try {
-        const decoded = base64Decode(base64Val);
-        const $decoded = cheerio.load(decoded);
-        // Buscar iframe o src en el contenido decodificado
-        let src = '';
-        if ($decoded('iframe').length) {
-          src = $decoded('iframe').attr('src') || '';
-        } else if ($decoded('div iframe').length) {
-          src = $decoded('div iframe').attr('src') || '';
-        }
+      // 2️⃣ Extraer a, b, c del script usando regex
+      const match = html.match(/toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\)/s);
+      if (!match) throw new Error("No se pudieron extraer datos de cifrado");
 
-        if (src) {
-          const finalUrl = transformObeywish(src);
-          videos.push({
-            servidor: new URL(finalUrl).hostname,
-            url: finalUrl,
-          });
-        }
-      } catch (err) {
-        console.error('[EXTRACTOR] Error decodificando base64:', err);
+      const a = toNumbers(match[1]);
+      const b = toNumbers(match[2]);
+      const c = toNumbers(match[3]);
+
+      // 3️⃣ Calcular valor de cookie
+      const cookieVal = toHex(slowAES.decrypt(c, 2, a, b));
+
+      // 4️⃣ Rehacer petición con cookie, ahora devuelve JSON con los videos
+      const { data } = await axios.get(apiUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+          'Cookie': `__test=${cookieVal}`,
+          'Accept': 'application/json'
+        },
+        timeout: 8000,
+      });
+
+      if (!data.success) {
+        console.error('[EXTRACTOR] Error desde PHP AnimeYTX:', data.error || 'Respuesta inválida');
+      } else {
+        videos = data.videos;
       }
-    });
-  } else if (/animeid/i.test(pageUrl)) {
-    // Método especial para AnimeID
-    $('#partes .parte').each((_, el) => {
-      let rawData = $(el).attr('data');
 
-      try {
-        rawData = rawData.replace(/'/g, '"'); // comillas simples a dobles
-        const parsed = JSON.parse(rawData);
+    } catch (err) {
+      console.error('[EXTRACTOR] Error consultando API AnimeYTX:', err.message);
+    }
 
-        if (parsed.v) {
-          const iframeHtml = parsed.v
-            .replace(/\\u003C/g, '<')
-            .replace(/\\u003E/g, '>')
-            .replace(/\\u002F/g, '/');
-          const match = iframeHtml.match(/src="([^"]+)"/i);
-          if (match) {
-            const finalUrl = transformObeywish(match[1]);
-            videos.push({
-              servidor: new URL(finalUrl).hostname,
-              url: finalUrl,
-            });
-          }
-        }
-      } catch (err) {
-        console.error('Error parseando parte:', err);
-      }
-    });
   } else {
-    // Método genérico original
-    $('script').each((_, el) => {
-      const scriptContent = $(el).html();
-      const match =
-        scriptContent &&
-        scriptContent.match(/var\s+videos\s*=\s*(\[.*?\]|\{[\s\S]*?\});/s);
-      if (!match) return;
+    // 🌐 Otros sitios: scraping directo
+    try {
+      const { data: html } = await axios.get(pageUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Encoding': 'gzip, deflate, br' },
+        timeout: 8000,
+      });
 
-      try {
-        const rawJson = match[1].replace(/\\\//g, '/');
-        const parsed = JSON.parse(rawJson);
+      const $ = cheerio.load(html);
 
-        if (parsed.SUB) {
-          videos = parsed.SUB.map((v) => {
-            const url = v.url || v.code || v[1];
-            const finalUrl = transformObeywish(url);
-            return {
-              servidor: v.server || v[0],
-              url: finalUrl,
-            };
-          });
-        } else if (Array.isArray(parsed) && parsed[0]?.length >= 2) {
-          videos = parsed.map((v) => {
-            const finalUrl = transformObeywish(v[1]);
-            return {
-              servidor: v[0],
-              url: finalUrl,
-            };
-          });
-        }
-      } catch (err) {
-        console.error('[EXTRACTOR] Error parseando videos:', err);
+      if (/animeid/i.test(pageUrl)) {
+        $('#partes .parte').each((_, el) => {
+          let rawData = $(el).attr('data');
+          try {
+            rawData = rawData.replace(/'/g, '"');
+            const parsed = JSON.parse(rawData);
+            if (parsed.v) {
+              const iframeHtml = parsed.v
+                .replace(/\\u003C/g, '<')
+                .replace(/\\u003E/g, '>')
+                .replace(/\\u002F/g, '/');
+              const match = iframeHtml.match(/src="([^"]+)"/i);
+              if (match) {
+                const finalUrl = transformObeywish(match[1]);
+                videos.push({ servidor: new URL(finalUrl).hostname, url: finalUrl });
+              }
+            }
+          } catch (err) {
+            console.error('Error parseando parte:', err);
+          }
+        });
+      } else {
+        $('script').each((_, el) => {
+          const scriptContent = $(el).html();
+          const match = scriptContent && scriptContent.match(/var\s+videos\s*=\s*(\[.*?\]|\{[\s\S]*?\});/s);
+          if (!match) return;
+
+          try {
+            const rawJson = match[1].replace(/\\\//g, '/');
+            const parsed = JSON.parse(rawJson);
+
+            if (parsed.SUB) {
+              videos = parsed.SUB.map((v) => {
+                const url = v.url || v.code || v[1];
+                return { servidor: v.server || v[0], url: transformObeywish(url) };
+              });
+            } else if (Array.isArray(parsed) && parsed[0]?.length >= 2) {
+              videos = parsed.map((v) => ({ servidor: v[0], url: transformObeywish(v[1]) }));
+            }
+          } catch (err) {
+            console.error('[EXTRACTOR] Error parseando videos:', err);
+          }
+        });
       }
-    });
+    } catch (err) {
+      console.error('[EXTRACTOR] Error scraping sitio genérico:', err.message);
+    }
   }
 
   console.log(`[EXTRACTOR] Videos extraídos: ${videos.length}`);
