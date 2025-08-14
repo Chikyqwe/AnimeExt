@@ -202,7 +202,6 @@ function validateVideoUrl(videoUrl, timeoutMs = 5000) {
 async function urlEpAX(urlPagina, capNum) {
   console.log(`[URL EPAX] Buscando episodio ${capNum} en ${urlPagina}`);
 
-  // Aseguramos que capNum sea número entero
   const capNumber = Number(capNum);
   if (isNaN(capNumber)) {
     console.warn(`[URL EPAX] capNum no es un número válido: ${capNum}`);
@@ -212,44 +211,41 @@ async function urlEpAX(urlPagina, capNum) {
   try {
     const { data } = await axios.get(urlPagina, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Origin': urlPagina,
+        'Referer': urlPagina,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
       }
     });
 
     const $ = cheerio.load(data);
-
     let urlEpisodio = null;
-
-    // Convertimos a array para poder usar for/of y break con claridad
     const elems = $('.eplister ul li').toArray();
 
     for (const elem of elems) {
       const numTextoRaw = $(elem).find('.epl-num').text();
       const numTexto = numTextoRaw.trim();
       const match = numTexto.match(/^(\d+)/);
-      if (!match) {
-        console.log('[URL EPAX] No se encontró número en:', numTexto);
-        continue;
-      }
+      if (!match) continue;
 
       const numero = parseInt(match[1], 10);
       if (numero === capNumber) {
         urlEpisodio = $(elem).find('a').attr('href') || null;
         console.log(`[URL EPAX] Episodio encontrado: ${numero} URL: ${urlEpisodio}`);
-        break; // salió del loop porque ya encontró
+        break;
       }
     }
 
-    if (!urlEpisodio) {
-      console.warn(`[URL EPAX] No se encontró URL para episodio ${capNumber}`);
-    }
-
+    if (!urlEpisodio) console.warn(`[URL EPAX] No se encontró URL para episodio ${capNumber}`);
     return urlEpisodio;
+
   } catch (error) {
     console.error(`[URL EPAX] Error al obtener la página: ${error.message}`);
     return null;
   }
 }
+
 
 
 module.exports = {
