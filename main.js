@@ -1,9 +1,3 @@
-var readline = require("readline");
-console.log('[INFO] Iniciando AnimeExt...');
-// Verificar existencia de package.json
-var packagePath = path.join(__dirname, 'package.json');
-if (!fs.existsSync(packagePath)) {
-    console.error('[ERROR] No se encontró package.json en el directorio actual.');
 // server.js
 const express = require('express');
 const axios = require('axios');
