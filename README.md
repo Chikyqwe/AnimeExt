@@ -62,24 +62,22 @@ Estructura del proyecto
 =======================
 # 📂 Estructura del proyecto: `AnimeExt`
 
+- 📄 [.env](.env)
 - 📄 [.gitignore](.gitignore)
-- 📄 [anim.js](anim.js)
-- 📄 [eafo.js](eafo.js)
 - 📄 [LICENSE](LICENSE)
 - 📄 [main.js](main.js)
+- 📄 [main.ts](main.ts)
 - 📄 [package-lock.json](package-lock.json)
 - 📄 [package.json](package.json)
 - 📄 [README.md](README.md)
-- 📄 [worker-mantenimiento.js](worker-mantenimiento.js)
 - 📁 [jsons](jsons/)
   - 📄 [anime_list.json](jsons/anime_list.json)
+  - 📄 [lastep.json](jsons/lastep.json)
   - 📄 [report_error.json](jsons/report_error.json)
   - 📄 [UnitID.json](jsons/UnitID.json)
 - 📁 [public](public/)
   - 📄 [404.html](public/404.html)
-  - 📄 [iframe.html](public/iframe.html)
   - 📄 [index.html](public/index.html)
-  - 📄 [list.html](public/list.html)
   - 📄 [maintenance.html](public/maintenance.html)
   - 📄 [pass.html](public/pass.html)
   - 📄 [player.html](public/player.html)
@@ -92,15 +90,22 @@ Estructura del proyecto
     - 📄 [functions_index.js](public/static/functions_index.js)
     - 📄 [functions_player.js](public/static/functions_player.js)
     - 📄 [index.js](public/static/index.js)
+    - 📄 [infy.js](public/static/infy.js)
     - 📄 [player.js](public/static/player.js)
     - 📄 [styles_404.css](public/static/styles_404.css)
     - 📄 [styles_index.css](public/static/styles_index.css)
     - 📄 [styles_player.css](public/static/styles_player.css)
+    - 📄 [styles.css](public/static/styles.css)
 - 📁 [src](src/)
   - 📄 [app.js](src/app.js)
   - 📄 [server.js](src/server.js)
   - 📁 [config](src/config/)
     - 📄 [index.js](src/config/index.js)
+  - 📁 [maintenimance](src/maintenimance/)
+    - 📄 [anim_helper.js](src/maintenimance/anim_helper.js)
+    - 📄 [anim.js](src/maintenimance/anim.js)
+    - 📄 [lastep.js](src/maintenimance/lastep.js)
+    - 📄 [worker-mantenimiento.js](src/maintenimance/worker-mantenimiento.js)
   - 📁 [middleware](src/middleware/)
     - 📄 [maintenanceBlock.js](src/middleware/maintenanceBlock.js)
   - 📁 [routes](src/routes/)
@@ -113,12 +118,14 @@ Estructura del proyecto
     - 📄 [jsonService.js](src/services/jsonService.js)
     - 📄 [maintenanceService.js](src/services/maintenanceService.js)
     - 📄 [queueService.js](src/services/queueService.js)
+  - 📁 [test](src/test/)
+    - 📄 [CheckAnimeList.js](src/test/CheckAnimeList.js)
+    - 📄 [link.js](src/test/link.js)
   - 📁 [utils](src/utils/)
     - 📄 [CheckMega.js](src/utils/CheckMega.js)
     - 📄 [helpers.js](src/utils/helpers.js)
+    - 📄 [token.js](src/utils/token.js)
     - 📄 [wakeUp.js](src/utils/wakeUp.js)
-- 📁 [test](test/)
-  - 📄 [link.js](test/link.js)
 
 Licencia
 ========
@@ -129,5 +136,5 @@ Consulta el archivo `LICENSE` para más información.
 Autoría
 =======
 
-Desarrollado por **Chikiyinyang@dev**
+Desarrollado por **Chikiqwe**
 <!-- Anime, streaming, Node.js, m3u8, browserless, scraper, reproductor -->

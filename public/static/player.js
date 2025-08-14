@@ -307,50 +307,24 @@ async function loadServerByIndex(index) {
   let success = false;
   const swUrls = [
     `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=1`,
-    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=2`, // URL alternativa 1
-    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=3`  // URL alternativa 2
+    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=2`, 
+    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=3`,
+    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=4`  
   ];
   const yuUrls = [
     `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=1`,
-    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=2`, // URL alternativa 1
-    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=3`  // URL alternativa 2
+    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=2`,
+    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=3`,
+    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=4`
+  ];
+  const bcUrls = [
+    `/api?id=${config.id}&ep=${config.ep}&server=bc&mirror=1`,
+    `/api?id=${config.id}&ep=${config.ep}&server=bc&mirror=2`,
+    `/api?id=${config.id}&ep=${config.ep}&server=bc&mirror=3`,
+    `/api?id=${config.id}&ep=${config.ep}&server=bc&mirror=4`
   ];
   try {
-    // --- SW ---
-    if (server === "sw") {
-      let lastError;
-
-      for (const url of swUrls) {
-        try {
-          const res = await fetch(buildApiUrl(url));
-          if (!res.ok) throw new Error("SW: respuesta no OK");
-          
-          const m3u8Text = await res.text();
-          if (!m3u8Text || m3u8Text.includes("error")) throw new Error("SW: m3u8 inválido");
-
-          loadStreamDirect(currentUrl, m3u8Text);
-          await savePrecached(currentUrl, {
-            url: currentUrl,
-            server: "sw",
-            stream: currentUrl,
-            m3u8Content: m3u8Text,
-            timestamp: Date.now()
-          });
-
-          success = true;
-          break; // Si tiene éxito, sale del bucle
-        } catch (error) {
-          console.error(`Intento fallido con la URL: ${url}`, error);
-          lastError = error;
-        }
-      }
-
-      if (!success) {
-        throw new Error(`SW: todos los intentos fallaron. Último error: ${lastError.message}`);
-      }
-    }
-    // --- YOURUPLOAD ---
-    else if (server === "yu" || server === "yourupload") {
+    if (server === "yu" || server === "yourupload") {
       let lastError;
 
       for (const url of yuUrls) { // Asume que existe un array 'yuUrls'
@@ -382,7 +356,70 @@ async function loadServerByIndex(index) {
       if (!success) {
         throw new Error(`YU: todos los intentos fallaron. Último error: ${lastError.message}`);
       }
-    }
+    } else if (server === "bc" || server === "burcloud") {
+      let lastError;
+
+      for (const url of bcUrls) { // Asume que existe un array 'bcUrls'
+        try {
+          const res = await fetch(buildApiUrl(url));
+          if (!res.ok) throw new Error("BC: respuesta no OK");
+          
+          const json = await res.json();
+          if (!json.url) throw new Error("BC: URL vacía");
+
+          const streamUrl = `/api/stream?videoUrl=${encodeURIComponent(json.url)}`;
+          loadStreamDirect(streamUrl);
+          await savePrecached(currentUrl, {
+            url: currentUrl,
+            server: "bc",
+            stream: streamUrl,
+            m3u8Content: null,
+            timestamp: Date.now()
+          });
+
+          success = true;
+          break; // Si tiene éxito, sale del bucle
+        } catch (error) {
+          console.error(`Intento fallido con la URL: ${url}`, error);
+          lastError = error;
+        }
+      }
+
+      if (!success) {
+        throw new Error(`BC: todos los intentos fallaron. Último error: ${lastError.message}`);
+      }
+    } else if (server === "sw") {
+      let lastError;
+
+      for (const url of swUrls) {
+        try {
+          const res = await fetch(buildApiUrl(url));
+          if (!res.ok) throw new Error("SW: respuesta no OK");
+          
+          const m3u8Text = await res.text();
+          if (!m3u8Text || m3u8Text.includes("error")) throw new Error("SW: m3u8 inválido");
+
+          loadStreamDirect(currentUrl, m3u8Text);
+          await savePrecached(currentUrl, {
+            url: currentUrl,
+            server: "sw",
+            stream: currentUrl,
+            m3u8Content: m3u8Text,
+            timestamp: Date.now()
+          });
+
+          success = true;
+          break; // Si tiene éxito, sale del bucle
+        } catch (error) {
+          console.error(`Intento fallido con la URL: ${url}`, error);
+          lastError = error;
+        }
+      }
+
+      if (!success) {
+        throw new Error(`SW: todos los intentos fallaron. Último error: ${lastError.message}`);
+      }
+    } 
     // --- MEGA ---
     else if (server === "mega") {
       const megaUrl = serverList[index].url || "";
@@ -625,7 +662,7 @@ async function start(mirrorNumber = 1) {
     await loadServerByIndex(0);
 
   } catch (err) {
-    if (mirrorNumber < 3) {
+    if (mirrorNumber < 4) {
       console.warn(`🔁 Reintentando con mirror=${mirrorNumber + 1}...`);
       return start(mirrorNumber + 1); // 🔁 Retry con siguiente mirror
     }

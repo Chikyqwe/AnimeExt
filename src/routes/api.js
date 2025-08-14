@@ -41,6 +41,9 @@ function normalizeServerName(name) {
   if (['yourupload', 'your-up', 'yourup', 'yu'].some(sub => n.includes(sub))) {
     return 'yu';
   }
+  if (['burstcloud.co', 'burstcloud'].some(sub => n.includes(sub))) {
+    return 'bc';
+  }
   if (['asnwish','obeywish'].some(sub => n.includes(sub))) {
     return 'sw';
   }
@@ -148,20 +151,18 @@ router.get('/api/servers', async (req, res) => {
       return res.status(400).json({ error: 'Parámetro "ep" obligatorio' });
     }
 
-    pageUrl = buildEpisodeUrl(anime, ep, parseInt(mirror));
+    // Esperar la Promesa
+    pageUrl = await buildEpisodeUrl(anime, ep, parseInt(mirror));
     if (!pageUrl) {
       return res.status(400).json({ error: 'No se pudo construir la URL del episodio' });
     }
 
-    // Detectar origen si está disponible desde el objeto anime
     if (anime.source) {
       source = anime.source;
     }
   }
 
-  if (!pageUrl || typeof pageUrl !== 'string') {
-    return res.status(400).json({ error: 'Falta parámetro "url" válido' });
-  }
+  console.log(pageUrl)
 
   // Detectar fuente si no se obtuvo del objeto anime
   if (source === 'UNKNOWN') {
@@ -171,9 +172,10 @@ router.get('/api/servers', async (req, res) => {
       source = 'FLV';
     } else if (pageUrl.includes('animeid')) {
       source = 'AID';
-    }
+    } else if (pageUrl.includes('animeytx')) {
+      source = 'AYTX';
   }
-
+  }
   try {
     const videos = await extractAllVideoLinks(pageUrl);
     const valid = await filterValidVideos(videos);
@@ -191,7 +193,6 @@ router.get('/api/servers', async (req, res) => {
 
 
 // API principal para obtener enlace de video según servidor
-// API principal para obtener enlace de video según servidor
 router.get('/api', async (req, res) => {
   const animeId = parseInt(req.query.id);
   const ep = parseInt(req.query.ep);
@@ -208,7 +209,7 @@ router.get('/api', async (req, res) => {
       return res.status(400).json({ error: 'Parámetro "ep" obligatorio' });
     }
 
-    pageUrl = buildEpisodeUrl(anime, ep, mirror);
+    pageUrl = await buildEpisodeUrl(anime, ep, mirror);
     console.log(pageUrl);
     if (!pageUrl) {
       return res.status(400).json({ error: 'No se pudo construir la URL del episodio' });
@@ -258,11 +259,12 @@ router.get('/api', async (req, res) => {
 
     const extractor = getExtractor(selected.servidor);
     const result = await extractor(selected.url);
-
+console.log(`[API] Resultado del extractor ${selected.servidor}:`, result);
 if (Array.isArray(result) && result[0]?.content) {
   const validatedResults = await Promise.all(result.map(async (r) => ({
     ...r,
-    isValid: await validateVideoUrl(r.url)
+    isValid: await validateVideoUrl(r.url),
+    userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(r.url)}`
   })));
 
   const validFiles = validatedResults.filter(r => r.isValid);
@@ -271,14 +273,23 @@ if (Array.isArray(result) && result[0]?.content) {
     return { status: 404, message: 'No se encontró ninguna URL de video válida' };
   }
 
-  res.json({ count: validFiles.length, files: validFiles, firstUrl: validFiles[0].url });
-} else if (result?.url) {
+  res.json({ 
+    count: validFiles.length, 
+    files: validFiles, 
+    firstUrl: validFiles[0].url,
+    firstUserUrl: validFiles[0].userUrl
+  });
+}
+else if (result?.url) {
   const isValid = await validateVideoUrl(result.url);
   if (!isValid) {
     return { status: 404, message: 'La URL del video no es válida o está caída' };
   }
 
-  res.json({ url: result.url });
+  res.json({ 
+    url: result.url,
+    userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(result.url)}`
+  });
 } else {
   throw new Error('Formato de extractor no reconocido');
 }

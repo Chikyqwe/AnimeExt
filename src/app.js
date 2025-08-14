@@ -115,7 +115,7 @@ if (WakeUP) {
 }
 if (isMetadataStale()) {
   console.log('[MANTENIMIENTO] Metadata expirada. Iniciando mantenimiento...');
-  iniciarMantenimiento();
+  // iniciarMantenimiento();
 } else {
   console.log('[MANTENIMIENTO] Metadata vigente. No se requiere mantenimiento.');
 }

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { urlEpAX } = require('../utils/helpers'); // Asegúrate de que esta ruta sea correcta
 const { JSON_FOLDER, ANIME_FILE } = require('../config');
 
 if (!fs.existsSync(JSON_FOLDER)) {
@@ -38,8 +39,9 @@ function getAnimeById(id) {
 function getAnimeByUnitId(unitId) {
   return readAnimeList().find(anime => anime.unit_id === parseInt(unitId, 10));
 }
-function buildEpisodeUrl(anime, ep, mirror = 1) {
+async function buildEpisodeUrl(anime, ep, mirror = 1) {
   if (!anime?.sources || !ep) return null;
+
 
   let baseUrl = '';
   if (mirror === 1 && anime.sources.FLV) {
@@ -47,10 +49,11 @@ function buildEpisodeUrl(anime, ep, mirror = 1) {
   } else if (mirror === 2 && anime.sources.TIO) {
     baseUrl = anime.sources.TIO.replace('/anime/', '/ver/') + `-${ep}`;
   } else if (mirror === 3 && anime.sources.ANIMEID) {
-    // Para ANIMEID hacemos transformación con URL
     const urlObj = new URL(anime.sources.ANIMEID);
-    // Construir nueva ruta: /v + pathname + -ep
     baseUrl = `${urlObj.origin}/v${urlObj.pathname}-${ep}`;
+  } else if (mirror === 4 && anime.sources.axty) {
+    baseUrl = await urlEpAX(anime.sources.axty, ep);
+    console.log(baseUrl)
   } else {
     return null;
   }

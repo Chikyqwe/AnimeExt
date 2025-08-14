@@ -212,8 +212,6 @@ window.addEventListener('load', async () => {
     } catch (e) {
         console.error("Error al cargar los datos:", e);
     } finally {
-        // Esta sección se ejecutará después de que TODO lo anterior haya finalizado
-        // (incluida la búsqueda y la espera de las imágenes).
         const elapsed = performance.now() - startTime;
         const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
         setTimeout(() => {
@@ -1078,13 +1076,6 @@ async function agregarBotonFavoritoEnCardsIndexed() {
 }
 
 
-/**
- * =======================================================
- * CÓDIGO OFUSCADO
- * =======================================================
- * Código ofuscado para la generación de tokens. No se modifica
- * ya que su estructura es intencional.
- */
 (function () {
     const _0x5c6b = ['split', 'length', 'from', 'charCodeAt', 'map', 'push', 'slice', 'concat', 'toString', 'padStart', 'join', 'reduce', 'cookie', 'log', 'shift', 'get'];
     const _0x1f45 = function (_0x4371e1, _0x27160e) {

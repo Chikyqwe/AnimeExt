@@ -34775,6 +34775,21 @@
       "unit_id": 1377
     },
     {
+      "title": "Takopi",
+      "slug": "takopi",
+      "image": "https://i3.wp.com/animeytx.com/wp-content/uploads/2025/06/jkm76k48764l87n.jpg?resize=247,350",
+      "episodes_count": 6,
+      "status": "Finalizado",
+      "next_episode_date": null,
+      "sources": {
+        "FLV": null,
+        "TIO": null,
+        "axty": "https://animeytx.com/ver/takopii-no-genzai/"
+      },
+      "id": 67712,
+      "unit_id": 89912
+    },
+    {
       "title": "Gundam Build Fighters",
       "slug": "gundam-build-fighters",
       "image": "https://animeflv.net/uploads/animes/covers/1166.jpg",

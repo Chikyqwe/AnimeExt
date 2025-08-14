@@ -1,6 +1,7 @@
 // src/services/browserlessExtractors.js
 
 const axios = require('axios');
+const qs = require('qs')
 const cheerio = require('cheerio');
 const puppeteer = require('puppeteer-core');
 const { firefox } = require('playwright-core');
@@ -78,6 +79,10 @@ async function getPuppeteerBrowser() {
   }
 }
 
+function base64Decode(str) {
+  return Buffer.from(str, 'base64').toString('utf-8');
+}
+
 async function extractAllVideoLinks(pageUrl) {
   console.log(`[EXTRACTOR] Extrayendo videos desde: ${pageUrl}`);
 
@@ -85,10 +90,10 @@ async function extractAllVideoLinks(pageUrl) {
     axios.get(pageUrl, {
       headers: {
         'Accept-Encoding': 'gzip, deflate, br',
-        'User-Agent': UA_FIREFOX
+        'User-Agent': UA_FIREFOX,
       },
       decompress: true,
-      timeout: 8000
+      timeout: 8000,
     })
   );
 
@@ -108,7 +113,35 @@ async function extractAllVideoLinks(pageUrl) {
     }
   }
 
-  if (/animeid/i.test(pageUrl)) {
+  if (pageUrl.includes('animeytx')) {
+    // Método especial para animeytx: buscar en <select class="mirror">
+    $('select.mirror option').each((_, el) => {
+      const base64Val = $(el).attr('value');
+      if (!base64Val) return;
+
+      try {
+        const decoded = base64Decode(base64Val);
+        const $decoded = cheerio.load(decoded);
+        // Buscar iframe o src en el contenido decodificado
+        let src = '';
+        if ($decoded('iframe').length) {
+          src = $decoded('iframe').attr('src') || '';
+        } else if ($decoded('div iframe').length) {
+          src = $decoded('div iframe').attr('src') || '';
+        }
+
+        if (src) {
+          const finalUrl = transformObeywish(src);
+          videos.push({
+            servidor: new URL(finalUrl).hostname,
+            url: finalUrl,
+          });
+        }
+      } catch (err) {
+        console.error('[EXTRACTOR] Error decodificando base64:', err);
+      }
+    });
+  } else if (/animeid/i.test(pageUrl)) {
     // Método especial para AnimeID
     $('#partes .parte').each((_, el) => {
       let rawData = $(el).attr('data');
@@ -127,7 +160,7 @@ async function extractAllVideoLinks(pageUrl) {
             const finalUrl = transformObeywish(match[1]);
             videos.push({
               servidor: new URL(finalUrl).hostname,
-              url: finalUrl
+              url: finalUrl,
             });
           }
         }
@@ -154,7 +187,7 @@ async function extractAllVideoLinks(pageUrl) {
             const finalUrl = transformObeywish(url);
             return {
               servidor: v.server || v[0],
-              url: finalUrl
+              url: finalUrl,
             };
           });
         } else if (Array.isArray(parsed) && parsed[0]?.length >= 2) {
@@ -162,7 +195,7 @@ async function extractAllVideoLinks(pageUrl) {
             const finalUrl = transformObeywish(v[1]);
             return {
               servidor: v[0],
-              url: finalUrl
+              url: finalUrl,
             };
           });
         }
@@ -175,7 +208,57 @@ async function extractAllVideoLinks(pageUrl) {
   console.log(`[EXTRACTOR] Videos extraídos: ${videos.length}`);
   return videos;
 }
+async function burstcloudExtractor(pageUrl) {
+  console.log(`[BURSTCLOUD] Extrayendo video desde: ${pageUrl}`);
 
+  try {
+    // 1️⃣ Obtener el HTML de la página
+    const { data: html } = await withRetries(() =>
+      axios.get(pageUrl, {
+        headers: {
+          'Accept-Encoding': 'gzip, deflate, br',
+          'User-Agent': UA_FIREFOX
+        },
+        decompress: true,
+        timeout: 8000
+      })
+    );
+
+    // 2️⃣ Extraer el data-file-id
+    const $ = cheerio.load(html);
+    const fileId = $('#player').attr('data-file-id');
+    if (!fileId) throw new Error('No se encontró el data-file-id');
+
+    // 3️⃣ Preparar datos POST
+    const postData = qs.stringify({ fileId });
+
+    // 4️⃣ Petición POST a Burstcloud
+    const postResponse = await axios.post(
+      'https://www.burstcloud.co/file/play-request/',
+      postData,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'Accept': 'application/json, text/javascript, */*; q=0.01',
+          'Origin': 'https://www.burstcloud.co',
+          'Referer': pageUrl,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        withCredentials: true
+      }
+    );
+
+    // 5️⃣ Devolver la URL del CDN
+    const cdnUrl = postResponse.data.purchase?.cdnUrl;
+    if (!cdnUrl) throw new Error('No se encontró cdnUrl en la respuesta');
+    console.log(`[BURSTCLOUD] CDN URL encontrada: ${cdnUrl}`);
+
+    return { url: cdnUrl };
+  } catch (err) {
+    console.error('[BURSTCLOUD] Error:', err.message);
+    return [];
+  }
+}
 async function extractM3u8(m3u8Url, maxBrowserRetries = 3) {
   const maxTabs = 3;
 
@@ -185,23 +268,35 @@ async function extractM3u8(m3u8Url, maxBrowserRetries = 3) {
       console.log(`Intento de navegador ${browserAttempt} de ${maxBrowserRetries}`);
       browser = await getPlaywrightBrowser();
       const context = await browser.newContext({ userAgent: UA_FIREFOX });
+
+      // Bloquear recursos innecesarios
       await context.route(/\.(png|jpg|gif|css|woff|woff2|ttf)$/i, route => route.abort());
 
       let indexM3u8Url;
       let pageWithContent;
 
-      // 1. Primer intento en la pestaña inicial
+      // 1️⃣ Primer intento en la pestaña inicial
       const initialPage = await context.newPage();
       initialPage.on('response', (res) => {
         const url = res.url();
-        console.log(url);
         if (/index-[^/]+\.m3u8$/i.test(url)) {
           console.log("Found index m3u8:", url);
           indexM3u8Url = url;
         }
       });
+
       await initialPage.goto(m3u8Url, { waitUntil: 'networkidle', timeout: 20000 });
 
+      // 🔍 Detectar si aparece el player en blanco
+      const hasBlankPlayer = await initialPage.$('img[src*="player_blank.jpg"]');
+      if (hasBlankPlayer) {
+        console.warn("Se detectó player_blank.jpg en el primer intento. Marcando como perdido.");
+        await context.close();
+        await browser.close();
+        return []; // No seguir intentando
+      }
+
+      // ⏳ Esperar hasta encontrar el m3u8
       const timeout = 6000;
       const pollingInterval = 250;
       const start = Date.now();
@@ -209,20 +304,19 @@ async function extractM3u8(m3u8Url, maxBrowserRetries = 3) {
         await initialPage.waitForTimeout(pollingInterval);
       }
 
-      // Si se encuentra el m3u8 en la primera pestaña, se salta el resto de la lógica
+      // ✅ Si lo encontramos en el primer intento
       if (indexM3u8Url) {
         pageWithContent = initialPage;
       } else {
         console.warn("No se encontró index.m3u8 en el primer intento. Abriendo nuevas pestañas.");
         await initialPage.close();
 
-        // 2. Lógica para abrir múltiples pestañas si el primer intento falla
+        // 2️⃣ Abrir pestañas adicionales
         for (let tabAttempt = 1; tabAttempt <= maxTabs; tabAttempt++) {
           console.log(`Abriendo pestaña ${tabAttempt} de ${maxTabs}`);
           const page = await context.newPage();
           page.on('response', (res) => {
             const url = res.url();
-            console.log(url);
             if (/index-[^/]+\.m3u8$/i.test(url)) {
               console.log("Found index m3u8:", url);
               indexM3u8Url = url;
@@ -230,12 +324,12 @@ async function extractM3u8(m3u8Url, maxBrowserRetries = 3) {
           });
 
           await page.goto(m3u8Url, { waitUntil: 'networkidle', timeout: 20000 });
-          await page.waitForTimeout(timeout); // Esperar un tiempo para ver si aparece el m3u8
+          await page.waitForTimeout(timeout);
 
           if (indexM3u8Url) {
             console.log(`¡Index m3u8 encontrado en la pestaña ${tabAttempt}!`);
             pageWithContent = page;
-            break; // Salir del bucle de pestañas
+            break;
           } else {
             console.warn(`No se encontró index.m3u8 en la pestaña ${tabAttempt}.`);
             await page.close();
@@ -243,13 +337,14 @@ async function extractM3u8(m3u8Url, maxBrowserRetries = 3) {
         }
       }
 
+      // ❌ Si no se encontró en ninguna pestaña
       if (!pageWithContent) {
-        console.warn(`No se pudo encontrar index.m3u8 en ninguna de las ${maxTabs} pestañas. Intentando con una nueva instancia del navegador.`);
+        console.warn(`No se pudo encontrar index.m3u8 en ninguna de las ${maxTabs} pestañas.`);
         await browser.close();
-        continue; // Pasar al siguiente intento del bucle de navegadores
+        continue;
       }
-      
-      // Si se encontró el m3u8 en cualquier intento, se procede a descargar el contenido
+
+      // 📥 Descargar el contenido del m3u8
       async function fetchTextInPage(url) {
         return withRetries(() =>
           pageWithContent.evaluate(async (u) => {
@@ -270,9 +365,7 @@ async function extractM3u8(m3u8Url, maxBrowserRetries = 3) {
     } catch (error) {
       console.error(`Error en intento de navegador ${browserAttempt}:`, error);
       if (browser) {
-        try {
-          await browser.close();
-        } catch (_) {}
+        try { await browser.close(); } catch (_) {}
       }
       if (browserAttempt === maxBrowserRetries) {
         console.error('Se agotaron los intentos de navegador.');
@@ -282,48 +375,47 @@ async function extractM3u8(m3u8Url, maxBrowserRetries = 3) {
   }
 }
 
-async function interceptPuppeteer(pageUrl, fileRegex) {
-  const browser = await getPuppeteerBrowser();
-  const page = await browser.newPage();
-  await page.setUserAgent(UA_CHROME);
 
-  return new Promise((resolve, reject) => {
-    let settled = false;
-    const done = async (err, data) => {
-      if (settled) return;
-      settled = true;
-      await page.close();
-      err ? reject(err) : resolve(data);
-    };
-
-    const guard = setTimeout(() => done(new Error('Timeout')), 12000);
-
-    page.on('request', (req) => {
-      const u = req.url();
-      if (fileRegex.test(u)) {
-        clearTimeout(guard);
-        done(null, { url: u });
-      }
+async function getJWPlayerFile(pageUrl) {
+  try {
+    const { data: html } = await axios.get(pageUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
+      },
+      timeout: 10000
     });
 
-    page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 10000 }).catch((e) => done(e));
-  });
-}
+    // Busca la línea que contiene "file: '...'"
+    const match = html.match(/file:\s*['"]([^'"]+\.mp4[^'"]*)['"]/i);
+    if (match && match[1]) {
+      return { url: match[1] };
+    }
 
+    throw new Error('No se encontró URL del archivo MP4');
+  } catch (err) {
+    console.error('[getJWPlayerFile] Error:', err.message);
+    return null;
+  }
+}
 function pass() {
   return;
 }
 
+const mp4 = (u) => getJWPlayerFile(u);
+
 const extractors = {
-  yourupload: (u) => interceptPuppeteer(u, /\.mp4$/),
-  yu: (u) => interceptPuppeteer(u, /\.mp4$/),
+  yourupload: mp4,
+  yu: mp4,
   streamwish: extractM3u8,
   sw: extractM3u8,
   swiftplayers: extractM3u8,
+  obeywish: extractM3u8,
   'mega.nz': pass,
   mega: pass,
-  obeywish: extractM3u8
+  'burstcloud.co': burstcloudExtractor,
+  bc: burstcloudExtractor
 };
+
 
 function getExtractor(name) {
   return extractors[name.toLowerCase()];

@@ -1,2 +1,5 @@
 list.js
 .env
+-/node_modules
+req.js
+tst.js

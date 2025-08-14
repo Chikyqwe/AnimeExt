@@ -29,6 +29,7 @@
     "playwright-core": "^1.52.0",
     "puppeteer-core": "^24.15.0",
     "request": "^2.88.2",
-    "serve-favicon": "^2.5.1"
+    "serve-favicon": "^2.5.1",
+    "tough-cookie": "^5.1.2"
   }
 }

@@ -1,6 +1,7 @@
 // src/utils/helpers.js
 const axios = require('axios');
 const urlLib = require('url');
+const cheerio = require('cheerio');
 const { http, https } = require('follow-redirects');
 
 // Funci�n para el proxy de im�genes
@@ -37,11 +38,17 @@ function streamVideo(videoUrl, req, res) {
   const isHttps = parsedUrl.protocol === 'https:';
   const protocol = isHttps ? https : http;
 
+  // Detectar dominio para el Referer
+  const referer = parsedUrl.hostname.includes('burstcloud.co')
+    ? 'https://burstcloud.co/'
+    : 'https://www.yourupload.com/';
+
   const headers = {
-    'Referer': 'https://www.yourupload.com/',
-    'Origin': 'https://www.yourupload.com',
+    'Referer': referer,
+    'Origin': referer,
     'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0'
   };
+
   if (req.headers.range) headers['Range'] = req.headers.range;
 
   const options = {
@@ -55,7 +62,7 @@ function streamVideo(videoUrl, req, res) {
 
   console.log(`[API STREAM] Opciones de petición:`, options);
 
-  const TIMEOUT_MS = 5000; // Timeout de 5 segundos
+  const TIMEOUT_MS = 5000;
 
   const proxyReq = protocol.request(options, (proxyRes) => {
     console.log(`[API STREAM] Respuesta recibida con status: ${proxyRes.statusCode}`);
@@ -80,30 +87,19 @@ function streamVideo(videoUrl, req, res) {
   proxyReq.setTimeout(TIMEOUT_MS, () => {
     console.error('[API STREAM] Tiempo de espera agotado para la solicitud al origen');
     proxyReq.abort();
-
-    if (!res.headersSent) {
-      res.status(504).send('Tiempo de espera agotado al conectar con el video');
-    } else {
-      res.end();
-    }
+    if (!res.headersSent) res.status(504).send('Tiempo de espera agotado al conectar con el video');
+    else res.end();
   });
 
   proxyReq.on('error', err => {
-    if (err.code === 'ECONNRESET') {
-      console.warn('[API STREAM] Conexión reiniciada (timeout probablemente alcanzado)');
-    } else {
-      console.error('[API STREAM] Error en proxy:', err);
-    }
-
-    if (!res.headersSent) {
-      res.status(500).send('Error al obtener el video: ' + err.message);
-    } else {
-      res.end();
-    }
+    console.error('[API STREAM] Error en proxy:', err);
+    if (!res.headersSent) res.status(500).send('Error al obtener el video: ' + err.message);
+    else res.end();
   });
 
   proxyReq.end();
 }
+
 // funcion para descargar el video con los headers correctos
 function downloadVideo(req, res) {
   const videoUrl = req.query.videoUrl;
@@ -165,6 +161,9 @@ function validateVideoUrl(videoUrl, timeoutMs = 5000) {
   return new Promise((resolve) => {
     if (!videoUrl) return resolve(false);
 
+    // Ignorar validación para BurstCloud
+    if (videoUrl.includes('burstcloud.co')) return resolve(true);
+
     const parsedUrl = urlLib.parse(videoUrl);
     const isHttps = parsedUrl.protocol === 'https:';
     const protocol = isHttps ? https : http;
@@ -199,9 +198,64 @@ function validateVideoUrl(videoUrl, timeoutMs = 5000) {
   });
 }
 
+
+async function urlEpAX(urlPagina, capNum) {
+  console.log(`[URL EPAX] Buscando episodio ${capNum} en ${urlPagina}`);
+
+  // Aseguramos que capNum sea número entero
+  const capNumber = Number(capNum);
+  if (isNaN(capNumber)) {
+    console.warn(`[URL EPAX] capNum no es un número válido: ${capNum}`);
+    return null;
+  }
+
+  try {
+    const { data } = await axios.get(urlPagina, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+      }
+    });
+
+    const $ = cheerio.load(data);
+
+    let urlEpisodio = null;
+
+    // Convertimos a array para poder usar for/of y break con claridad
+    const elems = $('.eplister ul li').toArray();
+
+    for (const elem of elems) {
+      const numTextoRaw = $(elem).find('.epl-num').text();
+      const numTexto = numTextoRaw.trim();
+      const match = numTexto.match(/^(\d+)/);
+      if (!match) {
+        console.log('[URL EPAX] No se encontró número en:', numTexto);
+        continue;
+      }
+
+      const numero = parseInt(match[1], 10);
+      if (numero === capNumber) {
+        urlEpisodio = $(elem).find('a').attr('href') || null;
+        console.log(`[URL EPAX] Episodio encontrado: ${numero} URL: ${urlEpisodio}`);
+        break; // salió del loop porque ya encontró
+      }
+    }
+
+    if (!urlEpisodio) {
+      console.warn(`[URL EPAX] No se encontró URL para episodio ${capNumber}`);
+    }
+
+    return urlEpisodio;
+  } catch (error) {
+    console.error(`[URL EPAX] Error al obtener la página: ${error.message}`);
+    return null;
+  }
+}
+
+
 module.exports = {
   proxyImage,
   streamVideo,
   downloadVideo,
+  urlEpAX,
   validateVideoUrl
 };
