@@ -67,7 +67,7 @@ function generarUnitIDExistenteOUnico(slug, usados, existentes) {
 }
 
 function combinarJSONPorTituloV3(datosTio, datosFlv, datosAnimeID, outputPath, log = console.log) {
-    const unitIDPath = path.join(__dirname, "..", "..", "jsons", "UnitID.json");
+    const unitIDPath = path.join(__dirname, "..", "..", "data", "UnitID.json");
     let unitIDsExistentes = {};
 
     if (fs.existsSync(unitIDPath)) {
@@ -504,8 +504,8 @@ async function main({ log = console.log } = {}) {
     const outTio = path.join(__dirname, "anime_list_tio.json");
     const outFlv = path.join(__dirname, "anime_list_flv.json");
     const outAnimeID = path.join(__dirname, "anime_list_animeid.json");
-    const outFinal = path.join(__dirname, "..", "..", "jsons", "anime_list.json");
-    const outReporte = path.join(__dirname, "..", "..", "jsons", "report_error.json");
+    const outFinal = path.join(__dirname, "..", "..", "data", "anime_list.json");
+    const outReporte = path.join(__dirname, "..", "..", "data", "report_error.json");
 
     fs.writeFileSync(outTio, JSON.stringify(tio, null, 2), "utf-8");
     fs.writeFileSync(outFlv, JSON.stringify(flv, null, 2), "utf-8");

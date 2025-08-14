@@ -1,25 +1,55 @@
+// Instala las dependencias si no las tienes:
+// npm install axios cli-progress
+
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const cliProgress = require('cli-progress');
 
-(async () => {
-  try {
-    const url = 'https://yuguaab.com/e/o5p5ntjbz0l9';
-    const { data: html } = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept-Language': 'es-ES,es;q=0.9',
-      }
-    });
+const urlEncoded = "https%3A%2F%2Fcdn.burstcloud.co%2Fa20250813yRh85r15CLE%2FTakopii-01.AnimeYT.es.mp4";
+const videoUrl = decodeURIComponent(urlEncoded);
 
-    // Regex para capturar el valor de 'link' dentro del script
-    const match = html.match(/pickDirect\s*\([^,]+,\s*'([^']+)'\s*\)/);
+const outputFile = path.resolve(__dirname, 'Takopii-01.mp4');
 
-    if (match && match[1]) {
-      console.log('Link encontrado:', match[1]);
-    } else {
-      console.log('No se encontró el link en el HTML');
-    }
+// Crear la barra de progreso
+const progressBar = new cliProgress.SingleBar({
+  format: 'Descargando [{bar}] {percentage}% | {value}/{total} MB',
+  barCompleteChar: '#',
+  barIncompleteChar: '-',
+  hideCursor: true
+});
 
-  } catch (err) {
-    console.error('Error al obtener el link:', err.message);
+axios({
+  method: 'get',
+  url: videoUrl,
+  responseType: 'stream',
+  headers: {
+    'Referer': 'https://burstcloud.co/',
+    'Origin': 'https://burstcloud.co/'
   }
-})();
+})
+.then(response => {
+  const totalLength = parseInt(response.headers['content-length']);
+  let downloaded = 0;
+
+  progressBar.start((totalLength / 1024 / 1024).toFixed(2), 0);
+
+  const writer = fs.createWriteStream(outputFile);
+  response.data.on('data', chunk => {
+    downloaded += chunk.length;
+    progressBar.update((downloaded / 1024 / 1024).toFixed(2));
+  });
+
+  response.data.pipe(writer);
+
+  writer.on('finish', () => {
+    progressBar.stop();
+    console.log('Descarga completada:', outputFile);
+  });
+
+  writer.on('error', err => {
+    progressBar.stop();
+    console.error('Error al escribir archivo:', err);
+  });
+})
+.catch(err => console.error('Error en la descarga:', err));

@@ -282,9 +282,6 @@ if (Array.isArray(result) && result[0]?.content) {
 }
 else if (result?.url) {
   const isValid = await validateVideoUrl(result.url);
-  if (!isValid) {
-    return { status: 404, message: 'La URL del video no es válida o está caída' };
-  }
 
   res.json({ 
     url: result.url,
