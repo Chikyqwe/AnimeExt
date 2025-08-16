@@ -82,7 +82,7 @@ router.get(route, auth, (req, res) => {
         term.open(document.getElementById('terminal'));
         term.focus();
 
-        const ws = new WebSocket('ws://' + location.host + '${route}/ws');
+        const ws = new WebSocket('wss://' + location.host + '${route}/ws');
 
         ws.onopen = () => term.write('\\x1b[32mConectado al servidor\\x1b[0m\\r\\n');
         ws.onmessage = e => { term.write(e.data); term.scrollToBottom(); };
