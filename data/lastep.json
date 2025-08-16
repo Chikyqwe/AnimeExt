@@ -1,5 +1,95 @@
 [
   {
+    "titulo": "Bad Girl",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/bad-girl-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4202.jpg",
+    "alt": "Bad Girl",
+    "slug": "bad-girl",
+    "id": 5065
+  },
+  {
+    "titulo": "Fermat no Ryouri",
+    "episodio": "Episodio 6",
+    "episodioNum": 6,
+    "url": "https://www3.animeflv.net/ver/fermat-no-ryouri-6",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4203.jpg",
+    "alt": "Fermat no Ryouri",
+    "slug": "fermat-no-ryouri",
+    "id": 7232
+  },
+  {
+    "titulo": "Ame to Kimi to",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/ame-to-kimi-to-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4201.jpg",
+    "alt": "Ame to Kimi to",
+    "slug": "ame-to-kimi-to",
+    "id": 3412
+  },
+  {
+    "titulo": "Koujo Denka no Kateikyoushi",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/koujo-denka-no-kateikyoushi-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4178.jpg",
+    "alt": "Koujo Denka no Kateikyoushi",
+    "slug": "koujo-denka-no-kateikyoushi",
+    "id": 7324
+  },
+  {
+    "titulo": "Hikaru ga Shinda Natsu",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/hikaru-ga-shinda-natsu-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4200.jpg",
+    "alt": "Hikaru ga Shinda Natsu",
+    "slug": "hikaru-ga-shinda-natsu",
+    "id": 4994
+  },
+  {
+    "titulo": "Sono Bisque Doll wa Koi wo Suru",
+    "episodio": "Episodio 19",
+    "episodioNum": 19,
+    "url": "https://www3.animeflv.net/ver/sono-bisque-doll-wa-koi-wo-suru-19",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/3568.jpg",
+    "alt": "Sono Bisque Doll wa Koi wo Suru",
+    "slug": "sono-bisque-doll-wa-koi-wo-suru",
+    "id": 4200
+  },
+  {
+    "titulo": "Kizetsu Yuusha to Ansatsu Hime",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/kizetsu-yuusha-to-ansatsu-hime-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4197.jpg",
+    "alt": "Kizetsu Yuusha to Ansatsu Hime",
+    "slug": "kizetsu-yuusha-to-ansatsu-hime",
+    "id": 1920
+  },
+  {
+    "titulo": "Kaijuu 8-gou 2nd Season",
+    "episodio": "Episodio 5",
+    "episodioNum": 5,
+    "url": "https://www3.animeflv.net/ver/kaijuu-8gou-2nd-season-5",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4224.jpg",
+    "alt": "Kaijuu 8-gou 2nd Season",
+    "slug": "kaijuu-8-gou-2nd-season",
+    "id": null
+  },
+  {
+    "titulo": "Shin Samurai-den Yaiba",
+    "episodio": "Episodio 19",
+    "episodioNum": 19,
+    "url": "https://www3.animeflv.net/ver/shin-samuraiden-yaiba-19",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4145.jpg",
+    "alt": "Shin Samurai-den Yaiba",
+    "slug": "shin-samurai-den-yaiba",
+    "id": null
+  },
+  {
     "titulo": "Nukitashi the Animation",
     "episodio": "Episodio 5",
     "episodioNum": 5,
@@ -108,96 +198,6 @@
     "alt": "Futari Solo Camp",
     "slug": "futari-solo-camp",
     "id": 5330
-  },
-  {
-    "titulo": "Dandadan 2nd Season",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/dandadan-2nd-season-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4188.jpg",
-    "alt": "Dandadan 2nd Season",
-    "slug": "dandadan-2nd-season",
-    "id": 4038
-  },
-  {
-    "titulo": "Tsuihousha Shokudou e Youkoso!",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/tsuihousha-shokudou-e-youkoso-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4187.jpg",
-    "alt": "Tsuihousha Shokudou e Youkoso!",
-    "slug": "tsuihousha-shokudou-e-youkoso",
-    "id": 4446
-  },
-  {
-    "titulo": "Dr. Stone: Science Future",
-    "episodio": "Episodio 18",
-    "episodioNum": 18,
-    "url": "https://www3.animeflv.net/ver/dr-stone-science-future-18",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4116.jpg",
-    "alt": "Dr. Stone: Science Future",
-    "slug": "dr-stone-science-future",
-    "id": 1148
-  },
-  {
-    "titulo": "Karaoke Iko!",
-    "episodio": "Episodio 4",
-    "episodioNum": 4,
-    "url": "https://www3.animeflv.net/ver/karaoke-iko-4",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4225.jpg",
-    "alt": "Karaoke Iko!",
-    "slug": "karaoke-iko",
-    "id": 8691
-  },
-  {
-    "titulo": "Uchuujin MuuMuu",
-    "episodio": "Episodio 19",
-    "episodioNum": 19,
-    "url": "https://www3.animeflv.net/ver/uchuujin-muumuu-19",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4168.jpg",
-    "alt": "Uchuujin MuuMuu",
-    "slug": "uchuujin-muumuu",
-    "id": 3379
-  },
-  {
-    "titulo": "Tsuyokute New Saga",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/tsuyokute-new-saga-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4185.jpg",
-    "alt": "Tsuyokute New Saga",
-    "slug": "tsuyokute-new-saga",
-    "id": 7276
-  },
-  {
-    "titulo": "Onmyou Kaiten Re:Birth",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/onmyou-kaiten-rebirth-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4184.jpg",
-    "alt": "Onmyou Kaiten Re:Birth",
-    "slug": "onmyou-kaiten-re-birth",
-    "id": null
-  },
-  {
-    "titulo": "Jigoku Sensei Nube (2025)",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/jigoku-sensei-nube-2025-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4186.jpg",
-    "alt": "Jigoku Sensei Nube (2025)",
-    "slug": "jigoku-sensei-nube-2025",
-    "id": 7505
-  },
-  {
-    "titulo": "Mikadono Sanshimai wa Angai, Choroi.",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/mikadono-sanshimai-wa-angai-choroi-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4220.jpg",
-    "alt": "Mikadono Sanshimai wa Angai, Choroi.",
-    "slug": "mikadono-sanshimai-wa-angai-choroi",
-    "id": 9083
   },
   {
     "titulo": "Yofukashi no Uta Season 2 7",
