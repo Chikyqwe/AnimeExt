@@ -40,6 +40,7 @@ function getAnimeByUnitId(unitId) {
   return readAnimeList().find(anime => anime.unit_id === parseInt(unitId, 10));
 }
 async function buildEpisodeUrl(anime, ep, mirror = 1) {
+  console.log(anime)
   if (!anime?.sources || !ep) return null;
 
 
@@ -48,17 +49,15 @@ async function buildEpisodeUrl(anime, ep, mirror = 1) {
     baseUrl = anime.sources.FLV.replace('/anime/', '/ver/') + `-${ep}`;
   } else if (mirror === 2 && anime.sources.TIO) {
     baseUrl = anime.sources.TIO.replace('/anime/', '/ver/') + `-${ep}`;
-  } else if (mirror === 3 && anime.sources.ANIMEID) {
-    const urlObj = new URL(anime.sources.ANIMEID);
-    baseUrl = `${urlObj.origin}/v${urlObj.pathname}-${ep}`;
-  } else if (mirror === 4 && anime.sources.axty) {
-    baseUrl = await urlEpAX(anime.sources.axty, ep);
-    console.log(baseUrl)
+  } else if (mirror === 3 && anime.sources.ANIMEYTX) {
+    baseUrl = await urlEpAX(anime.sources.ANIMEYTX, ep);
+    console.log(anime.sources.ANIMEYTX, ep, baseUrl);
   } else {
     return null;
   }
 
   return baseUrl;
+  console.log(baseUrl);
 }
 
 
