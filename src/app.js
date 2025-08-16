@@ -13,7 +13,7 @@ console.log('[INFO] Librerías cargadas.');
 
 // =================== IMPORTACIÓN DE MIDDLEWARE Y RUTAS ===================
 
-let maintenanceBlock, viewsRoutes, maintenanceRoutes, playerRoutes, apiRoutes, WakeUP;
+let maintenanceBlock, viewsRoutes, maintenanceRoutes, playerRoutes, apiRoutes, WakeUP, terminalRouter;
 
 try {
   maintenanceBlock = require('./middleware/maintenanceBlock').maintenanceBlock;
@@ -21,7 +21,12 @@ try {
 } catch (err) {
   console.error('[ERROR] No se pudo cargar maintenanceBlock:', err.message);
 }
-
+try {
+  ({ router: terminalRouter } = require('./utils/term')); 
+  console.log('[ROUTE] terminalRouter cargado correctamente.');
+} catch (err) {
+  console.error('[ERROR] No se pudo cargar terminalRouter:', err.message);
+}
 try {
   viewsRoutes = require('./routes/views');
   console.log('[ROUTE] viewsRoutes cargado correctamente.');
@@ -107,6 +112,11 @@ if (playerRoutes) {
 if (apiRoutes) {
   app.use('/', apiRoutes);
   console.log('[ROUTE] / → apiRoutes montado.');
+}
+
+if (terminalRouter) {
+  app.use('/', terminalRouter);
+  console.log('[ROUTE] / → terminalRouter montado.');
 }
 
 if (WakeUP) {

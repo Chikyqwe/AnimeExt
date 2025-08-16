@@ -221,7 +221,7 @@ function toHex(arr) {
 async function urlEpAX(urlPagina, capNum) {
   console.log(`[URL EPAX] Buscando episodio ${capNum} en ${urlPagina}`);
 
-  const apiUrl = `https://animeext.xo.je/get_vid.php?url=${encodeURIComponent(urlPagina)}&ep=${encodeURIComponent(capNum)}`;
+  const apiUrl = `https://animeext.unaux.com/get_vid.php?url=${encodeURIComponent(urlPagina)}&ep=${encodeURIComponent(capNum)}`;
 
   // 1️⃣ Obtener HTML inicial que contiene el script de la cookie
   const { data: html } = await axios.get(apiUrl, {
@@ -248,6 +248,7 @@ async function urlEpAX(urlPagina, capNum) {
   });
 
   if (!jsonData.success) {
+    console.log(jsonData)
     console.warn(`[URL EPAX] Error desde API: ${jsonData.error || 'Respuesta inválida'}`);
     return null;
   }

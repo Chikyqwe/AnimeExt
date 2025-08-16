@@ -6,7 +6,7 @@ const path = require('path');
 
 const FUENTE1_URL = 'https://www3.animeflv.net/';
 const FUENTE2_URL = 'https://tioanime.com/';
-const UNITID_PATH = path.join(__dirname, "..", "..",'jsons', 'UnitID.json');
+const UNITID_PATH = path.join(__dirname, "..", "..",'data', 'UnitID.json');
 
 function extractEpisodeNumber(text) {
   const match = text.match(/(\d+)(?!.*\d)/);
@@ -117,7 +117,7 @@ async function last() {
     };
   });
 
-  const outFinal = path.join(__dirname, "..", "..", "jsons", "lastep.json");
+  const outFinal = path.join(__dirname, "..", "..", "data", "lastep.json");
   fs.writeFileSync(outFinal, JSON.stringify(finalList, null, 2));
   console.log(`✅ ${finalList.length} episodios guardados en lastep.json`);
 }
