@@ -9,7 +9,8 @@
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom right, #7fffd4, #40e0d0);
+      background: linear-gradient(to bottom right, #1a1a1a, #121212);
+      color: #f0f0f0;
       height: 100vh;
       display: flex;
       align-items: center;
@@ -17,32 +18,38 @@
     }
 
     .container {
-      background: white;
+      background: #1f1f1f;
       padding: 2rem;
       border-radius: 1rem;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
       text-align: center;
       width: 90%;
       max-width: 400px;
     }
 
     h1 {
-      color: #008b8b;
+      color: #00ced1;
       margin-bottom: 1rem;
     }
 
     input[type="password"] {
       padding: 0.7rem;
       width: 80%;
-      border: 2px solid #7fffd4;
+      border: 2px solid #00ced1;
       border-radius: 0.5rem;
       margin-bottom: 1rem;
       font-size: 1rem;
+      background: #121212;
+      color: #f0f0f0;
+    }
+
+    input[type="password"]::placeholder {
+      color: #888;
     }
 
     button {
       padding: 0.7rem 1.5rem;
-      background-color: #20b2aa;
+      background-color: #008b8b;
       color: white;
       border: none;
       border-radius: 0.5rem;
@@ -52,7 +59,7 @@
     }
 
     button:hover {
-      background-color: #008b8b;
+      background-color: #00ced1;
     }
   </style>
 </head>
@@ -68,8 +75,6 @@
   <script src="/static/infy.js"></script>
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      const params = new URLSearchParams(window.location.search);
-
       document.getElementById("passForm").addEventListener("submit", function(e) {
         e.preventDefault();
         const password = document.getElementById("password").value;
