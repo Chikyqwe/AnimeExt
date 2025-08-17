@@ -14,17 +14,45 @@
   <link rel="stylesheet" href="/static/styles_player.css">
   <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script>eruda.init();</script>
+  <!-- Tus estilos CSS -->
+  <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
+<header class="topbar d-flex align-items-center">
+  <a href="/" class="logo">
+    <svg viewBox="0 0 300 120" class="logo-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+      <text x="10" y="60" font-family="Alice, serif" font-size="36" font-weight="bold">
+        <tspan class="main-text">Anime </tspan>
+        <tspan class="ext-text">EXT</tspan>
+      </text>
+      <path d="M220,30 L230,60 L220,90" stroke="#3C873A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="100" y="90" text-anchor="middle" font-family="sans-serif" font-size="14" class="subtext">アニメが好きな私たち</text>
+    </svg>
+  </a>
 
+
+  <form class="search-form d-flex ms-auto align-items-center" role="search" onsubmit="searchAnime(event)">
+    <button type="button" id="search-toggle-btn" class="btn btn-outline-light d-md-none">
+      <i class="fa fa-search"></i>
+    </button>
+    <input id="searchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="form-control me-2 d-none d-md-block" type="search" placeholder="Buscar anime..." aria-label="Buscar" />
+    <button class="btn btn-outline-light d-none d-md-block" type="submit">
+      <i class="fa fa-search"></i>
+    </button>
+    <ul id="search-suggestions" class="suggestions-list"></ul>
+  </form>
+</header>
 <div class="container-player">
   <h1 id="anime-title">Cargando...</h1>
 
   <div class="video-wrapper">
     <div class="loader" id="loader">
-      <div class="dot"></div>
-      <div class="dot"></div>
-      <div class="dot"></div>
+      <div class="dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <span id="loaderText">Cargando...</span>
     </div>
     <video id="player" controls preload="auto" playsinline></video>
   </div>
@@ -38,11 +66,30 @@
     <div class="d-flex flex-wrap justify-content-center gap-2" id="episode-list"></div>
   </div>
 </div>
+<div class="modal fade" id="animeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" id="modalCloseBtn" data-bs-dismiss="modal" aria-label="Cerrar" style="background-color: transparent; border: none; font-size: 1.5rem;">
+          <i class="fa fa-xmark" style="color: white;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-left">
+          <img id="modalImage" class="modal-img" src="" alt="Anime Image" />
+        </div>
+        <div class="modal-info">
+          <h2 id="modalTitle" class="modal-title"></h2>
+          <div id="episodes-list" class="episodes-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script id="config" type="application/json"></script> 
 <script src="/static/functions_player.js"></script>
 <script src="/static/infy.js"></script>
-
 </body>
 </html>

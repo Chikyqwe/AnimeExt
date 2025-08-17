@@ -18,6 +18,13 @@ const DB_NAME = 'AnimeCacheDB';
 const STORE_NAME = 'precached';
 let dbPromise = null;
 
+function setLoaderText(text) {
+  const loaderSpan = document.getElementById('loaderText');
+  if (loaderSpan) {
+    loaderSpan.innerText = text;
+  }
+}
+
 function openDB() {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
@@ -325,6 +332,7 @@ async function loadServerByIndex(index) {
   ];
   try {
     if (server === "yu" || server === "yourupload") {
+      setLoaderText(`Servidor YU ${currentMirror}`);
       let lastError;
 
       for (const url of yuUrls) { // Asume que existe un array 'yuUrls'
@@ -358,7 +366,7 @@ async function loadServerByIndex(index) {
       }
     } else if (server === "bc" || server === "burcloud") {
       let lastError;
-
+      setLoaderText(`Servidor BC ${currentMirror}`);
       for (const url of bcUrls) { // Asume que existe un array 'bcUrls'
         try {
           const res = await fetch(buildApiUrl(url));
@@ -390,7 +398,7 @@ async function loadServerByIndex(index) {
       }
     } else if (server === "sw") {
       let lastError;
-
+      setLoaderText(`Servidor SW ${currentMirror}`);
       for (const url of swUrls) {
         try {
           const res = await fetch(buildApiUrl(url));
@@ -422,6 +430,7 @@ async function loadServerByIndex(index) {
     } 
     // --- MEGA ---
     else if (server === "mega") {
+      setLoaderText(`Servidor MEGA, cargando Iframe`);
       const megaUrl = serverList[index].url || "";
       if (!megaUrl) throw new Error("MEGA: URL no encontrada");
 
@@ -459,6 +468,7 @@ async function loadServerByIndex(index) {
     }
     // --- CUALQUIER OTRO ---
     else {
+      setLoaderText(`Servidor ${server.toUpperCase()}, cargando...`);
       const res = await fetch(buildApiUrl(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=${server}`));
       if (!res.ok) throw new Error(`${server}: respuesta no OK`);
       const streamUrl = (await res.text()).trim();
@@ -503,6 +513,7 @@ async function requestWakeLock() {
 async function start(mirrorNumber = 1) {
   const ads = localStorage.getItem("ads") === "true";
   console.info("[INFO] Anuncios:", ads ? "Activados" : "Desactivados");
+  setLoaderText("Cargando servidores...");
 
   try {
     const mirrorParam = mirrorNumber > 1 ? `&mirror=${mirrorNumber}` : "";
@@ -664,10 +675,10 @@ async function start(mirrorNumber = 1) {
   } catch (err) {
     if (mirrorNumber < 4) {
       console.warn(`🔁 Reintentando con mirror=${mirrorNumber + 1}...`);
+      setLoaderText(`Cargando servidor ${mirrorNumber + 1}...`);
       return start(mirrorNumber + 1); // 🔁 Retry con siguiente mirror
     }
 
-    loader.textContent = '[Error] Error al cargar servidores';
     video.style.opacity = 0;
     console.error("🚨 start() error:", err);
   }
