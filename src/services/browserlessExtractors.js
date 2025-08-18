@@ -3,13 +3,8 @@
 const axios = require('axios');
 const qs = require('qs')
 const cheerio = require('cheerio');
-const puppeteer = require('puppeteer-core');
-const { firefox } = require('playwright-core');
 const { URL } = require('url');
-const {
-  BROWSERLESS_ENDPOINT,
-  BROWSERLESS_ENDPOINT_FIREFOX_PLAYWRIGHT
-} = require('../config');
+const { JSDOM, VirtualConsole } = require('jsdom');
 const { slowAES } = require('../utils/aes'); // aes.js en CommonJS
 
 const UA_FIREFOX =
@@ -33,30 +28,6 @@ async function withRetries(fn, max = 4, base = 800) {
     }
   }
   throw lastErr;
-}
-
-let playwrightBrowser = null;
-let puppeteerBrowser = null;
-
-async function getPlaywrightBrowser() {
-  try {
-    const isDisconnected =
-      !playwrightBrowser ||
-      (typeof playwrightBrowser.isConnected === 'function' && !playwrightBrowser.isConnected());
-
-    if (isDisconnected) {
-      console.log('[Playwright] Conectando a Browserless Firefox…');
-      playwrightBrowser = await firefox.connect({
-        wsEndpoint: BROWSERLESS_ENDPOINT_FIREFOX_PLAYWRIGHT,
-        timeout: 20_000
-      });
-    }
-    return playwrightBrowser;
-  } catch (err) {
-    console.error('[Playwright] Error al conectar:', err.message);
-    playwrightBrowser = null;
-    throw err;
-  }
 }
 
 // Funciones auxiliares
@@ -243,122 +214,161 @@ async function burstcloudExtractor(pageUrl) {
     return [];
   }
 }
-async function extractM3u8(m3u8Url, maxBrowserRetries = 3) {
-  const maxTabs = 3;
 
-  for (let browserAttempt = 1; browserAttempt <= maxBrowserRetries; browserAttempt++) {
-    let browser;
+async function getRedirectUrl(pageUrl) {
     try {
-      console.log(`Intento de navegador ${browserAttempt} de ${maxBrowserRetries}`);
-      browser = await getPlaywrightBrowser();
-      const context = await browser.newContext({ userAgent: UA_FIREFOX });
-
-      // Bloquear recursos innecesarios
-      await context.route(/\.(png|jpg|gif|css|woff|woff2|ttf)$/i, route => route.abort());
-
-      let indexM3u8Url;
-      let pageWithContent;
-
-      // 1️⃣ Primer intento en la pestaña inicial
-      const initialPage = await context.newPage();
-      initialPage.on('response', (res) => {
-        const url = res.url();
-        if (/index-[^/]+\.m3u8$/i.test(url)) {
-          console.log("Found index m3u8:", url);
-          indexM3u8Url = url;
-        }
-      });
-
-      await initialPage.goto(m3u8Url, { waitUntil: 'networkidle', timeout: 20000 });
-
-      // 🔍 Detectar si aparece el player en blanco
-      const hasBlankPlayer = await initialPage.$('img[src*="player_blank.jpg"]');
-      if (hasBlankPlayer) {
-        console.warn("Se detectó player_blank.jpg en el primer intento. Marcando como perdido.");
-        await context.close();
-        await browser.close();
-        return []; // No seguir intentando
-      }
-
-      // ⏳ Esperar hasta encontrar el m3u8
-      const timeout = 6000;
-      const pollingInterval = 250;
-      const start = Date.now();
-      while (!indexM3u8Url && Date.now() - start < timeout) {
-        await initialPage.waitForTimeout(pollingInterval);
-      }
-
-      // ✅ Si lo encontramos en el primer intento
-      if (indexM3u8Url) {
-        pageWithContent = initialPage;
-      } else {
-        console.warn("No se encontró index.m3u8 en el primer intento. Abriendo nuevas pestañas.");
-        await initialPage.close();
-
-        // 2️⃣ Abrir pestañas adicionales
-        for (let tabAttempt = 1; tabAttempt <= maxTabs; tabAttempt++) {
-          console.log(`Abriendo pestaña ${tabAttempt} de ${maxTabs}`);
-          const page = await context.newPage();
-          page.on('response', (res) => {
-            const url = res.url();
-            if (/index-[^/]+\.m3u8$/i.test(url)) {
-              console.log("Found index m3u8:", url);
-              indexM3u8Url = url;
+        const deobfuscatedScript = `
+            const dmca = ["hgplaycdn.com", "habetar.com", "yuguaab.com", "guxhag.com", "auvexiug.com", "xenolyzb.com"];
+            const main = ["kravaxxa.com", "davioad.com", "haxloppd.com", "tryzendm.com", "dumbalag.com"];
+            const rules = ["dhcplay.com", "hglink.to", "test.hglink.to", "wish-redirect.aiavh.com"];
+            
+            const url = new URL("${pageUrl}");
+            let destination;
+            
+            if (rules.includes(url.hostname)) {
+                destination = main[Math.floor(Math.random() * main.length)];
+            } else {
+                destination = dmca[Math.floor(Math.random() * dmca.length)];
             }
-          });
+            
+            const finalURL = "https://" + destination + url.pathname + url.search;
+            return finalURL;
+        `;
 
-          await page.goto(m3u8Url, { waitUntil: 'networkidle', timeout: 20000 });
-          await page.waitForTimeout(timeout);
+        const scriptFunction = new Function(deobfuscatedScript);
+        const finalUrl = scriptFunction();
 
-          if (indexM3u8Url) {
-            console.log(`¡Index m3u8 encontrado en la pestaña ${tabAttempt}!`);
-            pageWithContent = page;
-            break;
-          } else {
-            console.warn(`No se encontró index.m3u8 en la pestaña ${tabAttempt}.`);
-            await page.close();
-          }
-        }
-      }
-
-      // ❌ Si no se encontró en ninguna pestaña
-      if (!pageWithContent) {
-        console.warn(`No se pudo encontrar index.m3u8 en ninguna de las ${maxTabs} pestañas.`);
-        await browser.close();
-        continue;
-      }
-
-      // 📥 Descargar el contenido del m3u8
-      async function fetchTextInPage(url) {
-        return withRetries(() =>
-          pageWithContent.evaluate(async (u) => {
-            const r = await fetch(u);
-            if (!r.ok) throw new Error(r.status);
-            return await r.text();
-          }, url)
-        );
-      }
-
-      const indexContent = await fetchTextInPage(indexM3u8Url);
-
-      await context.close();
-      await browser.close();
-
-      return [{ url: indexM3u8Url, content: indexContent }];
+        return finalUrl;
 
     } catch (error) {
-      console.error(`Error en intento de navegador ${browserAttempt}:`, error);
-      if (browser) {
-        try { await browser.close(); } catch (_) {}
-      }
-      if (browserAttempt === maxBrowserRetries) {
-        console.error('Se agotaron los intentos de navegador.');
-        return [];
-      }
+        console.error('Error al ejecutar el script de redirección:', error.message);
+        return null;
     }
-  }
 }
 
+async function extractM3u8(pageUrl, maxRetries = 3) {
+    const redir = await getRedirectUrl(pageUrl);
+    try {
+        // 1️⃣ Obtener HTML de la página
+        const { data: html } = await axios.get(redir, { timeout: 10000 });
+
+        // 2️⃣ Crear JSDOM para ejecutar scripts embebidos
+        const virtualConsole = new VirtualConsole();
+        virtualConsole.on("jsdomError", () => {});
+        const dom = new JSDOM(html, {
+            runScripts: "dangerously",
+            resources: "usable",
+            virtualConsole
+        });
+        const { window } = dom;
+
+        let masterM3u8Url = null;
+
+        // 3️⃣ Inyectar jwplayer stub para interceptar el setup
+        window.jwplayer = function() {
+            return {
+                setup: function(config) {
+                    if (config.sources && config.sources[0].file) {
+                        const file = config.sources[0].file;
+                        masterM3u8Url = file.startsWith('/')
+                            ? new URL(file, redir).href
+                            : file;
+                    }
+                    return this;
+                },
+                on: () => {},
+                play: () => {},
+                getPlaylistItem: () => {}
+            };
+        };
+
+        // 4️⃣ Esperar a que se ejecute el script
+        await new Promise(r => setTimeout(r, 2000));
+        window.close();
+
+        if (!masterM3u8Url) {
+            console.warn('No se pudo obtener la URL del master m3u8');
+            return [];
+        }
+
+        // 5️⃣ Descargar master playlist
+        let masterContent = null;
+        let lastError = null;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const { data } = await axios.get(masterM3u8Url, { timeout: 10000 });
+                masterContent = data;
+                break;
+            } catch (err) {
+                console.warn(`Intento ${attempt} fallido al descargar master: ${err.message}`);
+                lastError = err;
+                await new Promise(r => setTimeout(r, 500 * attempt));
+            }
+        }
+
+        if (!masterContent) {
+            console.error('No se pudo descargar el master m3u8', lastError);
+            return [];
+        }
+
+        // 6️⃣ Analizar master playlist para encontrar la resolución más alta
+        const lines = masterContent.split('\n');
+        let maxRes = 0;
+        let bestUrl = null;
+
+        const baseUrl = masterM3u8Url.substring(0, masterM3u8Url.lastIndexOf('/') + 1);
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const match = /RESOLUTION=(\d+)x(\d+)/.exec(line);
+            if (match) {
+                const width = parseInt(match[1], 10);
+                const height = parseInt(match[2], 10);
+                const nextLine = lines[i + 1];
+                if (nextLine && !nextLine.startsWith('#')) {
+                    const totalRes = width * height;
+                    if (totalRes > maxRes) {
+                        maxRes = totalRes;
+                        bestUrl = nextLine.startsWith('/')
+                            ? new URL(nextLine, baseUrl).href
+                            : new URL(nextLine, baseUrl).href;
+                    }
+                }
+            }
+        }
+
+        if (!bestUrl) {
+            console.warn('No se encontró sub-playlist de resolución. Se devuelve el master original');
+            return [{ url: masterM3u8Url, content: masterContent }];
+        }
+
+        // 7️⃣ Descargar playlist de mayor resolución
+        let bestContent = null;
+        lastError = null;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const { data } = await axios.get(bestUrl, { timeout: 10000 });
+                bestContent = data;
+                break;
+            } catch (err) {
+                console.warn(`Intento ${attempt} fallido al descargar mejor resolución: ${err.message}`);
+                lastError = err;
+                await new Promise(r => setTimeout(r, 500 * attempt));
+            }
+        }
+
+        if (!bestContent) {
+            console.error('No se pudo descargar la mejor resolución', lastError);
+            return [];
+        }
+
+        return [{ url: bestUrl, content: bestContent }];
+
+    } catch (err) {
+        console.error('Error en extractSW:', err);
+        return [];
+    }
+}
 
 async function getJWPlayerFile(pageUrl) {
   try {
@@ -371,8 +381,16 @@ async function getJWPlayerFile(pageUrl) {
 
     // Busca la línea que contiene "file: '...'"
     const match = html.match(/file:\s*['"]([^'"]+\.mp4[^'"]*)['"]/i);
+
     if (match && match[1]) {
-      return { url: match[1] };
+      const videoUrl = match[1];
+
+      // Comprueba si es "novideo.mp4"
+      if (videoUrl.toLowerCase().includes('novideo.mp4')) {
+        throw new Error('El video no existe');
+      }
+
+      return { url: videoUrl };
     }
 
     throw new Error('No se encontró URL del archivo MP4');
@@ -381,6 +399,7 @@ async function getJWPlayerFile(pageUrl) {
     return null;
   }
 }
+
 function pass() {
   return;
 }
