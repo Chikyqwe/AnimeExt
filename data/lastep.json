@@ -1,5 +1,195 @@
 [
   {
+    "titulo": "Kijin Gentoushou",
+    "episodio": "Episodio 19",
+    "episodioNum": 19,
+    "url": "https://www3.animeflv.net/ver/kijin-gentoushou-19",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4133.jpg",
+    "alt": "Kijin Gentoushou",
+    "slug": "kijin-gentoushou",
+    "id": 6388
+  },
+  {
+    "titulo": "Watashi ga Koibito ni Nareru Wake Nai jan, Muri Muri! (※Muri ja Nakatta!?)",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/watashi-ga-koibito-ni-nareru-wake-nai-jan-muri-muri-muri-ja-nakatta-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4215.jpg",
+    "alt": "Watashi ga Koibito ni Nareru Wake Nai jan, Muri Muri! (※Muri ja Nakatta!?)",
+    "slug": "watashi-ga-koibito-ni-nareru-wake-nai-jan-muri-muri-muri-ja-nakatta",
+    "id": 7795
+  },
+  {
+    "titulo": "Grand Blue Season 2",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/grand-blue-season-2-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4214.jpg",
+    "alt": "Grand Blue Season 2",
+    "slug": "grand-blue-season",
+    "id": null
+  },
+  {
+    "titulo": "Sakamoto Days",
+    "episodio": "Episodio 18",
+    "episodioNum": 18,
+    "url": "https://www3.animeflv.net/ver/sakamoto-days-18",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4125.jpg",
+    "alt": "Sakamoto Days",
+    "slug": "sakamoto-days",
+    "id": 9953
+  },
+  {
+    "titulo": "Summer Pockets",
+    "episodio": "Episodio 20",
+    "episodioNum": 20,
+    "url": "https://www3.animeflv.net/ver/summer-pockets-20",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4162.jpg",
+    "alt": "Summer Pockets",
+    "slug": "summer-pockets",
+    "id": 9657
+  },
+  {
+    "titulo": "Yuusha Party wo Tsuihou sareta Shiromadoushi",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/yuusha-party-wo-tsuihou-sareta-shiromadoushi-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4198.jpg",
+    "alt": "Yuusha Party wo Tsuihou sareta Shiromadoushi",
+    "slug": "yuusha-party-wo-tsuihou-sareta-shiromadoushi",
+    "id": 9430
+  },
+  {
+    "titulo": "Seishun Buta Yarou wa Santa Claus no Yume wo Minai",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/seishun-buta-yarou-wa-santa-claus-no-yume-wo-minai-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4199.jpg",
+    "alt": "Seishun Buta Yarou wa Santa Claus no Yume wo Minai",
+    "slug": "seishun-buta-yarou-wa-santa-claus-no-yume-wo-minai",
+    "id": 6458
+  },
+  {
+    "titulo": "One Piece",
+    "episodio": "Episodio 1140",
+    "episodioNum": 1140,
+    "url": "https://www3.animeflv.net/ver/one-piece-tv-1140",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/7.jpg",
+    "alt": "One Piece",
+    "slug": "one-piece",
+    "id": 4239
+  },
+  {
+    "titulo": "City The Animation",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/city-the-animation-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4212.jpg",
+    "alt": "City The Animation",
+    "slug": "city-the-animation",
+    "id": 5703
+  },
+  {
+    "titulo": "Hotel Inhumans",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/hotel-inhumans-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4211.jpg",
+    "alt": "Hotel Inhumans",
+    "slug": "hotel-inhumans",
+    "id": 1654
+  },
+  {
+    "titulo": "Busamen Gachi Fighter",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/busamen-gachi-fighter-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4210.jpg",
+    "alt": "Busamen Gachi Fighter",
+    "slug": "busamen-gachi-fighter",
+    "id": 1126
+  },
+  {
+    "titulo": "Gachiakuta",
+    "episodio": "Episodio 6",
+    "episodioNum": 6,
+    "url": "https://www3.animeflv.net/ver/gachiakuta-6",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4209.jpg",
+    "alt": "Gachiakuta",
+    "slug": "gachiakuta",
+    "id": 9237
+  },
+  {
+    "titulo": "Nyaight of the Living Cat",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/nyaight-of-the-living-cat-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4207.jpg",
+    "alt": "Nyaight of the Living Cat",
+    "slug": "nyaight-of-the-living-cat",
+    "id": 9767
+  },
+  {
+    "titulo": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4206.jpg",
+    "alt": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
+    "slug": "isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku",
+    "id": 9166
+  },
+  {
+    "titulo": "Ruri no Houseki",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/ruri-no-houseki-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4204.jpg",
+    "alt": "Ruri no Houseki",
+    "slug": "ruri-no-houseki",
+    "id": 3095
+  },
+  {
+    "titulo": "Dekin no Mogura",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/dekin-no-mogura-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4205.jpg",
+    "alt": "Dekin no Mogura",
+    "slug": "dekin-no-mogura",
+    "id": 4260
+  },
+  {
+    "titulo": "Puniru wa Kawaii Slime",
+    "episodio": "Episodio 19",
+    "episodioNum": 19,
+    "url": "https://www3.animeflv.net/ver/puniru-wa-kawaii-slime-19",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4072.jpg",
+    "alt": "Puniru wa Kawaii Slime",
+    "slug": "puniru-wa-kawaii-slime",
+    "id": 3975
+  },
+  {
+    "titulo": "Jibaku Shounen Hanako-kun 2",
+    "episodio": "Episodio 19",
+    "episodioNum": 19,
+    "url": "https://www3.animeflv.net/ver/jibaku-shounen-hanakokun-2-19",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4129.jpg",
+    "alt": "Jibaku Shounen Hanako-kun 2",
+    "slug": "jibaku-shounen-hanako-kun",
+    "id": null
+  },
+  {
+    "titulo": "Witch Watch",
+    "episodio": "Episodio 20",
+    "episodioNum": 20,
+    "url": "https://www3.animeflv.net/ver/witch-watch-20",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4153.jpg",
+    "alt": "Witch Watch",
+    "slug": "witch-watch",
+    "id": 1607
+  },
+  {
     "titulo": "Bad Girl",
     "episodio": "Episodio 7",
     "episodioNum": 7,
@@ -10,203 +200,23 @@
     "id": 5065
   },
   {
-    "titulo": "Fermat no Ryouri",
-    "episodio": "Episodio 6",
-    "episodioNum": 6,
-    "url": "https://www3.animeflv.net/ver/fermat-no-ryouri-6",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4203.jpg",
-    "alt": "Fermat no Ryouri",
-    "slug": "fermat-no-ryouri",
-    "id": 7232
-  },
-  {
-    "titulo": "Ame to Kimi to",
+    "titulo": "Grand Blue Season 2 7",
     "episodio": "Episodio 7",
     "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/ame-to-kimi-to-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4201.jpg",
-    "alt": "Ame to Kimi to",
-    "slug": "ame-to-kimi-to",
-    "id": 3412
+    "url": "https://tioanime.com/ver/grand-blue-season-2-7",
+    "imagen": "https://tioanime.com/uploads/thumbs/4251.jpg",
+    "alt": "Grand Blue Season 2 7",
+    "slug": "grand-blue-season-2",
+    "id": 3400
   },
   {
-    "titulo": "Koujo Denka no Kateikyoushi",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/koujo-denka-no-kateikyoushi-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4178.jpg",
-    "alt": "Koujo Denka no Kateikyoushi",
-    "slug": "koujo-denka-no-kateikyoushi",
-    "id": 7324
-  },
-  {
-    "titulo": "Hikaru ga Shinda Natsu",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/hikaru-ga-shinda-natsu-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4200.jpg",
-    "alt": "Hikaru ga Shinda Natsu",
-    "slug": "hikaru-ga-shinda-natsu",
-    "id": 4994
-  },
-  {
-    "titulo": "Sono Bisque Doll wa Koi wo Suru",
+    "titulo": "Jibaku Shounen Hanako-kun 2 19",
     "episodio": "Episodio 19",
     "episodioNum": 19,
-    "url": "https://www3.animeflv.net/ver/sono-bisque-doll-wa-koi-wo-suru-19",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/3568.jpg",
-    "alt": "Sono Bisque Doll wa Koi wo Suru",
-    "slug": "sono-bisque-doll-wa-koi-wo-suru",
-    "id": 4200
-  },
-  {
-    "titulo": "Kizetsu Yuusha to Ansatsu Hime",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/kizetsu-yuusha-to-ansatsu-hime-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4197.jpg",
-    "alt": "Kizetsu Yuusha to Ansatsu Hime",
-    "slug": "kizetsu-yuusha-to-ansatsu-hime",
-    "id": 1920
-  },
-  {
-    "titulo": "Kaijuu 8-gou 2nd Season",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/kaijuu-8gou-2nd-season-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4224.jpg",
-    "alt": "Kaijuu 8-gou 2nd Season",
-    "slug": "kaijuu-8-gou-2nd-season",
+    "url": "https://tioanime.com/ver/jibaku-shounen-hanakokun-2-19",
+    "imagen": "https://tioanime.com/uploads/thumbs/4165.jpg",
+    "alt": "Jibaku Shounen Hanako-kun 2 19",
+    "slug": "jibaku-shounen-hanako-kun-2",
     "id": null
-  },
-  {
-    "titulo": "Shin Samurai-den Yaiba",
-    "episodio": "Episodio 19",
-    "episodioNum": 19,
-    "url": "https://www3.animeflv.net/ver/shin-samuraiden-yaiba-19",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4145.jpg",
-    "alt": "Shin Samurai-den Yaiba",
-    "slug": "shin-samurai-den-yaiba",
-    "id": null
-  },
-  {
-    "titulo": "Nukitashi the Animation",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/nukitashi-the-animation-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4223.jpg",
-    "alt": "Nukitashi the Animation",
-    "slug": "nukitashi-the-animation",
-    "id": 2902
-  },
-  {
-    "titulo": "Yofukashi no Uta Season 2",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/yofukashi-no-uta-season-2-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4196.jpg",
-    "alt": "Yofukashi no Uta Season 2",
-    "slug": "yofukashi-no-uta-season",
-    "id": null
-  },
-  {
-    "titulo": "Zutaboro Reijou wa Ane no Moto Konyakusha ni Dekiai sareru",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/zutaboro-reijou-wa-ane-no-moto-konyakusha-ni-dekiai-sareru-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4195.jpg",
-    "alt": "Zutaboro Reijou wa Ane no Moto Konyakusha ni Dekiai sareru",
-    "slug": "zutaboro-reijou-wa-ane-no-moto-konyakusha-ni-dekiai-sareru",
-    "id": 1093
-  },
-  {
-    "titulo": "Busu ni Hanataba wo.",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/busu-ni-hanataba-wo-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4194.jpg",
-    "alt": "Busu ni Hanataba wo.",
-    "slug": "busu-ni-hanataba-wo",
-    "id": 8089
-  },
-  {
-    "titulo": "Silent Witch: Chinmoku no Majo no Kakushigoto",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/silent-witch-chinmoku-no-majo-no-kakushigoto-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4193.jpg",
-    "alt": "Silent Witch: Chinmoku no Majo no Kakushigoto",
-    "slug": "silent-witch-chinmoku-no-majo-no-kakushigoto",
-    "id": 6295
-  },
-  {
-    "titulo": "Tougen Anki",
-    "episodio": "Episodio 6",
-    "episodioNum": 6,
-    "url": "https://www3.animeflv.net/ver/tougen-anki-6",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4222.jpg",
-    "alt": "Tougen Anki",
-    "slug": "tougen-anki",
-    "id": 8199
-  },
-  {
-    "titulo": "Watari-kun no xx ga Houkai Sunzen",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/watarikun-no-xx-ga-houkai-sunzen-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4192.jpg",
-    "alt": "Watari-kun no xx ga Houkai Sunzen",
-    "slug": "watari-kun-no-xx-ga-houkai-sunzen",
-    "id": null
-  },
-  {
-    "titulo": "Arknights: Rise from Ember",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/arknights-rise-from-ember-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4191.jpg",
-    "alt": "Arknights: Rise from Ember",
-    "slug": "arknights-rise-from-ember",
-    "id": 3736
-  },
-  {
-    "titulo": "Mizu Zokusei no Mahoutsukai",
-    "episodio": "Episodio 6",
-    "episodioNum": 6,
-    "url": "https://www3.animeflv.net/ver/mizu-zokusei-no-mahoutsukai-6",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4190.jpg",
-    "alt": "Mizu Zokusei no Mahoutsukai",
-    "slug": "mizu-zokusei-no-mahoutsukai",
-    "id": 3093
-  },
-  {
-    "titulo": "Kamitsubaki-shi Kensetsuchuu.",
-    "episodio": "Episodio 6",
-    "episodioNum": 6,
-    "url": "https://www3.animeflv.net/ver/kamitsubakishi-kensetsuchuu-6",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4189.jpg",
-    "alt": "Kamitsubaki-shi Kensetsuchuu.",
-    "slug": "kamitsubaki-shi-kensetsuchuu",
-    "id": null
-  },
-  {
-    "titulo": "Futari Solo Camp",
-    "episodio": "Episodio 6",
-    "episodioNum": 6,
-    "url": "https://www3.animeflv.net/ver/futari-solo-camp-6",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4221.jpg",
-    "alt": "Futari Solo Camp",
-    "slug": "futari-solo-camp",
-    "id": 5330
-  },
-  {
-    "titulo": "Yofukashi no Uta Season 2 7",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://tioanime.com/ver/yofukashi-no-uta-season-2-7",
-    "imagen": "https://tioanime.com/uploads/thumbs/4233.jpg",
-    "alt": "Yofukashi no Uta Season 2 7",
-    "slug": "yofukashi-no-uta-season-2",
-    "id": 6961
   }
 ]
