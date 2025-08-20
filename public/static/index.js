@@ -703,7 +703,40 @@ async function openModal(data, animeTitle) {
     modalTitle.textContent = cleanTitle(animeTitle);
     episodesList.innerHTML = '';
 
-    // Botón favorito dinámico
+    // ------------------------------
+    // Botón de ESTADO (con próxima fecha si aplica)
+    // ------------------------------
+    let statusBtn = document.getElementById('modal-status-btn');
+    if (!statusBtn) {
+        statusBtn = document.createElement('button');
+        statusBtn.id = 'modal-status-btn';
+        statusBtn.type = 'button';
+        statusBtn.className = 'btn btn-sm mx-1';
+        statusBtn.style.marginTop = '5px';
+        modalTitle.insertAdjacentElement('afterend', statusBtn);
+    }
+
+    // Normalizamos el status
+    let estado = (data.status || "Desconocido").toLowerCase();
+
+    if (estado.includes("emisión") || estado.includes("emision") || estado.includes("ongoing")) {
+        statusBtn.className = "btn btn-sm btn-success mx-1";
+        statusBtn.textContent = "En emisión";
+        // Mostrar fecha si existe
+        if (data.next_episode_date) {
+            statusBtn.textContent += ` (Próx: ${data.next_episode_date})`;
+        }
+    } else if (estado.includes("finalizado") || estado.includes("finished") || estado.includes("completed")) {
+        statusBtn.className = "btn btn-sm btn-secondary mx-1";
+        statusBtn.textContent = "Finalizado";
+    } else {
+        statusBtn.className = "btn btn-sm btn-dark mx-1";
+        statusBtn.textContent = "Desconocido";
+    }
+
+    // ------------------------------
+    // Botón FAVORITO dinámico
+    // ------------------------------
     let favBtn = document.getElementById('modal-fav-btn');
     if (!favBtn) {
         favBtn = document.createElement('button');
@@ -711,10 +744,9 @@ async function openModal(data, animeTitle) {
         favBtn.type = 'button';
         favBtn.className = 'btn btn-sm mx-1';
         favBtn.style.marginTop = '5px';
-        modalTitle.insertAdjacentElement('afterend', favBtn);
+        statusBtn.insertAdjacentElement('afterend', favBtn); // 👉 va después del status
     }
 
-    // Reemplazar botón para evitar listeners viejos
     const newFavBtn = favBtn.cloneNode(true);
     favBtn.replaceWith(newFavBtn);
     favBtn = newFavBtn;
@@ -724,7 +756,6 @@ async function openModal(data, animeTitle) {
         toggleFavoritoIndexed(animeTitle, favBtn);
     });
 
-    // Actualizar texto y clase según favorito
     const favoritos = await cargarFavoritosIndexed();
     if (favoritos.includes(animeTitle)) {
         favBtn.textContent = 'Quitar de favoritos';
@@ -736,7 +767,9 @@ async function openModal(data, animeTitle) {
         favBtn.classList.add('btn-outline-warning');
     }
 
+    // ------------------------------
     // Lista de episodios
+    // ------------------------------
     for (let i = 1; i <= data.episodes_count; i++) {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -753,6 +786,7 @@ async function openModal(data, animeTitle) {
     const modal = new bootstrap.Modal(animeModalEl);
     modal.show();
 }
+
 
 /**
  * Muestra los animes marcados como favoritos en un modal.

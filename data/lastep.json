@@ -1,5 +1,95 @@
 [
   {
+    "titulo": "Uchuujin MuuMuu",
+    "episodio": "Episodio 20",
+    "episodioNum": 20,
+    "url": "https://www3.animeflv.net/ver/uchuujin-muumuu-20",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4168.jpg",
+    "alt": "Uchuujin MuuMuu",
+    "slug": "uchuujin-muumuu",
+    "id": 5991
+  },
+  {
+    "titulo": "Tsuyokute New Saga",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/tsuyokute-new-saga-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4185.jpg",
+    "alt": "Tsuyokute New Saga",
+    "slug": "tsuyokute-new-saga",
+    "id": 7318
+  },
+  {
+    "titulo": "Jigoku Sensei Nube (2025)",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/jigoku-sensei-nube-2025-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4186.jpg",
+    "alt": "Jigoku Sensei Nube (2025)",
+    "slug": "jigoku-sensei-nube-2025",
+    "id": 7324
+  },
+  {
+    "titulo": "Onmyou Kaiten Re:Birth",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/onmyou-kaiten-rebirth-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4184.jpg",
+    "alt": "Onmyou Kaiten Re:Birth",
+    "slug": "onmyou-kaiten-re-birth",
+    "id": null
+  },
+  {
+    "titulo": "Mikadono Sanshimai wa Angai, Choroi.",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/mikadono-sanshimai-wa-angai-choroi-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4220.jpg",
+    "alt": "Mikadono Sanshimai wa Angai, Choroi.",
+    "slug": "mikadono-sanshimai-wa-angai-choroi",
+    "id": 873
+  },
+  {
+    "titulo": "Tensei shitara Dainana Ouji Datta node, Kimama ni Majutsu wo Kiwamemasu",
+    "episodio": "Episodio 19",
+    "episodioNum": 19,
+    "url": "https://www3.animeflv.net/ver/tensei-shitara-dainana-ouji-datta-node-kimama-ni-majutsu-wo-kiwamemasu-19",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/3956.jpg",
+    "alt": "Tensei shitara Dainana Ouji Datta node, Kimama ni Majutsu wo Kiwamemasu",
+    "slug": "tensei-shitara-dainana-ouji-datta-node-kimama-ni-majutsu-wo-kiwamemasu",
+    "id": 761
+  },
+  {
+    "titulo": "Jidou Hanbaiki ni Umarekawatta Ore wa Meikyuu wo Samayou 2nd Season",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/jidou-hanbaiki-ni-umarekawatta-ore-wa-meikyuu-wo-samayou-2nd-season-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4183.jpg",
+    "alt": "Jidou Hanbaiki ni Umarekawatta Ore wa Meikyuu wo Samayou 2nd Season",
+    "slug": "jidou-hanbaiki-ni-umarekawatta-ore-wa-meikyuu-wo-samayou-2nd-season",
+    "id": 6813
+  },
+  {
+    "titulo": "Tate no Yuusha no Nariagari Season 4",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/tate-no-yuusha-no-nariagari-season-4-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4219.jpg",
+    "alt": "Tate no Yuusha no Nariagari Season 4",
+    "slug": "tate-no-yuusha-no-nariagari-season",
+    "id": null
+  },
+  {
+    "titulo": "Clevatess: Majuu no Ou to Akago to Shikabane no Yuusha",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/clevatess-majuu-no-ou-to-akago-to-shikabane-no-yuusha-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4182.jpg",
+    "alt": "Clevatess: Majuu no Ou to Akago to Shikabane no Yuusha",
+    "slug": "clevatess-majuu-no-ou-to-akago-to-shikabane-no-yuusha",
+    "id": 3549
+  },
+  {
     "titulo": "Turkey!",
     "episodio": "Episodio 7",
     "episodioNum": 7,
@@ -110,94 +200,14 @@
     "id": 8477
   },
   {
-    "titulo": "Yuusha Party wo Tsuihou sareta Shiromadoushi",
+    "titulo": "Tate no Yuusha no Nariagari Season 4 7",
     "episodio": "Episodio 7",
     "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/yuusha-party-wo-tsuihou-sareta-shiromadoushi-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4198.jpg",
-    "alt": "Yuusha Party wo Tsuihou sareta Shiromadoushi",
-    "slug": "yuusha-party-wo-tsuihou-sareta-shiromadoushi",
-    "id": 9086
-  },
-  {
-    "titulo": "Seishun Buta Yarou wa Santa Claus no Yume wo Minai",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/seishun-buta-yarou-wa-santa-claus-no-yume-wo-minai-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4199.jpg",
-    "alt": "Seishun Buta Yarou wa Santa Claus no Yume wo Minai",
-    "slug": "seishun-buta-yarou-wa-santa-claus-no-yume-wo-minai",
-    "id": 2504
-  },
-  {
-    "titulo": "One Piece",
-    "episodio": "Episodio 1140",
-    "episodioNum": 1140,
-    "url": "https://www3.animeflv.net/ver/one-piece-tv-1140",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/7.jpg",
-    "alt": "One Piece",
-    "slug": "one-piece",
-    "id": 4551
-  },
-  {
-    "titulo": "City The Animation",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/city-the-animation-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4212.jpg",
-    "alt": "City The Animation",
-    "slug": "city-the-animation",
-    "id": 3551
-  },
-  {
-    "titulo": "Hotel Inhumans",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/hotel-inhumans-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4211.jpg",
-    "alt": "Hotel Inhumans",
-    "slug": "hotel-inhumans",
-    "id": 5787
-  },
-  {
-    "titulo": "Busamen Gachi Fighter",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/busamen-gachi-fighter-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4210.jpg",
-    "alt": "Busamen Gachi Fighter",
-    "slug": "busamen-gachi-fighter",
-    "id": 7019
-  },
-  {
-    "titulo": "Gachiakuta",
-    "episodio": "Episodio 6",
-    "episodioNum": 6,
-    "url": "https://www3.animeflv.net/ver/gachiakuta-6",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4209.jpg",
-    "alt": "Gachiakuta",
-    "slug": "gachiakuta",
-    "id": 1888
-  },
-  {
-    "titulo": "Nyaight of the Living Cat",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/nyaight-of-the-living-cat-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4207.jpg",
-    "alt": "Nyaight of the Living Cat",
-    "slug": "nyaight-of-the-living-cat",
-    "id": 1594
-  },
-  {
-    "titulo": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4206.jpg",
-    "alt": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
-    "slug": "isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku",
-    "id": 5085
+    "url": "https://tioanime.com/ver/tate-no-yuusha-no-nariagari-season-4-7",
+    "imagen": "https://tioanime.com/uploads/thumbs/4256.jpg",
+    "alt": "Tate no Yuusha no Nariagari Season 4 7",
+    "slug": "tate-no-yuusha-no-nariagari-season-4",
+    "id": 1921
   },
   {
     "titulo": "Kakkou no Iinazuke Season 2 7",

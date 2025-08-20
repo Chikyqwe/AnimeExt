@@ -44,11 +44,6 @@ router.get('/privacy-policy.html', (req, res) => {
   res.sendFile(path.join(__dirname, '..', '..', 'public', 'privacy-policy.html'));
 });
 
-router.get('/anime/list', (req, res) => {
-  console.log(`[GET /list]`);
-  res.sendFile(path.join(__dirname, '..', '..', 'public', 'list.html'));
-});
-
 // Ruta de mantenimiento
 router.get('/maintenance', (req, res) => {
   console.log(`[GET /maintenance] Sirviendo maintenance.html`);

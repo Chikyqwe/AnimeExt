@@ -34,5 +34,14 @@ router.get('/status', (req, res) => {
     message: '🎉Server is running and ready to handle requests.',
   });
 });
-
+router.get("/robots.txt", (req, res) => {
+  res.type("text/plain");
+  res.send(`User-agent: *
+Disallow: /admin
+Allow: /
+Sitemap: ` + req.protocol + '://' + req.get('host') + '/sitemap.xml');
+});
+router.get('/sitemap.xml', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'sitemap.xml'));
+});
 module.exports = router;
