@@ -44,4 +44,7 @@ Sitemap: ` + req.protocol + '://' + req.get('host') + '/sitemap.xml');
 router.get('/sitemap.xml', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'sitemap.xml'));
 });
+router.get('/google83049cbadfc49565.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'google83049cbadfc49565.html'));
+});
 module.exports = router;
