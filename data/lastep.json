@@ -1,5 +1,65 @@
 [
   {
+    "titulo": "Turkey!",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/turkey-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4218.jpg",
+    "alt": "Turkey!",
+    "slug": "turkey",
+    "id": 533
+  },
+  {
+    "titulo": "Osomatsu-san 4th Season",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/osomatsusan-4th-season-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4217.jpg",
+    "alt": "Osomatsu-san 4th Season",
+    "slug": "osomatsu-san-4th-season",
+    "id": null
+  },
+  {
+    "titulo": "Necronomico no Cosmic Horror Show",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/necronomico-no-cosmic-horror-show-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4181.jpg",
+    "alt": "Necronomico no Cosmic Horror Show",
+    "slug": "necronomico-no-cosmic-horror-show",
+    "id": 2105
+  },
+  {
+    "titulo": "Mattaku Saikin no Tantei to Kitara",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/mattaku-saikin-no-tantei-to-kitara-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4180.jpg",
+    "alt": "Mattaku Saikin no Tantei to Kitara",
+    "slug": "mattaku-saikin-no-tantei-to-kitara",
+    "id": 2066
+  },
+  {
+    "titulo": "Kakkou no Iinazuke Season 2",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/kakkou-no-iinazuke-season-2-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4216.jpg",
+    "alt": "Kakkou no Iinazuke Season 2",
+    "slug": "kakkou-no-iinazuke-season",
+    "id": null
+  },
+  {
+    "titulo": "Kanojo, Okarishimasu 4th Season",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/kanojo-okarishimasu-4th-season-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4179.jpg",
+    "alt": "Kanojo, Okarishimasu 4th Season",
+    "slug": "kanojo-okarishimasu-4th-season",
+    "id": 8369
+  },
+  {
     "titulo": "Kijin Gentoushou",
     "episodio": "Episodio 19",
     "episodioNum": 19,
@@ -7,7 +67,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4133.jpg",
     "alt": "Kijin Gentoushou",
     "slug": "kijin-gentoushou",
-    "id": 6388
+    "id": 3088
   },
   {
     "titulo": "Watashi ga Koibito ni Nareru Wake Nai jan, Muri Muri! (※Muri ja Nakatta!?)",
@@ -17,7 +77,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4215.jpg",
     "alt": "Watashi ga Koibito ni Nareru Wake Nai jan, Muri Muri! (※Muri ja Nakatta!?)",
     "slug": "watashi-ga-koibito-ni-nareru-wake-nai-jan-muri-muri-muri-ja-nakatta",
-    "id": 7795
+    "id": 3390
   },
   {
     "titulo": "Grand Blue Season 2",
@@ -37,7 +97,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4125.jpg",
     "alt": "Sakamoto Days",
     "slug": "sakamoto-days",
-    "id": 9953
+    "id": 9831
   },
   {
     "titulo": "Summer Pockets",
@@ -47,7 +107,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4162.jpg",
     "alt": "Summer Pockets",
     "slug": "summer-pockets",
-    "id": 9657
+    "id": 8477
   },
   {
     "titulo": "Yuusha Party wo Tsuihou sareta Shiromadoushi",
@@ -57,7 +117,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4198.jpg",
     "alt": "Yuusha Party wo Tsuihou sareta Shiromadoushi",
     "slug": "yuusha-party-wo-tsuihou-sareta-shiromadoushi",
-    "id": 9430
+    "id": 9086
   },
   {
     "titulo": "Seishun Buta Yarou wa Santa Claus no Yume wo Minai",
@@ -67,7 +127,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4199.jpg",
     "alt": "Seishun Buta Yarou wa Santa Claus no Yume wo Minai",
     "slug": "seishun-buta-yarou-wa-santa-claus-no-yume-wo-minai",
-    "id": 6458
+    "id": 2504
   },
   {
     "titulo": "One Piece",
@@ -77,7 +137,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/7.jpg",
     "alt": "One Piece",
     "slug": "one-piece",
-    "id": 4239
+    "id": 4551
   },
   {
     "titulo": "City The Animation",
@@ -87,7 +147,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4212.jpg",
     "alt": "City The Animation",
     "slug": "city-the-animation",
-    "id": 5703
+    "id": 3551
   },
   {
     "titulo": "Hotel Inhumans",
@@ -97,7 +157,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4211.jpg",
     "alt": "Hotel Inhumans",
     "slug": "hotel-inhumans",
-    "id": 1654
+    "id": 5787
   },
   {
     "titulo": "Busamen Gachi Fighter",
@@ -107,7 +167,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4210.jpg",
     "alt": "Busamen Gachi Fighter",
     "slug": "busamen-gachi-fighter",
-    "id": 1126
+    "id": 7019
   },
   {
     "titulo": "Gachiakuta",
@@ -117,7 +177,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4209.jpg",
     "alt": "Gachiakuta",
     "slug": "gachiakuta",
-    "id": 9237
+    "id": 1888
   },
   {
     "titulo": "Nyaight of the Living Cat",
@@ -127,7 +187,7 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4207.jpg",
     "alt": "Nyaight of the Living Cat",
     "slug": "nyaight-of-the-living-cat",
-    "id": 9767
+    "id": 1594
   },
   {
     "titulo": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
@@ -137,67 +197,17 @@
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4206.jpg",
     "alt": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
     "slug": "isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku",
-    "id": 9166
+    "id": 5085
   },
   {
-    "titulo": "Ruri no Houseki",
+    "titulo": "Kakkou no Iinazuke Season 2 7",
     "episodio": "Episodio 7",
     "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/ruri-no-houseki-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4204.jpg",
-    "alt": "Ruri no Houseki",
-    "slug": "ruri-no-houseki",
-    "id": 3095
-  },
-  {
-    "titulo": "Dekin no Mogura",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/dekin-no-mogura-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4205.jpg",
-    "alt": "Dekin no Mogura",
-    "slug": "dekin-no-mogura",
-    "id": 4260
-  },
-  {
-    "titulo": "Puniru wa Kawaii Slime",
-    "episodio": "Episodio 19",
-    "episodioNum": 19,
-    "url": "https://www3.animeflv.net/ver/puniru-wa-kawaii-slime-19",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4072.jpg",
-    "alt": "Puniru wa Kawaii Slime",
-    "slug": "puniru-wa-kawaii-slime",
-    "id": 3975
-  },
-  {
-    "titulo": "Jibaku Shounen Hanako-kun 2",
-    "episodio": "Episodio 19",
-    "episodioNum": 19,
-    "url": "https://www3.animeflv.net/ver/jibaku-shounen-hanakokun-2-19",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4129.jpg",
-    "alt": "Jibaku Shounen Hanako-kun 2",
-    "slug": "jibaku-shounen-hanako-kun",
-    "id": null
-  },
-  {
-    "titulo": "Witch Watch",
-    "episodio": "Episodio 20",
-    "episodioNum": 20,
-    "url": "https://www3.animeflv.net/ver/witch-watch-20",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4153.jpg",
-    "alt": "Witch Watch",
-    "slug": "witch-watch",
-    "id": 1607
-  },
-  {
-    "titulo": "Bad Girl",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/bad-girl-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4202.jpg",
-    "alt": "Bad Girl",
-    "slug": "bad-girl",
-    "id": 5065
+    "url": "https://tioanime.com/ver/kakkou-no-iinazuke-season-2-7",
+    "imagen": "https://tioanime.com/uploads/thumbs/4253.jpg",
+    "alt": "Kakkou no Iinazuke Season 2 7",
+    "slug": "kakkou-no-iinazuke-season-2",
+    "id": 9857
   },
   {
     "titulo": "Grand Blue Season 2 7",
@@ -207,16 +217,6 @@
     "imagen": "https://tioanime.com/uploads/thumbs/4251.jpg",
     "alt": "Grand Blue Season 2 7",
     "slug": "grand-blue-season-2",
-    "id": 3400
-  },
-  {
-    "titulo": "Jibaku Shounen Hanako-kun 2 19",
-    "episodio": "Episodio 19",
-    "episodioNum": 19,
-    "url": "https://tioanime.com/ver/jibaku-shounen-hanakokun-2-19",
-    "imagen": "https://tioanime.com/uploads/thumbs/4165.jpg",
-    "alt": "Jibaku Shounen Hanako-kun 2 19",
-    "slug": "jibaku-shounen-hanako-kun-2",
-    "id": null
+    "id": 3611
   }
 ]

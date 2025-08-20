@@ -7,9 +7,9 @@ const IMAGE_BASE = `${BASE_URL}/cdn/img/anime`;
 
 const DEFAULTS = {
   maxPages: 277,
-  listConcurrency: 21,
-  detailWorkers: 25,
-  detailConcurrency: 800,
+  listConcurrency: 30,
+  detailWorkers: 50,
+  detailConcurrency: 1200,
 };
 
 function crearScraper(options = {}) {

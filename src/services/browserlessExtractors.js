@@ -246,129 +246,115 @@ async function getRedirectUrl(pageUrl) {
     }
 }
 
-async function extractM3u8(pageUrl, maxRetries = 3) {
-    const redir = await getRedirectUrl(pageUrl);
-    try {
-        // 1️⃣ Obtener HTML de la página
-        const { data: html } = await axios.get(redir, { timeout: 10000 });
+async function extractM3u8(pageUrl, maxRetries = 2) {
+    let lastError = null;
 
-        // 2️⃣ Crear JSDOM para ejecutar scripts embebidos
-        const virtualConsole = new VirtualConsole();
-        virtualConsole.on("jsdomError", () => {});
-        const dom = new JSDOM(html, {
-            runScripts: "dangerously",
-            resources: "usable",
-            virtualConsole
-        });
-        const { window } = dom;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            // ✅ Regenerar la URL de redirección en cada intento
+            const redir = await getRedirectUrl(pageUrl);
 
-        let masterM3u8Url = null;
+            // 1️⃣ Obtener HTML de la página
+            const { data: html } = await axios.get(redir, { timeout: 10000 });
 
-        // 3️⃣ Inyectar jwplayer stub para interceptar el setup
-        window.jwplayer = function() {
-            return {
-                setup: function(config) {
-                    if (config.sources && config.sources[0].file) {
-                        const file = config.sources[0].file;
-                        masterM3u8Url = file.startsWith('/')
-                            ? new URL(file, redir).href
-                            : file;
-                    }
-                    return this;
-                },
-                on: () => {},
-                play: () => {},
-                getPlaylistItem: () => {}
+            // 2️⃣ Crear JSDOM para ejecutar scripts embebidos
+            const virtualConsole = new VirtualConsole();
+            virtualConsole.on("jsdomError", () => {});
+            const dom = new JSDOM(html, {
+                runScripts: "dangerously",
+                resources: "usable",
+                virtualConsole
+            });
+            const { window } = dom;
+
+            let masterM3u8Url = null;
+
+            // 3️⃣ Inyectar jwplayer stub
+            window.jwplayer = function() {
+                return {
+                    setup: function(config) {
+                        if (config.sources && config.sources[0].file) {
+                            const file = config.sources[0].file;
+                            masterM3u8Url = file.startsWith('/')
+                                ? new URL(file, redir).href
+                                : file;
+                        }
+                        return this;
+                    },
+                    on: () => {},
+                    play: () => {},
+                    getPlaylistItem: () => {}
+                };
             };
-        };
 
-        // 4️⃣ Esperar a que se ejecute el script
-        await new Promise(r => setTimeout(r, 2000));
-        window.close();
+            // 4️⃣ Esperar a que se ejecute el script
+            await new Promise(r => setTimeout(r, 2000));
+            window.close();
 
-        if (!masterM3u8Url) {
-            console.warn('No se pudo obtener la URL del master m3u8');
-            return [];
-        }
+            if (!masterM3u8Url) throw new Error('No se pudo obtener la URL del master m3u8');
 
-        // 5️⃣ Descargar master playlist
-        let masterContent = null;
-        let lastError = null;
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                const { data } = await axios.get(masterM3u8Url, { timeout: 10000 });
-                masterContent = data;
-                break;
-            } catch (err) {
-                console.warn(`Intento ${attempt} fallido al descargar master: ${err.message}`);
-                lastError = err;
-                await new Promise(r => setTimeout(r, 500 * attempt));
-            }
-        }
+            // 5️⃣ Descargar master playlist
+            const masterContent = await retryAxiosGet(masterM3u8Url, maxRetries, 'master');
 
-        if (!masterContent) {
-            console.error('No se pudo descargar el master m3u8', lastError);
-            return [];
-        }
+            // 6️⃣ Analizar master playlist
+            const lines = masterContent.split('\n');
+            let maxRes = 0;
+            let bestUrl = null;
+            const baseUrl = masterM3u8Url.substring(0, masterM3u8Url.lastIndexOf('/') + 1);
 
-        // 6️⃣ Analizar master playlist para encontrar la resolución más alta
-        const lines = masterContent.split('\n');
-        let maxRes = 0;
-        let bestUrl = null;
-
-        const baseUrl = masterM3u8Url.substring(0, masterM3u8Url.lastIndexOf('/') + 1);
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const match = /RESOLUTION=(\d+)x(\d+)/.exec(line);
-            if (match) {
-                const width = parseInt(match[1], 10);
-                const height = parseInt(match[2], 10);
-                const nextLine = lines[i + 1];
-                if (nextLine && !nextLine.startsWith('#')) {
-                    const totalRes = width * height;
-                    if (totalRes > maxRes) {
-                        maxRes = totalRes;
-                        bestUrl = nextLine.startsWith('/')
-                            ? new URL(nextLine, baseUrl).href
-                            : new URL(nextLine, baseUrl).href;
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const match = /RESOLUTION=(\d+)x(\d+)/.exec(line);
+                if (match) {
+                    const width = parseInt(match[1], 10);
+                    const height = parseInt(match[2], 10);
+                    const nextLine = lines[i + 1];
+                    if (nextLine && !nextLine.startsWith('#')) {
+                        const totalRes = width * height;
+                        if (totalRes > maxRes) {
+                            maxRes = totalRes;
+                            bestUrl = nextLine.startsWith('/')
+                                ? new URL(nextLine, baseUrl).href
+                                : new URL(nextLine, baseUrl).href;
+                        }
                     }
                 }
             }
+
+            if (!bestUrl) return [{ url: masterM3u8Url, content: masterContent }];
+
+            // 7️⃣ Descargar playlist de mayor resolución
+            const bestContent = await retryAxiosGet(bestUrl, maxRetries, 'mejor resolución');
+
+            return [{ url: bestUrl, content: bestContent }];
+
+        } catch (err) {
+            console.warn(`Intento ${attempt} fallido: ${err.message}`);
+            lastError = err;
+            await new Promise(r => setTimeout(r, 500 * attempt));
         }
-
-        if (!bestUrl) {
-            console.warn('No se encontró sub-playlist de resolución. Se devuelve el master original');
-            return [{ url: masterM3u8Url, content: masterContent }];
-        }
-
-        // 7️⃣ Descargar playlist de mayor resolución
-        let bestContent = null;
-        lastError = null;
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                const { data } = await axios.get(bestUrl, { timeout: 10000 });
-                bestContent = data;
-                break;
-            } catch (err) {
-                console.warn(`Intento ${attempt} fallido al descargar mejor resolución: ${err.message}`);
-                lastError = err;
-                await new Promise(r => setTimeout(r, 500 * attempt));
-            }
-        }
-
-        if (!bestContent) {
-            console.error('No se pudo descargar la mejor resolución', lastError);
-            return [];
-        }
-
-        return [{ url: bestUrl, content: bestContent }];
-
-    } catch (err) {
-        console.error('Error en extractSW:', err);
-        return [];
     }
+
+    console.error('Todos los intentos fallaron', lastError);
+    return [];
 }
+
+// Función auxiliar para reintentos de Axios
+async function retryAxiosGet(url, retries, label) {
+    let lastError = null;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const { data } = await axios.get(url, { timeout: 10000 });
+            return data;
+        } catch (err) {
+            console.warn(`Intento ${attempt} fallido al descargar ${label}: ${err.message}`);
+            lastError = err;
+            await new Promise(r => setTimeout(r, 200 * attempt));
+        }
+    }
+    return null;
+}
+
 
 async function getJWPlayerFile(pageUrl) {
   try {
