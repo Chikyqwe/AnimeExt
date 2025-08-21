@@ -245,35 +245,23 @@ async function getRedirectUrl(pageUrl) {
         return null;
     }
 }
+const vm = require('vm');
 
 async function extractM3u8(pageUrl, maxRetries = 2) {
     let lastError = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            // ✅ Regenerar la URL de redirección en cada intento
             const redir = await getRedirectUrl(pageUrl);
-
-            // 1️⃣ Obtener HTML de la página
             const { data: html } = await axios.get(redir, { timeout: 10000 });
-
-            // 2️⃣ Crear JSDOM para ejecutar scripts embebidos
-            const virtualConsole = new VirtualConsole();
-            virtualConsole.on("jsdomError", () => {});
-            const dom = new JSDOM(html, {
-                runScripts: "dangerously",
-                resources: "usable",
-                virtualConsole
-            });
-            const { window } = dom;
 
             let masterM3u8Url = null;
 
-            // 3️⃣ Inyectar jwplayer stub
-            window.jwplayer = function() {
-                return {
+            // 1️⃣ Crear sandbox mínimo
+            const sandbox = {
+                jwplayer: () => ({
                     setup: function(config) {
-                        if (config.sources && config.sources[0].file) {
+                        if (config.sources?.[0]?.file) {
                             const file = config.sources[0].file;
                             masterM3u8Url = file.startsWith('/')
                                 ? new URL(file, redir).href
@@ -284,50 +272,54 @@ async function extractM3u8(pageUrl, maxRetries = 2) {
                     on: () => {},
                     play: () => {},
                     getPlaylistItem: () => {}
-                };
+                }),
+                console: { log: () => {}, warn: () => {} }
             };
 
-            // 4️⃣ Esperar a que se ejecute el script
-            await new Promise(r => setTimeout(r, 2000));
-            window.close();
+            // 2️⃣ Ejecutar solo scripts que contengan el .m3u8
+            const scriptRegex = /<script[^>]*>([\s\S]*?\.m3u8[\s\S]*?)<\/script>/gi;
+            let match;
+            while ((match = scriptRegex.exec(html)) !== null) {
+                const code = match[1];
+                try {
+                    vm.runInNewContext(code, sandbox, { timeout: 2000 });
+                } catch {}
+                if (masterM3u8Url) break;
+            }
 
-            if (!masterM3u8Url) throw new Error('No se pudo obtener la URL del master m3u8');
+            if (!masterM3u8Url) throw new Error('No se pudo obtener URL m3u8');
 
-            // 5️⃣ Descargar master playlist
+            // 3️⃣ Descargar master playlist
             const masterContent = await retryAxiosGet(masterM3u8Url, maxRetries, 'master');
 
-            // 6️⃣ Analizar master playlist
+            // 4️⃣ Analizar y escoger mejor resolución
             const lines = masterContent.split('\n');
             let maxRes = 0;
             let bestUrl = null;
             const baseUrl = masterM3u8Url.substring(0, masterM3u8Url.lastIndexOf('/') + 1);
 
             for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                const match = /RESOLUTION=(\d+)x(\d+)/.exec(line);
-                if (match) {
-                    const width = parseInt(match[1], 10);
-                    const height = parseInt(match[2], 10);
-                    const nextLine = lines[i + 1];
-                    if (nextLine && !nextLine.startsWith('#')) {
-                        const totalRes = width * height;
-                        if (totalRes > maxRes) {
-                            maxRes = totalRes;
-                            bestUrl = nextLine.startsWith('/')
-                                ? new URL(nextLine, baseUrl).href
-                                : new URL(nextLine, baseUrl).href;
-                        }
+                const match = /RESOLUTION=(\d+)x(\d+)/.exec(lines[i]);
+                if (match && lines[i + 1] && !lines[i + 1].startsWith('#')) {
+                    const totalRes = parseInt(match[1], 10) * parseInt(match[2], 10);
+                    if (totalRes > maxRes) {
+                        maxRes = totalRes;
+                        bestUrl = lines[i + 1].startsWith('/')
+                            ? new URL(lines[i + 1], baseUrl).href
+                            : lines[i + 1];
                     }
                 }
             }
 
-            if (!bestUrl) return [{ url: masterM3u8Url, content: masterContent }];
+            const finalUrl = bestUrl || masterM3u8Url;
+            const finalContent = bestUrl
+                ? await retryAxiosGet(bestUrl, maxRetries, 'mejor resolución')
+                : masterContent;
 
-            // 7️⃣ Descargar playlist de mayor resolución
-            const bestContent = await retryAxiosGet(bestUrl, maxRetries, 'mejor resolución');
+            // 5️⃣ Liberar memoria
+            masterContent = null;
 
-            return [{ url: bestUrl, content: bestContent }];
-
+            return [{ url: finalUrl, content: finalContent }];
         } catch (err) {
             console.warn(`Intento ${attempt} fallido: ${err.message}`);
             lastError = err;
@@ -338,6 +330,7 @@ async function extractM3u8(pageUrl, maxRetries = 2) {
     console.error('Todos los intentos fallaron', lastError);
     return [];
 }
+
 
 // Función auxiliar para reintentos de Axios
 async function retryAxiosGet(url, retries, label) {
