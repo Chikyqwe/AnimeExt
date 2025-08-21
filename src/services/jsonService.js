@@ -40,7 +40,6 @@ function getAnimeByUnitId(unitId) {
   return readAnimeList().find(anime => anime.unit_id === parseInt(unitId, 10));
 }
 async function buildEpisodeUrl(anime, ep, mirror = 1) {
-  console.log(anime)
   if (!anime?.sources || !ep) return null;
 
 
