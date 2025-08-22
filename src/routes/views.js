@@ -42,4 +42,9 @@ router.get('/privacy-policy.html', (req, res) => {
   res.sendFile(path.join(__dirname, '..', '..', 'public', 'privacy-policy.html'));
 });
 
+router.get('/app', (req, res) => {
+  console.log(`[GET /app] Sirviendo app.html`);
+  res.sendFile(path.join(__dirname, '..', '..', 'public', 'app.html'));
+});
+
 module.exports = router;

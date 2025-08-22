@@ -247,7 +247,6 @@ async function getRedirectUrl(pageUrl) {
 }
 
 async function extractM3u8(pageUrl, maxRetries = 2) {
-  let lastError = null;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     let dom = null;
     let window = null;
@@ -333,7 +332,6 @@ async function extractM3u8(pageUrl, maxRetries = 2) {
 
       return [{ url: bestUrl, content: bestContent }];
     } catch (err) { 
-      lastError = err;
       console.warn(`Intento ${attempt} fallido: ${err.message}`);
       if (window) window.close();
       dom = null;

@@ -354,18 +354,16 @@ function filtrarAnimesValidos(animes){ return animes.filter(a=>a && a.title && t
 // --------------------------------------------
 // Episodes_count desde API de AnimeYTX con cookie
 // --------------------------------------------
-async function obtenerEpsAnimeYTX(url, cookieVal, log = console.log) {
-  try {
-    const headers = { 'User-Agent': 'Mozilla/5.0' };
-    if (cookieVal) headers['Cookie'] = `__test=${cookieVal}`;
-    const resp = await axios.get(`https://animeext.unaux.com/get_ep_vid.php?url=${encodeURIComponent(url)}`, { timeout: 10000, headers });
-    const data = resp.data;
-    if (data && typeof data.episodes_count === "number") return data.episodes_count;
-    return 0;
-  } catch (e) {
-    registrarError("AnimeYTX", "get_ep_vid", e.message, url);
-    return 0;
-  }
+async function obtenerEpsAnimeYTX(url, cookieVal, log = console.log, maxRetries = 2) {
+  const headers = { 'User-Agent': 'Mozilla/5.0' }; 
+  if (cookieVal) headers['Cookie'] = `__test=${cookieVal}`;
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      const { data } = await axios.get(`https://animeext.unaux.com/get_ep_vid.php?url=${encodeURIComponent(url)}`, { timeout: 10000, headers });
+      if (data && typeof data.episodes_count === "number" && data.episodes_count > 0) return data.episodes_count;
+    } catch (e) { registrarError("AnimeYTX", "get_ep_vid", e.message, url); }
+  }
+  return 0;
 }
 
 // --------------------------------------------

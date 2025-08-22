@@ -26,6 +26,7 @@ const {
 
 const { buildComplexToken } = require('../utils/token');
 const apiQueue = require('../services/queueService');
+const { default: axios } = require('axios');
 
 // --- Helpers ---
 
@@ -394,6 +395,18 @@ router.get('/api/stream', (req, res) => {
   }
 
   streamVideo(videoUrl, req, res);
+});
+
+router.get('/api/req', async (req, res) => {
+  const url = req.query.url;
+
+  try {
+    const response = await axios.get(url);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error al realizar la solicitud:', error.message);
+    res.status(500).json({ error: 'Error interno al realizar la solicitud' });
+  }
 });
 
 // Descargar video

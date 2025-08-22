@@ -78,7 +78,34 @@
       color: #121212;
     }
   </style>
+  <style>
+    #downloadBadge {
+      position: fixed;
+      align-items: center;
+      background-color: #00bfff; /* azul */
+      padding: 6px 14px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      z-index: 1050;
+    }
+
+    #downloadBadge:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+
+    @media (max-width: 576px) {
+      #downloadBadge {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
 <div id="loader">
@@ -121,7 +148,16 @@
     <a href="#" id="mobileNavInicio" class="active" role="menuitem" onclick="mostrarInicio(event); toggleMobileMenu(false)">Inicio</a>
     <a href="#" id="mobileNavDirectorio" role="menuitem" onclick="mostrarDirectorio(event); toggleMobileMenu(false)">Directory</a>
   </div> 
+  <!-- Botón de descarga flotante -->
+
 </header>
+<div style="margin-bottom: 30px;">
+  <a href="/app" id="downloadBadge" class="btn btn-success d-flex align-items-center">
+    <i class="fa fa-download me-2"></i> Descarga nuestra app!
+  </a>
+</div>
+
+
 
 <div class="layout-container">
   <aside class="sidebar">

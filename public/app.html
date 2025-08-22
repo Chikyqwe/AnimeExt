@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anime EXT - App</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #121212;
+    overflow-x: hidden;
+  }
+  canvas#stars {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+  }
+  .navbar {
+    z-index: 10;
+    background-color: rgba(18,18,18,0.95);
+  }
+  .navbar-brand img {
+    height: 40px;
+  }
+  header {
+    padding: 100px 20px 40px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  header h1 {
+    color: #00fa9a;
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  header p {
+    font-size: 1.2rem;
+    color: #b0b0b0;
+    margin-bottom: 30px;
+  }
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 45px;
+    background-color: #00fa9a;
+    color: #121212;
+    font-weight: 600;
+    font-size: 1.3rem;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: 0.3s;
+  }
+  .download-btn:hover {
+    background-color: #00c17c;
+    color: #fff;
+  }
+  .features {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 25px;
+    margin: 60px 0;
+    position: relative;
+    z-index: 1;
+  }
+  .feature-card {
+    background-color: #1e1e1e;
+    border-radius: 15px;
+    padding: 30px 20px;
+    width: 240px;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
+    color:#ffff;
+  }
+  .feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 8px 25px rgba(0, 250, 154, 0.4);
+  }
+  .feature-card i {
+    font-size: 2.2rem;
+    color: #00fa9a;
+    margin-bottom: 15px;
+  }
+  .carousel-item img {
+    max-height: 600px;
+    margin: 0 auto;
+    border-radius: 20px;
+    object-fit: contain;
+  }
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    background-color: #00ff9d;
+    border-radius: 50%;
+    padding: 10px;
+  }
+  .carousel-indicators [data-bs-target] {
+    background-color: #00fa9a;
+    top: 0;
+  }
+  .carousel-indicators {
+    top: 0;
+  }
+  .hero-badge {
+    background-color: #00fa9a;
+    color: #121212;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+  footer {
+    text-align: center;
+    padding: 25px;
+    border-top: 1px solid #2c2c2c;
+    color: #888;
+    position: relative;
+    z-index: 1;
+  }
+  footer a i:hover {
+    color: #00f2fa;
+  }
+.logo-svg{height:80px;flex-shrink:0;flex-grow:0;width:auto}
+.logo-svg text{transition:fill .3s ease}
+.logo-svg .main-text,.logo-svg .subtext{fill:white}
+.logo-svg .ext-text{fill:#00bfff}
+body.light-theme .logo-svg .main-text,body.light-theme .logo-svg .subtext{fill:#111}
+body.light-theme .logo-svg .ext-text{fill:#2e94dc}
+.topbar{position:fixed;top:0;left:0;right:0;height:70px;background:#181818;border-bottom:1px solid #333;display:flex;align-items:center;padding:0 20px;gap:20px;z-index:1050}
+.topbar img{height:65px;user-select:none;margin-right:auto;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<!-- 🔹 Nueva Topbar -->
+<header class="topbar d-flex align-items-center">
+  <a href="/" class="logo">
+    <svg viewBox="0 0 300 120" class="logo-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+      <text x="10" y="60" font-family="Alice, serif" font-size="36" font-weight="bold">
+        <tspan class="main-text">Anime </tspan>
+        <tspan class="ext-text">EXT</tspan>
+      </text>
+      <path d="M220,30 L230,60 L220,90" stroke="#3C873A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="100" y="90" text-anchor="middle" font-family="sans-serif" font-size="14" class="subtext">アニメが好きな私たち</text>
+    </svg>
+  </a>
+</header>
+
+<header class="hero">
+  <span class="hero-badge">¡No necesitas navegador!</span>
+  <h1>Anime EXT App</h1>
+  <p>Abre la app y empieza a ver tus animes favoritos al instante, rápida, ligera y siempre a la mano. Anime Ext App 4.1.2</p>
+  <a href="https://animeext.unaux.com/app/beta/AnimeExt-4.1.2.apk" class="download-btn">
+    <i class="bi bi-download"></i> Descargar APK
+  </a>
+</header>
+
+<section class="features">
+  <div class="feature-card">
+    <i class="bi bi-speedometer2"></i>
+    <h3>Rápida</h3>
+    <p>Optimizada para cargar los episodios.</p>
+  </div>
+  <div class="feature-card">
+    <i class="bi bi-moon-stars-fill"></i>
+    <h3>Modo Oscuro</h3>
+    <p>Ver anime de noche sin cansar la vista.</p>
+  </div>
+  <div class="feature-card">
+    <i class="bi bi-hourglass-split"></i>
+    <h3>Próximamente</h3>
+    <p>Funciones como notificaciones están en desarrollo.</p>
+  </div>
+</section>
+
+<section class="mockup my-5 text-center">
+  <h2 style="color:#00fa9a; margin-bottom:30px;">Capturas de la App</h2>
+  <div id="screenshotsCarousel" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-inner" id="carousel-inner"></div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#screenshotsCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Anterior</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#screenshotsCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Siguiente</span>
+    </button>
+  </div>
+</section>
+
+<footer>
+  <div class="carousel-indicators" id="carousel-indicators"></div>
+  Anime EXT © 2025 · 
+  <a href="https://github.com/Chikyqwe/AnimeExt/" target="_blank" class="text-decoration-none text-secondary" style="position: relative; z-index: 10000000000;">
+    <i class="bi bi-github" style="font-size: 1.5rem;"></i>
+  </a>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Carrusel dinámico
+// Puedes cambiar 'localhost:2022' por la URL real de tu servidor si lo necesitas
+const page = window.location.hostname === 'localhost' ? 'localhost:2022' : 'animeext-m5lt.onrender.com';
+const screenshots = [
+`/app/Screenshot-2025-08-17-22-26-32-186-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-26-43-246-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-27-22-922-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-27-32-209-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-27-42-252-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-27-53-928-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-28-15-172-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-56-04-446-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-56-15-944-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-56-19-274-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-56-24-250-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-56-52-648-com-chikyqwe-animeext.jpg`,
+`/app/Screenshot-2025-08-17-22-57-02-904-com-chikyqwe-animeext.jpg`
+];
+
+const carouselInner = document.getElementById('carousel-inner');
+const carouselIndicators = document.getElementById('carousel-indicators');
+
+screenshots.forEach((url, index) => {
+  const item = document.createElement('div');
+  item.className = 'carousel-item' + (index === 0 ? ' active' : '');
+  const img = document.createElement('img');
+  img.src = url;
+  img.className = 'd-block w-75';
+  img.alt = `Screenshot ${index+1}`;
+  item.appendChild(img);
+  carouselInner.appendChild(item);
+
+  const indicator = document.createElement('button');
+  indicator.type = 'button';
+  indicator.setAttribute('data-bs-target','#screenshotsCarousel');
+  indicator.setAttribute('data-bs-slide-to', index);
+  if(index===0) indicator.className='active';
+  carouselIndicators.appendChild(indicator);
+});
+
+// Fondo estrellado
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const stars = Array.from({length: 200}, () => ({
+  x: Math.random()*canvas.width,
+  y: Math.random()*canvas.height,
+  r: Math.random()*1.2,
+  d: Math.random()*0.5
+}));
+
+function drawStars(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#fff';
+  stars.forEach(s=>{
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fill();
+    s.y += s.d;
+    if(s.y>canvas.height){s.y=0; s.x=Math.random()*canvas.width;}
+  });
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+window.addEventListener('resize', ()=>{
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+
+</body>
+</html>
