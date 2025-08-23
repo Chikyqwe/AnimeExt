@@ -126,7 +126,7 @@ router.post('/anime/list', (req, res) => {
 
   res.sendFile(getJSONPath('anime_list.json'));
 });
-
+router.post('/anime/list/ext/beta/cordova/beta/anime/app/chikyqwe', (req, res) => {res.sendFile(getJSONPath('anime_list.json'));});
 router.get('/anime/last',(req, res) => {
   res.sendFile(getJSONPath('lastep.json'))
 });
