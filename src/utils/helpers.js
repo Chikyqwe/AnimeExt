@@ -37,7 +37,9 @@ function streamVideo(videoUrl, req, res) {
 
   const referer = parsedUrl.hostname.includes('burstcloud.co')
     ? 'https://burstcloud.co/'
-    : 'https://www.yourupload.com/';
+    : parsedUrl.hostname.includes('vidcache.net')
+      ? 'https://www.yourupload.com/'
+      : 'https://www.mp4upload.com/';
 
   let start = 0;
   const rangeHeader = req.headers.range;
@@ -50,7 +52,7 @@ function streamVideo(videoUrl, req, res) {
     const headers = {
       'Referer': referer,
       'Origin': referer,
-      'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0'
+      'User-Agent': 'Mozilla/5.0'
     };
     if (from > 0) headers['Range'] = `bytes=${from}-`;
 
@@ -64,13 +66,14 @@ function streamVideo(videoUrl, req, res) {
     };
 
     const proxyReq = protocol.request(options, (proxyRes) => {
-      if (proxyRes.statusCode >= 400) return res.status(proxyRes.statusCode).send('Video no disponible');
+      if (proxyRes.statusCode >= 400) return res.status(proxyRes.statusCode).send('Video no disponible: ' + proxyRes.statusMessage);
 
       if (!res.headersSent) {
         const headersToSend = {
-          'Content-Type': proxyRes.headers['content-type'] || 'video/mp4',
+          'Content-Type': 'video/mp4',
           'Accept-Ranges': 'bytes',
           'Content-Length': proxyRes.headers['content-length'],
+          'Content-Disposition': 'inline'
         };
         if (proxyRes.headers['content-range']) headersToSend['Content-Range'] = proxyRes.headers['content-range'];
 
@@ -115,78 +118,31 @@ function streamVideo(videoUrl, req, res) {
 
 // funcion para descargar el video con los headers correctos
 function downloadVideo(req, res) {
-  const videoUrl = req.query.videoUrl;
-  console.log(`[API DOWNLOAD] Solicitud para videoUrl: ${videoUrl}`);
-
-  if (!videoUrl) {
-    console.warn(`[API DOWNLOAD] Falta parámetro videoUrl`);
-    return res.status(400).send('Falta parámetro videoUrl');
-  }
-
-  const parsedUrl = urlLib.parse(videoUrl);
-  const isHttps = parsedUrl.protocol === 'https:';
-  const protocol = isHttps ? https : http;
-
-  const headers = {
-    'Referer': 'https://www.yourupload.com/',
-    'Origin': 'https://www.yourupload.com',
-    'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0'
-  };
-  if (req.headers.range) headers['Range'] = req.headers.range;
-
-  console.log(`[API DOWNLOAD] Opciones de petición:`, {
-    hostname: parsedUrl.hostname,
-    port: parsedUrl.port || (isHttps ? 443 : 80),
-    path: parsedUrl.path + (parsedUrl.search || ''),
-    headers
-  });
-
-  const options = {
-    hostname: parsedUrl.hostname,
-    port: parsedUrl.port || (isHttps ? 443 : 80),
-    path: parsedUrl.path + (parsedUrl.search || ''),
-    method: 'GET',
-    headers,
-    rejectUnauthorized: false,
-  };
-
-  const proxyReq = protocol.request(options, (proxyRes) => {
-    console.log(`[API DOWNLOAD] Respuesta recibida con status: ${proxyRes.statusCode}`);
-    proxyRes.headers['Content-Disposition'] = 'attachment; filename="video.mp4"';
-    proxyRes.headers['Content-Type'] = 'video/mp4';
-    res.writeHead(proxyRes.statusCode, proxyRes.headers);
-    proxyRes.pipe(res);
-  });
-
-  proxyReq.on('error', err => {
-    console.error(`[API DOWNLOAD] Error en proxy:`, err);
-    if (!res.headersSent) {
-      res.status(500).send('Error al obtener el video: ' + err.message);
-    } else {
-      res.end();
-    }
-  });
-
-  proxyReq.end();
+  return false;
 }
 
 function validateVideoUrl(videoUrl, timeoutMs = 5000) {
+  console.log(`[VALIDATE VIDEO URL] Validando URL: ${videoUrl}`);
   return new Promise((resolve) => {
     if (!videoUrl) return resolve(false);
 
     const parsedUrl = urlLib.parse(videoUrl);
     const isHttps = parsedUrl.protocol === 'https:';
     const protocol = isHttps ? https : http;
-
+  const referer = parsedUrl.hostname.includes('burstcloud.co')
+    ? 'https://burstcloud.co/'
+    : parsedUrl.hostname.includes('vidcache.net')
+      ? 'https://www.yourupload.com/'
+      : 'https://www.mp4upload.com/';
     const options = {
       method: 'HEAD',
       hostname: parsedUrl.hostname,
       port: parsedUrl.port || (isHttps ? 443 : 80),
       path: parsedUrl.path + (parsedUrl.search || ''),
       headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Referer': 'https://www.yourupload.com/',
-        'Origin': 'https://www.yourupload.com'
+        'Referer': referer,
+        'Origin': referer,
+        'User-Agent': 'Mozilla/5.0'
       },
       timeout: timeoutMs,
       rejectUnauthorized: false
@@ -194,8 +150,10 @@ function validateVideoUrl(videoUrl, timeoutMs = 5000) {
 
     const req = protocol.request(options, (res) => {
       const isValidStatus = [200, 206].includes(res.statusCode);
-      const contentType = res.headers['content-type'] || '';
-      resolve(isValidStatus && contentType.startsWith('video/'));
+      const contentLength = parseInt(res.headers['content-length'] || '0', 10);
+      const byContent = contentLength > 1000000; // > 1MB
+      console.log('Content-Length:', contentLength);
+      resolve(isValidStatus && byContent);
     });
 
     req.on('timeout', () => {

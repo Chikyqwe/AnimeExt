@@ -159,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 li.style.cursor = "pointer";
 
                 li.innerHTML = `
-                        <div class="text-white text-decoration-none d-flex align-items-center anime-link">
+                        <div class="text-decoration-none d-flex align-items-center anime-link">
                             <i class="fa fa-play me-2 text-danger"></i>
                             <span class="text-truncate">${anime.title}</span>
                         </div>
@@ -257,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.classList.add('showing');
         searchInput.style.display = 'block';
         searchInput.focus();
-        document.querySelector('.topbar img').style.display = 'none';
     }
 
     function closeMobileSearch() {
@@ -268,7 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
             searchForm.classList.remove('mobile-search-active', 'hiding');
             searchInput.classList.remove('hiding');
             searchInput.style.display = 'none';
-            document.querySelector('.topbar img').style.display = '';
         }, 300);
     }
 

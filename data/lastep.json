@@ -1,5 +1,85 @@
 [
   {
+    "titulo": "Nukitashi the Animation",
+    "episodio": "Episodio 6",
+    "episodioNum": 6,
+    "url": "https://www3.animeflv.net/ver/nukitashi-the-animation-6",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4223.jpg",
+    "alt": "Nukitashi the Animation",
+    "slug": "nukitashi-the-animation",
+    "id": 1165
+  },
+  {
+    "titulo": "Yofukashi no Uta Season 2",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/yofukashi-no-uta-season-2-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4196.jpg",
+    "alt": "Yofukashi no Uta Season 2",
+    "slug": "yofukashi-no-uta-season",
+    "id": null
+  },
+  {
+    "titulo": "Zutaboro Reijou wa Ane no Moto Konyakusha ni Dekiai sareru",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/zutaboro-reijou-wa-ane-no-moto-konyakusha-ni-dekiai-sareru-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4195.jpg",
+    "alt": "Zutaboro Reijou wa Ane no Moto Konyakusha ni Dekiai sareru",
+    "slug": "zutaboro-reijou-wa-ane-no-moto-konyakusha-ni-dekiai-sareru",
+    "id": 9864
+  },
+  {
+    "titulo": "Busu ni Hanataba wo.",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/busu-ni-hanataba-wo-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4194.jpg",
+    "alt": "Busu ni Hanataba wo.",
+    "slug": "busu-ni-hanataba-wo",
+    "id": 1979
+  },
+  {
+    "titulo": "Silent Witch: Chinmoku no Majo no Kakushigoto",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/silent-witch-chinmoku-no-majo-no-kakushigoto-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4193.jpg",
+    "alt": "Silent Witch: Chinmoku no Majo no Kakushigoto",
+    "slug": "silent-witch-chinmoku-no-majo-no-kakushigoto",
+    "id": 2948
+  },
+  {
+    "titulo": "Watari-kun no xx ga Houkai Sunzen",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/watarikun-no-xx-ga-houkai-sunzen-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4192.jpg",
+    "alt": "Watari-kun no xx ga Houkai Sunzen",
+    "slug": "watari-kun-no-xx-ga-houkai-sunzen",
+    "id": null
+  },
+  {
+    "titulo": "Tougen Anki",
+    "episodio": "Episodio 7",
+    "episodioNum": 7,
+    "url": "https://www3.animeflv.net/ver/tougen-anki-7",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4222.jpg",
+    "alt": "Tougen Anki",
+    "slug": "tougen-anki",
+    "id": 9695
+  },
+  {
+    "titulo": "Arknights: Rise from Ember",
+    "episodio": "Episodio 8",
+    "episodioNum": 8,
+    "url": "https://www3.animeflv.net/ver/arknights-rise-from-ember-8",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4191.jpg",
+    "alt": "Arknights: Rise from Ember",
+    "slug": "arknights-rise-from-ember",
+    "id": 7788
+  },
+  {
     "titulo": "Mizu Zokusei no Mahoutsukai",
     "episodio": "Episodio 7",
     "episodioNum": 7,
@@ -120,93 +200,13 @@
     "id": 873
   },
   {
-    "titulo": "Tensei shitara Dainana Ouji Datta node, Kimama ni Majutsu wo Kiwamemasu",
-    "episodio": "Episodio 19",
-    "episodioNum": 19,
-    "url": "https://www3.animeflv.net/ver/tensei-shitara-dainana-ouji-datta-node-kimama-ni-majutsu-wo-kiwamemasu-19",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/3956.jpg",
-    "alt": "Tensei shitara Dainana Ouji Datta node, Kimama ni Majutsu wo Kiwamemasu",
-    "slug": "tensei-shitara-dainana-ouji-datta-node-kimama-ni-majutsu-wo-kiwamemasu",
-    "id": 761
-  },
-  {
-    "titulo": "Jidou Hanbaiki ni Umarekawatta Ore wa Meikyuu wo Samayou 2nd Season",
+    "titulo": "Yofukashi no Uta Season 2 8",
     "episodio": "Episodio 8",
     "episodioNum": 8,
-    "url": "https://www3.animeflv.net/ver/jidou-hanbaiki-ni-umarekawatta-ore-wa-meikyuu-wo-samayou-2nd-season-8",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4183.jpg",
-    "alt": "Jidou Hanbaiki ni Umarekawatta Ore wa Meikyuu wo Samayou 2nd Season",
-    "slug": "jidou-hanbaiki-ni-umarekawatta-ore-wa-meikyuu-wo-samayou-2nd-season",
-    "id": 6813
-  },
-  {
-    "titulo": "Tate no Yuusha no Nariagari Season 4",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/tate-no-yuusha-no-nariagari-season-4-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4219.jpg",
-    "alt": "Tate no Yuusha no Nariagari Season 4",
-    "slug": "tate-no-yuusha-no-nariagari-season",
-    "id": null
-  },
-  {
-    "titulo": "Clevatess: Majuu no Ou to Akago to Shikabane no Yuusha",
-    "episodio": "Episodio 8",
-    "episodioNum": 8,
-    "url": "https://www3.animeflv.net/ver/clevatess-majuu-no-ou-to-akago-to-shikabane-no-yuusha-8",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4182.jpg",
-    "alt": "Clevatess: Majuu no Ou to Akago to Shikabane no Yuusha",
-    "slug": "clevatess-majuu-no-ou-to-akago-to-shikabane-no-yuusha",
-    "id": 3549
-  },
-  {
-    "titulo": "Turkey!",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/turkey-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4218.jpg",
-    "alt": "Turkey!",
-    "slug": "turkey",
-    "id": 533
-  },
-  {
-    "titulo": "Osomatsu-san 4th Season",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://www3.animeflv.net/ver/osomatsusan-4th-season-7",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4217.jpg",
-    "alt": "Osomatsu-san 4th Season",
-    "slug": "osomatsu-san-4th-season",
-    "id": null
-  },
-  {
-    "titulo": "Necronomico no Cosmic Horror Show",
-    "episodio": "Episodio 8",
-    "episodioNum": 8,
-    "url": "https://www3.animeflv.net/ver/necronomico-no-cosmic-horror-show-8",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4181.jpg",
-    "alt": "Necronomico no Cosmic Horror Show",
-    "slug": "necronomico-no-cosmic-horror-show",
-    "id": 2105
-  },
-  {
-    "titulo": "Mattaku Saikin no Tantei to Kitara",
-    "episodio": "Episodio 8",
-    "episodioNum": 8,
-    "url": "https://www3.animeflv.net/ver/mattaku-saikin-no-tantei-to-kitara-8",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4180.jpg",
-    "alt": "Mattaku Saikin no Tantei to Kitara",
-    "slug": "mattaku-saikin-no-tantei-to-kitara",
-    "id": 2066
-  },
-  {
-    "titulo": "Tate no Yuusha no Nariagari Season 4 7",
-    "episodio": "Episodio 7",
-    "episodioNum": 7,
-    "url": "https://tioanime.com/ver/tate-no-yuusha-no-nariagari-season-4-7",
-    "imagen": "https://tioanime.com/uploads/thumbs/4256.jpg",
-    "alt": "Tate no Yuusha no Nariagari Season 4 7",
-    "slug": "tate-no-yuusha-no-nariagari-season-4",
-    "id": 1921
+    "url": "https://tioanime.com/ver/yofukashi-no-uta-season-2-8",
+    "imagen": "https://tioanime.com/uploads/thumbs/4233.jpg",
+    "alt": "Yofukashi no Uta Season 2 8",
+    "slug": "yofukashi-no-uta-season-2",
+    "id": 5931
   }
 ]

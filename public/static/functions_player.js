@@ -38,6 +38,7 @@ async function initPlayerPage() {
 
     document.getElementById("config").textContent = JSON.stringify({
       id: data.id,
+      uid: data.uid_data,
       totalEp: data.episodes_count,
       ep: ep,
       nextUrl: (ep < data.episodes_count) ? `/player?id=${encodeURIComponent(data.id)}&ep=${ep + 1}` : null,

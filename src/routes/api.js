@@ -204,7 +204,7 @@ router.get('/api', async (req, res) => {
   if (!pageUrl && animeId) {
     const anime = getAnimeById(animeId);
     if (!anime || !anime.unit_id) {
-      return res.status(404).json({ error: 'Anime no encontrado o sin unit_id' });
+      return res.status(404).json({ error: 'Anime no encontrado o sin unit_id', id: animeId });
     }
     if (!ep) {
       return res.status(400).json({ error: 'Parámetro "ep" obligatorio' });
@@ -219,7 +219,7 @@ router.get('/api', async (req, res) => {
 
   apiQueue.add(async () => {
     if (!pageUrl || typeof pageUrl !== 'string') {
-      return { status: 400, message: 'URL no válida' };
+      return res.status(400).json({ error: 'URL no válida', url: pageUrl || 'null' });
     }
 
     const videos = await extractAllVideoLinks(pageUrl);
@@ -228,7 +228,7 @@ router.get('/api', async (req, res) => {
       .filter(v => getExtractor(v.servidor));
 
     if (!valid.length) {
-      return { status: 404, message: 'No hay servidores válidos' };
+      return res.status(404).json({ error: 'No hay servidores validos' });
     }
 
     // 🔁 --- M3U8 SWIFT ---
@@ -271,7 +271,7 @@ if (Array.isArray(result) && result[0]?.content) {
   const validFiles = validatedResults.filter(r => r.isValid);
 
   if (!validFiles.length) {
-    return { status: 404, message: 'No se encontró ninguna URL de video válida' };
+    return res.status(404).json({ error: 'No se encontró ninguna URL de video válida' });
   }
 
   res.json({ 
@@ -283,10 +283,16 @@ if (Array.isArray(result) && result[0]?.content) {
 }
 else if (result?.url) {
   const isValid = await validateVideoUrl(result.url);
-
+  console.log(`[API] URL validada: ${result.url} - Válida: ${isValid}`);
+  if (!isValid) {
+    return res.status(404).json({ error: 'La URI No paso la validacion', uri: result.url, valid: isValid });
+  }
   res.json({ 
     url: result.url,
-    userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(result.url)}`
+    userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(result.url)}`,
+    baseUrl: selected.url,
+    valid: isValid,
+    id: animeId
   });
 } else {
   throw new Error('Formato de extractor no reconocido');

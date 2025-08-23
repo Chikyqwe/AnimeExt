@@ -90,25 +90,34 @@ function toggleTheme() {
   document.body.classList.toggle('light-theme');
   document.body.classList.toggle('dark-theme');
 
-  const icon = document.querySelector('#bottomThemeIcon i'); // ✅ Selecciona el <i> directamente
+  const icon = document.querySelector('#themeIcon');
 
-  // ✅ Cambia los íconos correctamente
-  icon.classList.toggle('fa-moon');
-  icon.classList.toggle('fa-sun');
+  // Cambia el icono sin usar dos toggles
+  if (document.body.classList.contains('light-theme')) {
+    icon.classList.replace('fa-moon', 'fa-sun');
+  } else {
+    icon.classList.replace('fa-sun', 'fa-moon');
+  }
 
+  // Guarda el estado
   localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
 
-  adaptarBotonesCerrar(); // tu función para los botones
+  // Tu función extra
+  adaptarBotonesCerrar();
 }
+
 
 function restoreTheme() {
   const savedTheme = localStorage.getItem('theme');
   if (savedTheme === 'light') {
     document.body.classList.add('light-theme');
-    const icon = document.getElementById('bottomThemeIcon');
-    if (icon) {
-      icon.classList.remove('fa-moon');
-      icon.classList.add('fa-sun');
+    const icon = document.querySelector('#themeIcon');
+
+    // Cambia el icono sin usar dos toggles
+    if (document.body.classList.contains('light-theme')) {
+      icon.classList.replace('fa-moon', 'fa-sun');
+    } else {
+      icon.classList.replace('fa-sun', 'fa-moon');
     }
   }
 }

@@ -1,7 +1,7 @@
 // === Configuración inicial ===
 const API_BASE = "api";
 const config = JSON.parse(document.getElementById("config").textContent);
-const slug = `${config.id}-${config.ep}`;
+const slug = `${config.uid}-${config.ep}`;
 let currentUrl = slug;
 
 const video = document.getElementById('player');
@@ -670,8 +670,15 @@ async function start(mirrorNumber = 1) {
       return 0;
     });
 
+  const cached = await loadPrecached(slug);
+  if (cached) {
+    console.log("[CACHE] Episodio encontrado en cache:", cached);
+    await loadStreamDirect(cached.stream, cached.m3u8Content);
+    return;
+  } else {
+    console.log("[CACHE] Episodio no encontrado en cache, buscando en servidores...");
     await loadServerByIndex(0);
-
+  }
   } catch (err) {
     if (mirrorNumber < 4) {
       console.warn(`🔁 Reintentando con mirror=${mirrorNumber + 1}...`);

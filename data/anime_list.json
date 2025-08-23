@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "creado_en": "2025-08-22T00:23:23.346Z",
+    "creado_en": "2025-08-23T03:22:19.512Z",
     "total_animes": 4531
   },
   "animes": [
@@ -53,9 +53,9 @@
       "title": "Nukitashi the Animation",
       "slug": "nukitashi-the-animation",
       "image": "https://animeflv.net/uploads/animes/covers/4223.jpg",
-      "episodes_count": 5,
+      "episodes_count": 6,
       "status": "En emisión",
-      "next_episode_date": "2025-08-22",
+      "next_episode_date": "2025-08-29",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/nukitashi-the-animation",
         "TIO": "https://tioanime.com/anime/nukitashi-the-animation",
@@ -68,9 +68,9 @@
       "title": "Tougen Anki",
       "slug": "tougen-anki",
       "image": "https://animeflv.net/uploads/animes/covers/4222.jpg",
-      "episodes_count": 6,
+      "episodes_count": 7,
       "status": "En emisión",
-      "next_episode_date": "2025-08-22",
+      "next_episode_date": "2025-08-29",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/tougen-anki",
         "TIO": "https://tioanime.com/anime/tougen-anki",
@@ -458,9 +458,9 @@
       "title": "Watari-kun no xx ga Houkai Sunzen",
       "slug": "watarikun-no-xx-ga-houkai-sunzen",
       "image": "https://animeflv.net/uploads/animes/covers/4192.jpg",
-      "episodes_count": 7,
+      "episodes_count": 8,
       "status": "En emisión",
-      "next_episode_date": "2025-08-22",
+      "next_episode_date": "2025-08-29",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/watarikun-no-xx-ga-houkai-sunzen",
         "TIO": "https://tioanime.com/anime/watarikun-no-xx-ga-houkai-sunzen",
@@ -473,9 +473,9 @@
       "title": "Yofukashi no Uta Temporada 2",
       "slug": "yofukashi-no-uta-season-2",
       "image": "https://animeflv.net/uploads/animes/covers/4196.jpg",
-      "episodes_count": 7,
+      "episodes_count": 8,
       "status": "En emisión",
-      "next_episode_date": "2025-08-22",
+      "next_episode_date": "2025-08-29",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/yofukashi-no-uta-season-2",
         "TIO": "https://tioanime.com/anime/yofukashi-no-uta-season-2",
@@ -488,9 +488,9 @@
       "title": "Arknights: Rise from Ember",
       "slug": "arknights-rise-from-ember",
       "image": "https://animeflv.net/uploads/animes/covers/4191.jpg",
-      "episodes_count": 7,
+      "episodes_count": 8,
       "status": "En emisión",
-      "next_episode_date": "2025-08-22",
+      "next_episode_date": "2025-08-29",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/arknights-rise-from-ember",
         "TIO": "https://tioanime.com/anime/arknights-rise-from-ember",
@@ -503,9 +503,9 @@
       "title": "Zutaboro Reijou wa Ane no Moto Konyakusha ni Dekiai sareru",
       "slug": "zutaboro-reijou-wa-ane-no-moto-konyakusha-ni-dekiai-sareru",
       "image": "https://animeflv.net/uploads/animes/covers/4195.jpg",
-      "episodes_count": 7,
+      "episodes_count": 8,
       "status": "En emisión",
-      "next_episode_date": "2025-08-22",
+      "next_episode_date": "2025-08-29",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/zutaboro-reijou-wa-ane-no-moto-konyakusha-ni-dekiai-sareru",
         "TIO": "https://tioanime.com/anime/zutaboro-reijou-wa-ane-no-moto-konyakusha-ni-dekiai-sareru",
@@ -518,9 +518,9 @@
       "title": "Busu ni Hanataba wo.",
       "slug": "busu-ni-hanataba-wo",
       "image": "https://animeflv.net/uploads/animes/covers/4194.jpg",
-      "episodes_count": 7,
+      "episodes_count": 8,
       "status": "En emisión",
-      "next_episode_date": "2025-08-22",
+      "next_episode_date": "2025-08-29",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/busu-ni-hanataba-wo",
         "TIO": "https://tioanime.com/anime/busu-ni-hanataba-wo",
@@ -533,9 +533,9 @@
       "title": "Silent Witch: Chinmoku no Majo no Kakushigoto",
       "slug": "silent-witch-chinmoku-no-majo-no-kakushigoto",
       "image": "https://animeflv.net/uploads/animes/covers/4193.jpg",
-      "episodes_count": 7,
+      "episodes_count": 8,
       "status": "En emisión",
-      "next_episode_date": "2025-08-22",
+      "next_episode_date": "2025-08-29",
       "sources": {
         "FLV": "https://www3.animeflv.net/anime/silent-witch-chinmoku-no-majo-no-kakushigoto",
         "TIO": "https://tioanime.com/anime/silent-witch-chinmoku-no-majo-no-kakushigoto",
@@ -63653,7 +63653,7 @@
       "title": "Boku no Hero Academia Temporada 6",
       "slug": "boku-no-hero-academia-temporada-6",
       "image": "https://i3.wp.com/animeytx.com/wp-content/uploads/2025/08/hkj4650h965kjh0956j.jpg?resize=247,350",
-      "episodes_count": 2,
+      "episodes_count": 6,
       "status": null,
       "next_episode_date": null,
       "sources": {
@@ -64073,7 +64073,7 @@
       "title": "Dragon Raja Temporada 2",
       "slug": "dragon-raja-temporada-2",
       "image": "https://i0.wp.com/animeytx.com/wp-content/uploads/2025/07/hj45h045hjk4502hh54.jpg?resize=247,350",
-      "episodes_count": 7,
+      "episodes_count": 8,
       "status": null,
       "next_episode_date": null,
       "sources": {
@@ -66338,7 +66338,7 @@
       "title": "Osomatsu-san Temporada 4",
       "slug": "osomatsu-san-temporada-4",
       "image": "https://animeytx.com/wp-content/uploads/2025/07/62MXldhJ4d8w5FZYtp.webp",
-      "episodes_count": 6,
+      "episodes_count": 7,
       "status": null,
       "next_episode_date": null,
       "sources": {
