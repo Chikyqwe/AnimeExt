@@ -9,9 +9,6 @@ const { slowAES } = require('../utils/aes'); // aes.js en CommonJS
 
 const UA_FIREFOX =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0';
-const UA_CHROME =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36';
-
 function delay(ms) {
   return new Promise((res) => setTimeout(res, ms));
 }
@@ -415,11 +412,6 @@ const extractors = {
 function getExtractor(name) {
   return extractors[name.toLowerCase()];
 }
-
-process.on('exit', async () => {
-  if (playwrightBrowser) await playwrightBrowser.close();
-  if (puppeteerBrowser) await puppeteerBrowser.close();
-});
 
 module.exports = {
   extractAllVideoLinks,
