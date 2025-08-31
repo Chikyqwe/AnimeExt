@@ -220,7 +220,7 @@ async function obtenerCookieAnimeYTX(urlPagina) {
 async function obtenerHtmlConCookieAnimeYTX(urlPagina, cookieVal) {
   const headers = { 'User-Agent':'Mozilla/5.0' };
   if(cookieVal) headers['Cookie']=`__test=${cookieVal}`;
-  const { data: html } = await axios.get(`https://animeext.unaux.com/get_html.php?url=${encodeURIComponent(urlPagina)}`, { headers });
+  const { data: html } = await axios.get(`https://animeext.xo.je/get_html.php?url=${encodeURIComponent(urlPagina)}`, { headers });
   return html;
 }
 
@@ -359,7 +359,7 @@ async function obtenerEpsAnimeYTX(url, cookieVal, log = console.log, maxRetries 
   if (cookieVal) headers['Cookie'] = `__test=${cookieVal}`;
   for (let i = 0; i <= maxRetries; i++) {
     try {
-      const { data } = await axios.get(`https://animeext.unaux.com/get_ep_vid.php?url=${encodeURIComponent(url)}`, { timeout: 10000, headers });
+      const { data } = await axios.get(`https://animeext.xo.je/get_ep_vid.php?url=${encodeURIComponent(url)}`, { timeout: 10000, headers });
       if (data && typeof data.episodes_count === "number" && data.episodes_count > 0) return data.episodes_count;
     } catch (e) { registrarError("AnimeYTX", "get_ep_vid", e.message, url); }
   }
