@@ -16,7 +16,8 @@ const {
   proxyImage,
   streamVideo,
   downloadVideo,
-  validateVideoUrl
+  validateVideoUrl,
+  getCookie
 } = require('../utils/helpers');
 
 const {
@@ -441,5 +442,20 @@ router.get('/api/queue/status', (req, res) => {
     res.status(500).json({ error: 'Error interno al obtener estado de la cola' });
   }
 });
-
+router.get('/app/v', async (req, res) => {
+  const apiUrl = 'https://animeext.xo.je/app/beta/dw.php?d';
+  try {
+    const cookieVal = await getCookie(apiUrl);
+    const { data } = await axios.get(apiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Cookie': `__test=${cookieVal}`
+      }
+    });
+    res.json(data);
+  } catch (error) {
+    console.error('Error obteniendo datos de la API:', error);
+    res.status(500).json({ error: 'Error interno al obtener datos de la API' });
+  }
+});
 module.exports = router;

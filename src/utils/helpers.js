@@ -214,8 +214,23 @@ async function urlEpAX(urlPagina, capNum) {
   console.log(`[URL EPAX] Episodio encontrado: ${jsonData.capitulo} URL: ${jsonData.url_episodio}`);
   return jsonData.url_episodio;
 }
+async function getCookie(apiUrl) {
+  const { data: html } = await axios.get(apiUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0' }
+  });
 
+  const match = html.match(/toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\)/s);
+  if (!match) throw new Error("No se pudieron extraer datos de cifrado");
+
+  const a = toNumbers(match[1]);
+  const b = toNumbers(match[2]);
+  const c = toNumbers(match[3]);
+
+  const cookieVal = toHex(slowAES.decrypt(c, 2, a, b));
+  return cookieVal;
+}
 module.exports = {
+  getCookie,
   proxyImage,
   streamVideo,
   downloadVideo,
