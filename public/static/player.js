@@ -1,17 +1,11 @@
-// === Configuración inicial ===
-const API_BASE = "api";
-const config = JSON.parse(document.getElementById("config").textContent);
-const slug = `${config.uid}-${config.ep}`;
-let currentUrl = slug;
-
-const video = document.getElementById('player');
-const loader = document.getElementById('loader');
-const serverButtonsContainer = document.getElementById('serverButtons');
-
+// === Variables de Estado Globales ===
+const API_BASE = "/api";
+let currentConfig = {};
+let currentServerList = [];
 let hlsInstance = null;
-let serverList = [];
 let currentBlobUrl = null;
 let wakeLock = null;
+let currentMirror = 1;
 
 // === IndexedDB ===
 const DB_NAME = 'AnimeCacheDB';
@@ -28,7 +22,7 @@ function setLoaderText(text) {
 function openDB() {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
+    const request = indexedDB.open(DB_NAME, 3); // ⚡ subimos versión a 3
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);
     request.onupgradeneeded = (event) => {
@@ -36,10 +30,56 @@ function openDB() {
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: 'url' });
       }
+      if (!db.objectStoreNames.contains("progress")) {
+        db.createObjectStore("progress", { keyPath: "slug" });
+      }
+      if (!db.objectStoreNames.contains("history")) {
+        db.createObjectStore("history", { keyPath: "uid" }); // ⚡ solo uid
+      }
     };
   });
   return dbPromise;
 }
+
+// History
+
+// Guardar uid en history
+async function addToHistory(uid) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("history", "readwrite");
+    const store = tx.objectStore("history");
+    const req = store.put({ uid, addedAt: Date.now() }); // guarda uid y fecha
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// Obtener todo el historial
+async function getHistory() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("history", "readonly");
+    const store = tx.objectStore("history");
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// Borrar un anime del historial
+async function removeFromHistory(uid) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("history", "readwrite");
+    const store = tx.objectStore("history");
+    const req = store.delete(uid);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// History end
 
 async function idbPut(entry) {
   const db = await openDB();
@@ -59,6 +99,34 @@ async function idbGet(url) {
     const store = tx.objectStore(STORE_NAME);
     const req = store.get(url);
     req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function saveLastEpisode(uid, ep) {
+  const data = { uid, ep };
+  localStorage.setItem("lasted", JSON.stringify(data));
+}
+
+// === Progreso de videos ===
+async function saveProgress(slug, currentTime) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("progress", "readwrite");
+    const store = tx.objectStore("progress");
+    const req = store.put({ slug, currentTime, updatedAt: Date.now() });
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function loadProgress(slug) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("progress", "readonly");
+    const store = tx.objectStore("progress");
+    const req = store.get(slug);
+    req.onsuccess = () => resolve(req.result ? req.result.currentTime : 0);
     req.onerror = () => reject(req.error);
   });
 }
@@ -86,7 +154,7 @@ function delay(ms) {
 }
 
 function highlightActiveButton(activeIndex) {
-  const buttons = serverButtonsContainer.querySelectorAll("button");
+  const buttons = document.getElementById("serverButtons").querySelectorAll("button");
   buttons.forEach((btn, i) => {
     btn.classList.toggle("active", i === activeIndex);
   });
@@ -102,7 +170,7 @@ async function precacheNextEpisode(slug, triedServers = []) {
 
   try {
     await delay(10000);
-    const res = await fetch(`${API_BASE}/servers?id=${config.id}&ep=${parseInt(config.ep) + 1}`);
+    const res = await fetch(`${API_BASE}/servers?id=${currentConfig.id}&ep=${currentConfig.ep + 1}`);
     if (!res.ok) throw new Error("Error al obtener lista de servidores");
 
     const servers = await res.json();
@@ -126,19 +194,19 @@ async function precacheNextEpisode(slug, triedServers = []) {
 
     try {
       if (server === "sw") {
-        const resM3u8 = await fetch(`/api?id=${config.id}&ep=${parseInt(config.ep) + 1}&server=sw`);
+        const resM3u8 = await fetch(`/api?id=${currentConfig.id}&ep=${currentConfig.ep + 1}&server=sw`);
         if (!resM3u8.ok) throw new Error(`SW error: ${resM3u8.status}`);
         m3u8Content = await resM3u8.text();
         if (!m3u8Content || m3u8Content.includes("error")) throw new Error("M3U8 vacío o inválido");
         streamUrl = nextSlug;
       } else if (server === "yu" || server === "yourupload") {
-        const resAlt = await fetch(`${API_BASE}?id=${config.id}&ep=${parseInt(config.ep) + 1}&server=yu`);
+        const resAlt = await fetch(`${API_BASE}?id=${currentConfig.id}&ep=${currentConfig.ep + 1}&server=yu`);
         if (!resAlt.ok) throw new Error(`YU error: ${resAlt.status}`);
         const json = await resAlt.json();
         if (!json.url) throw new Error("YU: URL no encontrada");
         streamUrl = `/api/stream?videoUrl=${encodeURIComponent(json.url)}`;
       } else {
-        const resAlt = await fetch(`${API_BASE}?id=${config.id}&ep=${parseInt(config.ep) + 1}&server=${server}`);
+        const resAlt = await fetch(`${API_BASE}?id=${currentConfig.id}&ep=${currentConfig.ep + 1}&server=${server}`);
         if (!resAlt.ok) throw new Error(`${server} error: ${resAlt.status}`);
         const stream = await resAlt.text();
         streamUrl = stream.trim();
@@ -164,7 +232,6 @@ async function precacheNextEpisode(slug, triedServers = []) {
   }
 }
 
-
 function isCacheValid(entry) {
   return entry && Date.now() - entry.timestamp < 12 * 60 * 60 * 1000;
 }
@@ -186,319 +253,417 @@ async function savePrecached(url, data) {
   }
 }
 
-// === Reproducción ===
-async function loadStreamDirect(url, m3u8Content = null) {
-  if (hlsInstance) {
+// === Lógica principal del reproductor ===
+async function initPlayerAndLoadEpisode(epNumber) {
+    document.getElementById("loader").style.display = 'flex';
+    document.getElementById('player').style.opacity = 0;
+    document.getElementById('nav-buttons').innerHTML = '';
+    document.getElementById('episode-list').innerHTML = '';
+    const serverButtonsContainer = document.getElementById('serverButtons');
+    if (serverButtonsContainer) serverButtonsContainer.innerHTML = '';
+    
+    // Si hay un iframe de mega o ads, lo limpiamos
+    const existingIframe = document.getElementById('megaIframe') || document.getElementById('adsIframe');
+    if (existingIframe) existingIframe.remove();
+    document.getElementById('player').style.display = 'block';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    const uid = urlParams.get('uid');
+
+    if ((!id && !uid) || isNaN(epNumber)) {
+        document.getElementById("anime-title").innerText = "Faltan parámetros";
+        return;
+    }
+
     try {
-      hlsInstance.destroy();
-      if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
-    } catch {}
+        let res;
+        if (id) {
+            res = await fetch(`${API_BASE}/player?id=${encodeURIComponent(id)}&ep=${epNumber}`);
+        } else {
+            res = await fetch(`${API_BASE}/player?uid=${encodeURIComponent(uid)}&ep=${epNumber}`);
+        }
+        const data = await res.json();
+
+        if (data.error) {
+            document.getElementById("anime-title").innerText = "Error: " + data.error;
+            return;
+        }
+
+        // Actualizamos el estado global de la configuración
+        currentConfig = {
+            id: data.id,
+            uid: data.uid_data,
+            totalEp: data.episodes_count,
+            ep: epNumber,
+            title: data.anime_title
+        };
+
+        // Actualizamos la URL del navegador sin recargar
+        const newUrl = `?${id ? `id=${encodeURIComponent(data.id)}` : `uid=${encodeURIComponent(data.uid_data)}`}&ep=${epNumber}`;
+        window.history.pushState(currentConfig, data.anime_title, newUrl);
+        document.title = `${data.anime_title}`;
+
+        // Llamamos a las funciones de renderizado y carga
+        renderPlayerUI(data);
+        startEpisodeLoad();
+
+    } catch (e) {
+        document.getElementById("anime-title").innerText = "Error de carga.";
+        console.error(e);
+    }
+}
+
+function renderPlayerUI(data) {
+    const navButtons = document.getElementById("nav-buttons");
+    const episodeList = document.getElementById("episode-list");
+    const ep = currentConfig.ep;
+    const episodesPerPage = 12;
+    let currentGroup = Math.floor((ep - 1) / episodesPerPage);
+    navButtons.innerHTML = '';
+    // Título del anime
+    document.getElementById("anime-title").innerText = data.anime_title;
+
+    // Botones de navegación
+    if (ep > 1) {
+        const btnPrev = document.createElement("button");
+        btnPrev.title = "Anterior";
+        btnPrev.innerHTML = '<i class="bi bi-arrow-left"></i>';
+        btnPrev.onclick = () => initPlayerAndLoadEpisode(ep - 1);
+        navButtons.appendChild(btnPrev);
+    }
+
+    const btnHome = document.createElement("button");
+    btnHome.title = "Inicio";
+    btnHome.innerHTML = '<i class="bi bi-house-door-fill"></i>';
+    btnHome.onclick = () => location.href = '/';
+    navButtons.appendChild(btnHome);
+
+    if (ep < data.episodes_count) {
+        const btnNext = document.createElement("button");
+        btnNext.title = "Siguiente";
+        btnNext.innerHTML = '<i class="bi bi-arrow-right"></i>';
+        btnNext.onclick = () => initPlayerAndLoadEpisode(ep + 1);
+        navButtons.appendChild(btnNext);
+    }
+
+    const infoSpan = document.createElement("span");
+    infoSpan.innerText = ` Episodio ${ep} / ${data.episodes_count} `;
+    navButtons.appendChild(infoSpan);
+
+    // Botón de tema
+    const themeBtn = document.createElement("button");
+    themeBtn.id = "theme-toggle";
+    themeBtn.title = "Cambiar tema";
+    themeBtn.innerHTML = '<i class="bi bi-moon-stars-fill"></i>';
+    navButtons.appendChild(themeBtn);
+    setupThemeToggle(themeBtn);
+
+    // Lista de episodios
+    function renderEpisodeGroup() {
+        episodeList.innerHTML = "";
+
+        const totalGroups = Math.ceil(data.episodes_count / episodesPerPage);
+        const start = currentGroup * episodesPerPage + 1;
+        const end = Math.min(start + episodesPerPage - 1, data.episodes_count);
+
+        if (currentGroup > 0) {
+            const prevGroupBtn = document.createElement("button");
+            prevGroupBtn.className = "btn episode-btn";
+            prevGroupBtn.textContent = "◀";
+            prevGroupBtn.onclick = () => {
+                currentGroup--;
+                renderEpisodeGroup();
+            };
+            episodeList.appendChild(prevGroupBtn);
+        }
+
+        for (let i = start; i <= end; i++) {
+            const btn = document.createElement("button");
+            btn.className = "btn episode-btn" + (i === ep ? " active" : "");
+            btn.textContent = i;
+            btn.onclick = () => initPlayerAndLoadEpisode(i);
+            episodeList.appendChild(btn);
+        }
+
+        if (currentGroup < totalGroups - 1) {
+            const nextGroupBtn = document.createElement("button");
+            nextGroupBtn.className = "btn episode-btn";
+            nextGroupBtn.textContent = "▶";
+            nextGroupBtn.onclick = () => {
+                currentGroup++;
+                renderEpisodeGroup();
+            };
+            episodeList.appendChild(nextGroupBtn);
+        }
+    }
+    renderEpisodeGroup();
+}
+
+function setupThemeToggle(toggleButton) {
+  function setTheme(theme) {
+    if (theme === "light") {
+      document.body.classList.add("light-theme");
+      toggleButton.innerHTML = '<i class="bi bi-brightness-high-fill"></i>';
+    } else {
+      document.body.classList.remove("light-theme");
+      toggleButton.innerHTML = '<i class="bi bi-moon-stars-fill"></i>';
+    }
+    localStorage.setItem("theme", theme);
+  }
+
+  toggleButton.addEventListener("click", () => {
+    const currentTheme = document.body.classList.contains("light-theme") ? "light" : "dark";
+    setTheme(currentTheme === "light" ? "dark" : "light");
+  });
+
+  setTheme(localStorage.getItem("theme") || "dark");
+}
+
+// === Lógica de carga y reproducción de stream ===
+async function startEpisodeLoad(mirrorNumber = 1) {
+  const video = document.getElementById('player');
+  const loader = document.getElementById('loader');
+  const serverButtonsContainer = document.getElementById('serverButtons');
+  const slug = `${currentConfig.uid}-${currentConfig.ep}`;
+  saveLastEpisode(currentConfig.uid, currentConfig.ep);
+  addToHistory(currentConfig.uid);
+  currentMirror = mirrorNumber;
+
+  if (hlsInstance) {
+    try { hlsInstance.destroy(); } catch {}
     hlsInstance = null;
+    if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = null;
+  }
+
+  setLoaderText("Cargando servidores...");
+  video.src = '';
+  video.pause();
+
+  const ads = localStorage.getItem("ads") === "true";
+  
+  if (ads) {
+      console.log("[INFO] Modo ADS activado");
+      // Lógica de carga de servidores con anuncios (ejemplo simple)
+      try {
+        const res = await fetch(`${API_BASE}/servers?id=${currentConfig.id}&ep=${currentConfig.ep}&mirror=${currentMirror}`);
+        const servers = await res.json();
+        currentServerList = servers.map(s => ({
+            ...s,
+            servidor: s.servidor.toLowerCase()
+        }));
+
+        const orden = ["yu", "mega", "sw", "voe"];
+        currentServerList.sort((a, b) => {
+            const ia = orden.indexOf(a.servidor);
+            const ib = orden.indexOf(b.servidor);
+            if (ia === -1 && ib === -1) return 0;
+            if (ia === -1) return 1;
+            if (ib === -1) return -1;
+            return ia - ib;
+        });
+        
+        createServerButtons(currentServerList, (server) => loadStreamWithAds(server, serverButtonsContainer));
+        const firstServer = currentServerList[0];
+        if (firstServer) loadStreamWithAds(firstServer, serverButtonsContainer);
+      } catch (err) {
+        console.error("Error al cargar servidores en modo ADS:", err);
+        loader.style.display = 'none';
+        setLoaderText("Error al cargar servidores");
+      }
+      return;
+  }
+
+  // Lógica para modo sin anuncios
+  try {
+    const cached = await loadPrecached(slug);
+    if (cached) {
+      console.log("[CACHE] Episodio encontrado en cache:", cached);
+      await loadStreamDirect(cached.stream, cached.m3u8Content);
+      precacheNextEpisode(slug);
+      return;
+    } else {
+      console.log("[CACHE] Episodio no encontrado en cache, buscando en servidores...");
+      const res = await fetch(`${API_BASE}/servers?id=${currentConfig.id}&ep=${currentConfig.ep}&mirror=${currentMirror}`);
+      currentServerList = await res.json();
+      if (!currentServerList || currentServerList.length === 0) throw new Error("No hay servidores disponibles");
+      
+      currentServerList.sort((a, b) => {
+        if (a.servidor === 'mega' || a.servidor === 'mega.nz') return 1;
+        if (b.servidor === 'mega' || b.servidor === 'mega.nz') return -1;
+        return 0;
+      });
+
+      createServerButtons(currentServerList, (server, index) => loadServerByIndex(index));
+      await loadServerByIndex(0);
+    }
+  } catch (err) {
+    if (mirrorNumber < 4) {
+      console.warn(`🔁 Reintentando con mirror=${mirrorNumber + 1}...`);
+      setLoaderText(`Cargando servidor ${mirrorNumber + 1}...`);
+      return startEpisodeLoad(mirrorNumber + 1);
+    }
+    console.error("Error fatal en startEpisodeLoad:", err);
+    setLoaderText("Error de carga. Intente de nuevo.");
+    loader.style.display = 'none';
+  }
+}
+
+// === Funciones auxiliares para la carga de streams ===
+// === Funciones auxiliares para la carga de streams ===
+async function loadStreamDirect(url, m3u8Content = null) {
+  const video = document.getElementById('player');
+  const loader = document.getElementById('loader');
+  const slug = `${currentConfig.uid}-${currentConfig.ep}`;
+
+  // Limpia cualquier iframe existente
+  const existingIframe = document.getElementById('megaIframe') || document.getElementById('adsIframe');
+  if (existingIframe) existingIframe.remove();
+  video.style.display = 'block';
+
+  if (hlsInstance) {
+    try { hlsInstance.destroy(); } catch {}
+    hlsInstance = null;
+    if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
     currentBlobUrl = null;
   }
 
   const isM3U8 = url.endsWith(".m3u8") || m3u8Content;
   const isMP4 = url.endsWith(".mp4");
 
-  if (isMP4) {
-    video.src = url;
-    console.info(url)
-    video.load();
-    video.addEventListener('loadedmetadata', async () => {
-      loader.style.display = 'none';
-      video.style.opacity = 1;
-      video.muted = false;
-      try {
-        await video.play();
-        await requestWakeLock();
-      } catch {}
-      await delay(10000);
-      precacheNextEpisode(slug);
-  
-    }, { once: true });
-    return;
-  }
+  // ✅ Variable local para el autoplay del siguiente episodio
+  let nextEpisodeTriggered = false;
 
   if (Hls.isSupported() && isM3U8) {
     hlsInstance = new Hls();
-    if (m3u8Content) {
-      const fixed = fixM3u8(m3u8Content, url);
-      const blob = new Blob([fixed], { type: 'application/vnd.apple.mpegurl' });
-      currentBlobUrl = URL.createObjectURL(blob);
-      console.info(currentBlobUrl)
-      hlsInstance.loadSource(currentBlobUrl);
-    } else {
-      hlsInstance.loadSource(url);
-    }
+    const source = m3u8Content ? URL.createObjectURL(new Blob([fixM3u8(m3u8Content, url)], { type: 'application/vnd.apple.mpegurl' })) : url;
+    if (m3u8Content) currentBlobUrl = source;
+
+    hlsInstance.loadSource(source);
     hlsInstance.attachMedia(video);
     hlsInstance.on(Hls.Events.MANIFEST_PARSED, async () => {
       loader.style.display = 'none';
       video.style.opacity = 1;
-      video.muted = false;
-      try {
-        await video.play();
-        await requestWakeLock();
-      } catch {}
-      await delay(10000);
-      precacheNextEpisode(slug);
-  
+      try { await video.play(); await requestWakeLock(); } catch {}
+      precacheNextEpisode(`${currentConfig.uid}-${currentConfig.ep}`);
     });
-    return;
+  } else {
+    video.src = url;
+    video.load();
+    video.addEventListener('loadedmetadata', async () => {
+      loader.style.display = 'none';
+      video.style.opacity = 1;
+      try { await video.play(); await requestWakeLock(); } catch {}
+      precacheNextEpisode(`${currentConfig.uid}-${currentConfig.ep}`);
+    }, { once: true });
   }
-
-  video.src = url;
-  console.info(url)
-  video.load();
-  video.addEventListener('loadedmetadata', async () => {
-    loader.style.display = 'none';
-    video.style.opacity = 1;
-    video.muted = true;
-    try {
-      await video.play();
-      await requestWakeLock();
-    } catch {}
-    await delay(10000);
-    precacheNextEpisode(slug);
-
-  }, { once: true });
+  // Manejo de siguiente episodio al finalizar
+  video.addEventListener('timeupdate', () => {
+    if (!video.duration || currentConfig.ep >= currentConfig.totalEp) return;
+    const remaining = video.duration - video.currentTime;
+    if (remaining <= 5 && !nextEpisodeTriggered) {
+      nextEpisodeTriggered = true;
+      console.log('Reproduciendo siguiente episodio');
+      initPlayerAndLoadEpisode(currentConfig.ep + 1);
+    }
+  });
 }
-
-
-// === Cargar servidor por índice ===
-let currentMirror = 1;
 
 async function loadServerByIndex(index) {
-  function buildApiUrl(baseUrl) {
-    if (currentMirror === 2) return `${baseUrl}&mirror=2`;
-    if (currentMirror === 3) return `${baseUrl}&mirror=3`;
-    return baseUrl; // mirror 1 por defecto
-  }
-
-  if (index >= serverList.length) {
-    // Cambiar mirror solo si no es el último mirror (3)
-    if (currentMirror < 3) {
-      currentMirror++; // Avanza al siguiente mirror
-
-      try {
-        const res = await fetch(`/api/servers?id=${config.id}&ep=${config.ep}&mirror=${currentMirror}`);
-        if (!res.ok) throw new Error(`No se pudo cargar el mirror ${currentMirror}`);
-
-        const newList = await res.json();
-        if (!Array.isArray(newList) || newList.length === 0) {
-          throw new Error(`Mirror ${currentMirror} sin servidores`);
-        }
-
-        serverList = newList;
-        console.log(`[Player] Cambiado a mirror=${currentMirror} con ${serverList.length} servidores`);
-        await loadServerByIndex(0);
-        return;
-
-      } catch (err) {
-        console.error(`[Player] Falló la carga del mirror ${currentMirror}:`, err.message);
-        loader.style.display = 'none';
-        return;
+  const server = currentServerList[index];
+  if (!server) {
+      if (currentMirror < 4) {
+          console.warn(`🔁 Reintentando con mirror=${currentMirror + 1}...`);
+          return startEpisodeLoad(currentMirror + 1);
       }
-    }
-
-    // Si ya agotaste todos los mirrors
-    console.error('Todos los mirrors fallaron');
-    loader.style.display = 'none';
-    return;
+      console.error('Todos los mirrors fallaron');
+      setLoaderText("Error: No se pudo cargar ningún servidor.");
+      document.getElementById('loader').style.display = 'none';
+      return;
   }
-
-  const server = serverList[index].servidor.toLowerCase();
+  
   highlightActiveButton(index);
-  loader.style.display = 'flex';
+  setLoaderText(`Cargando ${server.servidor.toUpperCase()}...`);
+  const video = document.getElementById('player');
+  const loader = document.getElementById('loader');
   video.style.opacity = 0;
+  loader.style.display = 'flex';
 
-  let success = false;
-  const swUrls = [
-    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=1`,
-    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=2`, 
-    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=3`,
-    `/api?id=${config.id}&ep=${config.ep}&server=sw&mirror=4`  
-  ];
-  const yuUrls = [
-    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=1`,
-    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=2`,
-    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=3`,
-    `/api?id=${config.id}&ep=${config.ep}&server=yu&mirror=4`
-  ];
-  const bcUrls = [
-    `/api?id=${config.id}&ep=${config.ep}&server=bc&mirror=1`,
-    `/api?id=${config.id}&ep=${config.ep}&server=bc&mirror=2`,
-    `/api?id=${config.id}&ep=${config.ep}&server=bc&mirror=3`,
-    `/api?id=${config.id}&ep=${config.ep}&server=bc&mirror=4`
-  ];
   try {
-    if (server === "yu" || server === "yourupload") {
-      setLoaderText(`Servidor YU ${currentMirror}`);
-      let lastError;
+    let streamUrl, m3u8Content = null;
+    let success = false;
 
-      for (const url of yuUrls) { // Asume que existe un array 'yuUrls'
-        try {
-          const res = await fetch(buildApiUrl(url));
-          if (!res.ok) throw new Error("YU: respuesta no OK");
-          
-          const json = await res.json();
-          if (!json.url) throw new Error("YU: URL vacía");
+    if (['yu', 'yourupload', 'bc', 'burcloud', 'sw'].includes(server.servidor)) {
+      const serverNames = {
+        'yu': 'yu',
+        'yourupload': 'yu',
+        'bc': 'bc',
+        'burcloud': 'bc',
+        'sw': 'sw'
+      };
+      
+      const serverParam = serverNames[server.servidor];
+      const url = `${API_BASE}?id=${currentConfig.id}&ep=${currentConfig.ep}&server=${serverParam}&mirror=${currentMirror}`;
+      
+      try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Respuesta no OK");
 
-          const streamUrl = `/api/stream?videoUrl=${encodeURIComponent(json.url)}`;
-          loadStreamDirect(streamUrl);
-          await savePrecached(currentUrl, {
-            url: currentUrl,
-            server: "yu",
-            stream: streamUrl,
-            m3u8Content: null,
-            timestamp: Date.now()
-          });
-
+          if (serverParam === 'sw') {
+              m3u8Content = await res.text();
+              if (!m3u8Content || m3u8Content.includes("error")) throw new Error("M3U8 inválido");
+              streamUrl = url;
+          } else {
+              const json = await res.json();
+              if (!json.url) throw new Error("URL vacía");
+              streamUrl = `/api/stream?videoUrl=${encodeURIComponent(json.url)}`;
+          }
           success = true;
-          break; // Si tiene éxito, sale del bucle
-        } catch (error) {
+      } catch (error) {
           console.error(`Intento fallido con la URL: ${url}`, error);
-          lastError = error;
-        }
+          throw error; // Propagar el error para que pase al siguiente servidor
       }
 
-      if (!success) {
-        throw new Error(`YU: todos los intentos fallaron. Último error: ${lastError.message}`);
-      }
-    } else if (server === "bc" || server === "burcloud") {
-      let lastError;
-      setLoaderText(`Servidor BC ${currentMirror}`);
-      for (const url of bcUrls) { // Asume que existe un array 'bcUrls'
-        try {
-          const res = await fetch(buildApiUrl(url));
-          if (!res.ok) throw new Error("BC: respuesta no OK");
-          
-          const json = await res.json();
-          if (!json.url) throw new Error("BC: URL vacía");
-
-          const streamUrl = `/api/stream?videoUrl=${encodeURIComponent(json.url)}`;
-          loadStreamDirect(streamUrl);
-          await savePrecached(currentUrl, {
-            url: currentUrl,
-            server: "bc",
-            stream: streamUrl,
-            m3u8Content: null,
-            timestamp: Date.now()
-          });
-
-          success = true;
-          break; // Si tiene éxito, sale del bucle
-        } catch (error) {
-          console.error(`Intento fallido con la URL: ${url}`, error);
-          lastError = error;
-        }
-      }
-
-      if (!success) {
-        throw new Error(`BC: todos los intentos fallaron. Último error: ${lastError.message}`);
-      }
-    } else if (server === "sw") {
-      let lastError;
-      setLoaderText(`Servidor SW ${currentMirror}`);
-      for (const url of swUrls) {
-        try {
-          const res = await fetch(buildApiUrl(url));
-          if (!res.ok) throw new Error("SW: respuesta no OK");
-          
-          const m3u8Text = await res.text();
-          if (!m3u8Text || m3u8Text.includes("error")) throw new Error("SW: m3u8 inválido");
-
-          loadStreamDirect(currentUrl, m3u8Text);
-          await savePrecached(currentUrl, {
-            url: currentUrl,
-            server: "sw",
-            stream: currentUrl,
-            m3u8Content: m3u8Text,
-            timestamp: Date.now()
-          });
-
-          success = true;
-          break; // Si tiene éxito, sale del bucle
-        } catch (error) {
-          console.error(`Intento fallido con la URL: ${url}`, error);
-          lastError = error;
-        }
-      }
-
-      if (!success) {
-        throw new Error(`SW: todos los intentos fallaron. Último error: ${lastError.message}`);
-      }
-    } 
-    // --- MEGA ---
-    else if (server === "mega") {
-      setLoaderText(`Servidor MEGA, cargando Iframe`);
-      const megaUrl = serverList[index].url || "";
-      if (!megaUrl) throw new Error("MEGA: URL no encontrada");
-
-      if (hlsInstance) {
-        try {
-          hlsInstance.destroy();
-          if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
-        } catch {}
-        hlsInstance = null;
-        currentBlobUrl = null;
-      }
-
-      video.pause();
-      video.style.display = 'none';
-
-      const existingIframe = document.getElementById('megaIframe');
-      if (existingIframe) existingIframe.remove();
-
-      const iframe = document.createElement('iframe');
-      iframe.src = megaUrl.replace('/file/', '/embed/');
-      iframe.allowFullscreen = true;
-      iframe.id = 'megaIframe';
-
-      iframe.style.width = '100%';
-      iframe.style.height = '200px';
-      iframe.style.border = 'none';
-      iframe.style.display = 'block';
-      iframe.className = video.className;
-      iframe.style.borderRadius = '1rem';
-
-      video.parentElement.insertBefore(iframe, video.nextSibling);
-      loader.style.display = 'none';
-
-      success = true;
+    } else if (server.servidor === 'mega') {
+        const megaUrl = server.url || "";
+        if (!megaUrl) throw new Error("URL de MEGA no encontrada");
+        loader.style.display = 'none';
+        video.style.display = 'none';
+        const existingIframe = document.getElementById('megaIframe');
+        if (existingIframe) existingIframe.remove();
+        const iframe = document.createElement('iframe');
+        iframe.src = megaUrl.replace('/file/', '/embed/');
+        iframe.allowFullscreen = true;
+        iframe.id = 'megaIframe';
+        iframe.className = video.className;
+        video.parentElement.insertBefore(iframe, video);
+        success = true;
+    } else {
+        const res = await fetch(`${API_BASE}?id=${currentConfig.id}&ep=${currentConfig.ep}&server=${server.servidor}&mirror=${currentMirror}`);
+        if (!res.ok) throw new Error("Respuesta no OK");
+        streamUrl = (await res.text()).trim();
+        if (!streamUrl) throw new Error("URL vacía");
+        success = true;
     }
-    // --- CUALQUIER OTRO ---
-    else {
-      setLoaderText(`Servidor ${server.toUpperCase()}, cargando...`);
-      const res = await fetch(buildApiUrl(`${API_BASE}?id=${config.id}&ep=${config.ep}&server=${server}`));
-      if (!res.ok) throw new Error(`${server}: respuesta no OK`);
-      const streamUrl = (await res.text()).trim();
-      if (!streamUrl) throw new Error(`${server}: stream URL vacía`);
 
-      loadStreamDirect(streamUrl);
-      await savePrecached(currentUrl, {
-        url: currentUrl,
-        server,
-        stream: streamUrl,
-        m3u8Content: null,
-        timestamp: Date.now()
-      });
+    if (success && ['mega'].includes(server.servidor)) return; 
 
-      success = true;
-    }
+    await loadStreamDirect(streamUrl, m3u8Content);
+    await savePrecached(`${currentConfig.uid}-${currentConfig.ep}`, {
+      url: `${currentConfig.uid}-${currentConfig.ep}`,
+      server: server.servidor,
+      stream: streamUrl,
+      m3u8Content,
+      timestamp: Date.now()
+    });
+
   } catch (err) {
-    console.warn(`Fallo servidor "${server}":`, err.message || err);
-  }
-
-  if (!success) {
+    console.warn(`Fallo servidor "${server.servidor}" en mirror ${currentMirror}:`, err.message || err);
     await loadServerByIndex(index + 1);
-  } else {
-    loader.style.display = 'none';
-    video.style.opacity = 1;
   }
 }
-
-
-// === Wake Lock ===
+// WakeLock
 async function requestWakeLock() {
   try {
     wakeLock = await navigator.wakeLock.request('screen');
@@ -508,188 +673,66 @@ async function requestWakeLock() {
     console.warn("No Wake Lock:", err.message);
   }
 }
-
-// === Iniciar ===
-async function start(mirrorNumber = 1) {
-  const ads = localStorage.getItem("ads") === "true";
-  console.info("[INFO] Anuncios:", ads ? "Activados" : "Desactivados");
-  setLoaderText("Cargando servidores...");
-
-  try {
-    const mirrorParam = mirrorNumber > 1 ? `&mirror=${mirrorNumber}` : "";
-    const res = await fetch(`${API_BASE}/servers?id=${config.id}&ep=${config.ep}${mirrorParam}`);
-    let servers = await res.json();
-
-    if (!servers || servers.length === 0) throw new Error("No hay servidores disponibles");
-
-    // Normaliza nombres de servidor
-    serverList = servers.map(s => ({
-      ...s,
-      servidor: s.servidor.toLowerCase(),
-    }));
-
-    // Contenedor botones, creamos si no existe
+// === Funciones para la UI de servidores ===
+function createServerButtons(servers, onClickCallback) {
     let serverButtonsContainer = document.getElementById('serverButtons');
     if (!serverButtonsContainer) {
-      serverButtonsContainer = document.createElement('div');
-      serverButtonsContainer.id = 'serverButtons';
-      serverButtonsContainer.style.display = 'flex';
-      serverButtonsContainer.style.gap = '10px';
-      serverButtonsContainer.style.flexWrap = 'wrap';
-      serverButtonsContainer.style.justifyContent = 'center';
-      serverButtonsContainer.style.margin = '1rem 0';
-      video.parentElement.insertBefore(serverButtonsContainer, video);
+        serverButtonsContainer = document.createElement('div');
+        serverButtonsContainer.id = 'serverButtons';
+        serverButtonsContainer.className = 'server-buttons';
+        document.getElementById('player').parentElement.insertBefore(serverButtonsContainer, document.getElementById('player').nextSibling);
     }
-
-    function limpiarIframeYVideo() {
-      const existingIframe = document.getElementById('adsIframe');
-      if (existingIframe) existingIframe.remove();
-
-      video.pause();
-      video.style.display = 'none';
-    }
-
-    function cargarServidor(server) {
-      limpiarIframeYVideo();
-
-      let url = server.url;
-      if (server.servidor === 'mega') {
-        url = url.replace('/file/', '/embed/');
-      }
-
-      const iframe = document.createElement('iframe');
-      iframe.src = url;
-      iframe.id = "adsIframe";
-      iframe.allowFullscreen = true;
-      iframe.style.width = '100%';
-      iframe.style.height = window.innerWidth > 500 ? '485px' : '185px';
-      iframe.style.border = 'none';
-      iframe.style.display = 'block';
-      iframe.style.borderRadius = '1rem';
-      iframe.style.opacity = 1;
-
-      video.parentElement.insertBefore(iframe, video.nextSibling);
-      loader.style.display = 'none';
-
-      // Actualiza estilos de botones para activo/inactivo
-      document.querySelectorAll('#serverButtons button').forEach(btn => {
-        if (btn.dataset.servidor === server.servidor) {
-          btn.classList.add('active');
-          btn.style.background = 'linear-gradient(135deg, #4ade80, #22c55e)';
-          btn.style.boxShadow = '0 6px 14px rgba(34, 197, 94, 0.6)';
-        } else {
-          btn.classList.remove('active');
-          btn.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
-          btn.style.boxShadow = '0 6px 10px rgba(37, 99, 235, 0.4)';
-        }
-      });
-    }
-
-    function crearBotones(servers) {
-      serverButtonsContainer.innerHTML = '';
-
-      servers.forEach(server => {
+    serverButtonsContainer.innerHTML = '';
+    
+    servers.forEach((server, index) => {
         const btn = document.createElement('button');
-        btn.textContent = server.servidor;
+        btn.textContent = server.servidor.toUpperCase();
         btn.dataset.servidor = server.servidor;
-
-        btn.style.cursor = 'pointer';
-        btn.style.padding = '10px 18px';
-        btn.style.borderRadius = '12px';
-        btn.style.border = 'none';
-        btn.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
-        btn.style.color = 'white';
-        btn.style.fontWeight = '600';
-        btn.style.fontFamily = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
-        btn.style.boxShadow = '0 6px 10px rgba(37, 99, 235, 0.4)';
-        btn.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
-        btn.style.minWidth = '90px';
-        btn.style.textTransform = 'capitalize';
-
-        btn.onmouseenter = () => {
-          btn.style.transform = 'scale(1.08)';
-          btn.style.boxShadow = btn.classList.contains('active')
-            ? '0 10px 20px rgba(34, 197, 94, 0.8)'
-            : '0 10px 18px rgba(37, 99, 235, 0.7)';
-        };
-        btn.onmouseleave = () => {
-          btn.style.transform = 'scale(1)';
-          btn.style.boxShadow = btn.classList.contains('active')
-            ? '0 6px 14px rgba(34, 197, 94, 0.6)'
-            : '0 6px 10px rgba(37, 99, 235, 0.4)';
-        };
-        btn.onmousedown = () => {
-          btn.style.transform = 'scale(0.96)';
-          btn.style.boxShadow = btn.classList.contains('active')
-            ? '0 4px 8px rgba(34, 197, 94, 0.5)'
-            : '0 4px 6px rgba(37, 99, 235, 0.5)';
-        };
-        btn.onmouseup = () => {
-          btn.style.transform = 'scale(1.08)';
-          btn.style.boxShadow = btn.classList.contains('active')
-            ? '0 10px 20px rgba(34, 197, 94, 0.8)'
-            : '0 10px 18px rgba(37, 99, 235, 0.7)';
-        };
-
-        btn.onclick = () => cargarServidor(server);
-
+        btn.className = 'btn server-btn';
+        btn.onclick = () => onClickCallback(server, index);
         serverButtonsContainer.appendChild(btn);
-      });
-    }
-
-    if (ads) {
-      const orden = ["yu", "mega", "sw", "voe"];
-      serverList.sort((a, b) => {
-        const ia = orden.indexOf(a.servidor);
-        const ib = orden.indexOf(b.servidor);
-        if (ia === -1 && ib === -1) return 0;
-        if (ia === -1) return 1;
-        if (ib === -1) return -1;
-        return ia - ib;
-      });
-
-      crearBotones(serverList);
-
-      const firstServer = serverList.find(s =>
-        orden.includes(s.servidor) || orden.some(name => s.servidor.includes(name))
-      ) || serverList[0];
-
-      if (firstServer) {
-        cargarServidor(firstServer);
-      } else {
-        loader.textContent = "No se encontró ningún servidor disponible";
-      }
-
-      return;
-    }
-
-    // Aquí el orden para no ads
-    serverList.sort((a, b) => {
-      if (a.servidor === 'mega' || a.servidor === 'mega.nz') return 1;
-      if (b.servidor === 'mega' || b.servidor === 'mega.nz') return -1;
-      return 0;
     });
-
-  const cached = await loadPrecached(slug);
-  if (cached) {
-    console.log("[CACHE] Episodio encontrado en cache:", cached);
-    await loadStreamDirect(cached.stream, cached.m3u8Content);
-    return;
-  } else {
-    console.log("[CACHE] Episodio no encontrado en cache, buscando en servidores...");
-    await loadServerByIndex(0);
-  }
-  } catch (err) {
-    if (mirrorNumber < 4) {
-      console.warn(`🔁 Reintentando con mirror=${mirrorNumber + 1}...`);
-      setLoaderText(`Cargando servidor ${mirrorNumber + 1}...`);
-      return start(mirrorNumber + 1); // 🔁 Retry con siguiente mirror
-    }
-
-    video.style.opacity = 0;
-    console.error("🚨 start() error:", err);
-  }
 }
 
-// === Iniciar ===
-start();
+function loadStreamWithAds(server, container) {
+    // Implementa la lógica de carga de un iframe con anuncios
+    const video = document.getElementById('player');
+    video.pause();
+    video.style.display = 'none';
+
+    const existingIframe = document.getElementById('adsIframe');
+    if (existingIframe) existingIframe.remove();
+
+    const iframe = document.createElement('iframe');
+    iframe.src = server.url.replace('/file/', '/embed/');
+    iframe.id = 'adsIframe';
+    iframe.className = video.className;
+    iframe.allowFullscreen = true;
+    container.parentElement.insertBefore(iframe, container.nextSibling);
+
+    container.querySelectorAll('button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.servidor === server.servidor);
+    });
+    document.getElementById('loader').style.display = 'none';
+}
+
+// === Inicio de la Aplicación ===
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialEp = parseInt(urlParams.get('ep'));
+    if (!isNaN(initialEp)) {
+        initPlayerAndLoadEpisode(initialEp);
+    } else {
+        document.getElementById("anime-title").innerText = "Faltan parámetros";
+        document.getElementById("loader").style.display = 'none';
+    }
+});
+
+// Manejar los cambios de URL del navegador
+window.addEventListener('popstate', (event) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const ep = parseInt(urlParams.get('ep'));
+    if (ep && ep !== currentConfig.ep) {
+        initPlayerAndLoadEpisode(ep);
+    }
+});

@@ -32,13 +32,14 @@ to { opacity: 1; visibility: visible;}
 .modal-info { flex: 2; display: flex; flex-direction: column; width: 100%;}
 .download-btn { margin-top: 15px; width: 100%; background: #00bfa5; border: none; border-radius: 8px; color: #fff; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 191, 165, 0.5); transition: background-color 0.3s ease, box-shadow 0.3s ease; user-select: none;}
 .download-btn:hover { background: #009e87; box-shadow: 0 6px 20px rgba(0, 158, 135, 0.7);}
-.modal-title { font-size: 2.4rem; font-weight: 700; margin-bottom: 1.5rem; color: #00bfa5;}
-/* Episodios */ .episodes-list { background: #292929; border-radius: 8px; padding: 10px; max-height: 320px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #00bfa5 #292929;}
+.modal-title { font-size: 2.4rem; font-weight: 700; margin-bottom: 1.5rem; color: #ffffff; text-align: center;}
+/* Episodios */ .episodes-list { background: #292929; border-radius: 8px; padding: 10px; max-height: 320px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #00bfa5 #292929; display: grid; gap: 10px; height: 645px;}
+.episode-status { cursor: default; width: 100%; padding: 10px 15px; border: none; border-radius: 8px;}
 .episodes-list::-webkit-scrollbar { width: 8px;}
 .episodes-list::-webkit-scrollbar-track { background: #292929; border-radius: 5px;}
 .episodes-list::-webkit-scrollbar-thumb { background: #00bfa5; border-radius: 5px;}
 .episode-item:not(:last-child) { margin-bottom: 8px;}
-.episode-button { width: 100%; padding: 10px 15px; background: #00bfa5; color: #121212; border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; box-shadow: 0 3px 10px rgba(0, 191, 165, 0.5); text-align: left; transition: background-color 0.25s ease; user-select: none;}
+.episode-button { width: 100%; padding: 10px 15px; background: #00bfa5; color: #121212; border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; box-shadow: 0 3px 10px rgba(0, 191, 165, 0.5); text-align: center; transition: background-color 0.25s ease; user-select: none;}
 .episode-button:hover { background: #009e87; box-shadow: 0 5px 15px rgba(0, 158, 135, 0.7);}
 /* Topbar */ .topbar { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: #181818; border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 20px; gap: 20px; z-index: 1050;}
 .topbar img { height: 65px; user-select: none; margin-right: auto; flex-shrink: 0;}
@@ -144,3 +145,21 @@ body.light-theme #menuOverlay .policy-header { background: #f8f8f8; border-color
 body.light-theme .menu-circle { background-color: #f4f4f4; border-color: #ddd; color: #00796b;}
 body.light-theme .menu-circle:hover { background-color: #e0f7f4;}
 body.light-theme .menu-text { color: #121212;}
+/* CSS: ponlo en tu archivo de estilos o dentro de <style> en el head */ #continueWatchingModal .continue-modal-content { position: relative; /* necesario para que el botón absolute se posicione bien */ overflow: hidden;}
+/* botón cerrar siempre encima */ #continueWatchingModal .continue-close { position: absolute; top: 0.5rem; right: 0.5rem; z-index: 2000; /* > 1050 (Bootstrap modal) */ background: none; border: none; color: #fff; line-height: 1; padding: 0.25rem; cursor: pointer;}
+.modal-title-S { font-size: 1.8rem; font-weight: 700; margin-bottom: 1rem; color: #ffffff; text-align: center;}
+/* imagen debajo del botón */ #continueWatchingModal .continue-watching-img { display: block; width: 100%; object-fit: cover; border-radius: 6px; position: relative; z-index: 1; /* baja prioridad */}
+/* móviles: que no ocupe todo el alto */ @media (max-width: 576px) { .modal-md>div:nth-child(1) { background: #222; color: #fff; border-radius: 12px; overflow: hidden; height: auto !important;}
+#continueWatchingModal .modal-body { padding: 1rem;}
+}
+#pagination { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 24px 0 20px 0;}
+.pagination-btn { padding: 6px 14px; margin: 4px; border-radius: 999px; font-weight: 600; font-size: 14px; border: 2px solid aquamarine; background-color: transparent; color: aquamarine; cursor: pointer; transition: all 0.2s ease-in-out; box-shadow: 0 0 0 transparent;}
+.pagination-btn:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(127, 255, 212, 0.3);}
+.pagination-btn.active { background-color: aquamarine; color: #111;}
+.pagination-btn.nav { border-color: #ccc; color: #ccc;}
+.pagination-btn.nav:hover { background-color: #ccc; color: black; transform: translateY(-3px);}
+@media (max-width: 480px) { .pagination-btn { padding: 4px 10px; font-size: 12px; margin: 2px;}
+}
+.modal-description { background-color: rgba(255, 255, 255, 0.08); /* más sutil que violeta sólido */ border-radius: 12px; margin-bottom: 15px; padding: 15px 20px; /* espacio interno para que respire */ color: #eaeaea; /* texto en tono claro */ line-height: 1.6; /* más legible */}
+.description-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 0.8rem; color: #ffffff; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* separador */ padding-bottom: 5px;}
+.description-text { font-size: 1rem; font-weight: 400; color: #dddddd; text-align: justify; /* para bloques largos de texto */}

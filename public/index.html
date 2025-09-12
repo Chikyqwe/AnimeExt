@@ -7,18 +7,42 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Google fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Delius+Swash+Caps&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-  
   <!-- Tus estilos CSS -->
-  <link rel="stylesheet" href="/static/styles.css" />
-  <link rel="stylesheet" href="/static/styles_index.css" />
+  <link rel="stylesheet" href="static/styles.css" />
+  <link rel="stylesheet" href="static/styles_index.css" />
 </head>
 
 <body>
+
+<div class="modal fade" id="continueWatchingModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="background:#222; color:#fff; border-radius:12px; overflow:hidden;">
+      
+      <!-- Header -->
+      <div class="modal-header border-0">
+        <h5 class="modal-title-S fw-bold" id="continue-watching-title">Continuar viendo</h5>
+        <button type="button" data-bs-dismiss="modal" aria-label="Cerrar" style="background:none;border:none;font-size:1.2rem;"><i class="fa fa-xmark" style="color: rgb(241, 241, 241); transition: color 0.3s;"></i></button>
+      </div>
+      
+      <!-- Body -->
+      <div class="modal-body text-center">
+        <img id="continue-watching-img" src="" alt="Anime" 
+             class="img-fluid rounded mb-3" style="object-fit:cover;">
+        
+        <button id="continue-watching-btn" class="btn btn-success fw-semibold px-4">
+          <i class="fa fa-play me-1"></i> Continuar viendo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <div id="loader">
   <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
@@ -37,7 +61,7 @@
   </a>
 
   <!-- Botón hamburguesa para móvil -->
-  <button id="hamburgerBtn" class="btn btn-outline-light me-2" type="button" aria-label="Abrir menú">
+  <button id="hamburgerBtn"class="btn btn-outline-light me-2" type="button" aria-label="Abrir menú">
     <i class="fa fa-bars fa-lg"></i>
   </button>
 
@@ -61,11 +85,6 @@
     <a href="#" id="mobileNavDirectorio" role="menuitem" onclick="mostrarDirectorio(event); toggleMobileMenu(false)">Directory</a>
   </div> 
 </header>
-<div style="margin-bottom: 30px;">
-  <a href="/app" id="downloadBadge" class="btn btn-success d-flex align-items-center">
-    <i class="fa fa-download me-2"></i> Descarga nuestra app!
-  </a>
-</div>
 <div class="layout-container">
   <aside class="sidebar">
     <h3 class="sidebar-title">Animes en emisión</h3>
@@ -79,9 +98,7 @@
     </div>
 
     <div id="directory-section" class="d-none">
-      <h1 class="text-center my-4 text-secondary fw-bold" style="font-family: 'Delius Swash Caps', cursive; font-size: 3.5rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.2);">
-        Anime Directory
-      </h1>
+      <h2 class="section-title">Nuestros Animes</h2>
       <div class="card-container" id="card-container"></div>
     </div>
   </main>
@@ -126,7 +143,7 @@
   <div class="policy-modal">
     <div class="policy-header d-flex justify-content-between align-items-center">
       <i class="fa fa-gear"></i>
-      <div><center><span>Anime ext 14.50.0</span></center></div>
+      <div><center><span>AnimeExt 14.7.1</span></center></div>
       <button onclick="cerrarOverlay('menuOverlay')" style="background:none;border:none;font-size:1.2rem;"><i class="fa fa-xmark"></i></button>
     </div>
     
@@ -161,15 +178,40 @@
         </div>
         <div class="modal-info">
           <h2 id="modalTitle" class="modal-title"></h2>
+          <div class="modal-description">
+            <h3 class="description-title">Descripción</h3>
+            <p id="modalDescription" class="description-text">Function in development, introduction for the next actualization.</p>
+          </div>
           <div id="episodes-list" class="episodes-list"></div>
-        </div>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <button id="favoriteBtn" class="btn btn-outline-light">
+              <i class="fa fa-heart"></i> Agregar a Favoritos
+            </button>
+            <button id="shareBtn" class="btn btn-outline-light">
+              <i class="fa fa-share-alt"></i> Compartir
+            </button>
+          </div>
       </div>
     </div>
   </div>
 </div>
 
+<div class="modal-dialog modal-lg modal-dialog-scrollable" style="display: none;">
+  <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalFavoritosLabel">Favoritos</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="favoritosContainer" class="d-flex flex-wrap justify-content-start gap-3"></div>
+      </div>                
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/static/index.js"></script>
-<script src="/static/functions_index.js"></script>
+<script src="static/index.js"></script>
+<script src="static/functions_index.js"></script>
+<script>
+  console.info("%cAnime EXT - Tu Mundo Anime\n%cDesarrollado por Chiki & Chikiqwe","color: #3C873A; font-size: 1.5rem; font-weight: bold;","color: #888; font-size: 1rem;");
+</script>
 </body>
 </html>

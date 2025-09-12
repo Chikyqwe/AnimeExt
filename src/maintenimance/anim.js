@@ -13,7 +13,7 @@ const { last } = require('./lastep');
 // --------------------------------------------
 const FLV_BASE_URL = "https://www3.animeflv.net";
 const TIO_BASE_URL = "https://tioanime.com";
-const ANIMEYTX_BASE_URL = "https://animeytx.com/ver/?page=";
+const ANIMEYTX_BASE_URL = "https://animeytx.com/tv/?page=";
 
 const FLV_MAX_PAGES = 173;
 const TIO_TOTAL_PAGES = 209;
@@ -228,6 +228,7 @@ async function extraerAnimeYTXDePagina(page, cookieVal, log = console.log) {
   const url = `${ANIMEYTX_BASE_URL}${page}`;
   try {
     const html = await obtenerHtmlConCookieAnimeYTX(url, cookieVal);
+    console.log(`[AnimeYTX] Procesando página ${page}`);
     const $ = cheerio.load(html);
     const animes = [];
 
@@ -321,30 +322,90 @@ async function scrapeAnimeFLV(log = console.log) {
 // --------------------------------------------
 // TioAnime
 // --------------------------------------------
-async function extraerTioanimesDePagina(pagina, log = console.log){
-  const url = `${TIO_BASE_URL}/directorio?p=${pagina}`;
-  try{ const resp = await axios.get(url,{timeout:20000}); const $=cheerio.load(resp.data); const animes=[];
-  $("ul.animes.list-unstyled.row article.anime").each((_,article)=>{ const href=$(article).find("a").attr("href")||""; if(href.includes("/anime/")){ const slug=href.replace("/anime/","").replace(/\/$/,""); const titulo=slug.replace(/-/g," "); animes.push({ slug, titulo }); }});
-  return animes; }catch(e){ registrarError("TioAnime",`Página ${pagina}`,e.message,url); return []; }
+async function extraerTioanimesDePagina(pagina, log = console.log) {
+  const url = `${TIO_BASE_URL}/directorio?p=${pagina}`;
+  console.log(`[TioAnime] Extrayendo página ${pagina}`);
+  try {
+    const resp = await axios.get(url, { timeout: 20000 });
+    const $ = cheerio.load(resp.data);
+    const animes = [];
+
+    $("ul.animes.list-unstyled.row article.anime").each((_, article) => {
+      const link = $(article).find("a");
+      const href = link.attr("href") || "";
+      if (href.includes("/anime/")) {
+        const slug = href.replace("/anime/", "").replace(/\/$/, "");
+        const titulo = link.find("h3.title").text().trim();
+        let img = link.find("img").attr("src") || "";
+        if (img && !img.startsWith("http")) img = TIO_BASE_URL + img;
+        console.log(`[TioAnime] Encontrado: ${titulo} imagen: ${img}`);
+        animes.push({ slug, titulo, image: img });
+      }
+    });
+
+    return animes;
+  } catch (e) {
+    registrarError("TioAnime", `Página ${pagina}`, e.message, url);
+    return [];
+  }
 }
 
-async function procesarTioanime(anime, log = console.log){
-  const url=`${TIO_BASE_URL}/anime/${anime.slug}`;
-  try{
-    const resp = await axios.get(url,{timeout:10000}); const html = resp.data; const matchEpisodes = html.match(/var episodes\s*=\s*(\[[^\]]*\])/);
-    const episodes_count = matchEpisodes? JSON.parse(matchEpisodes[1]).length:0;
-    return { title: anime.titulo, slug: anime.slug, url, episodes_count };
-  }catch(e){ registrarError("TioAnime",`anime:${anime.titulo}`,e.message,url); return null; }
+async function procesarTioanime(anime, log = console.log) {
+  const url = `${TIO_BASE_URL}/anime/${anime.slug}`;
+  console.log(`[TioAnime] Procesando anime: ${anime.titulo}`);
+  try {
+    const resp = await axios.get(url, { timeout: 10000 });
+    const html = resp.data;
+
+    // Episodes count
+    const matchEpisodes = html.match(/var episodes\s*=\s*(\[[^\]]*\])/);
+    const episodes_count = matchEpisodes ? JSON.parse(matchEpisodes[1]).length : 0;
+
+    // Anime info estilo FLV
+    const animeInfoMatch = html.match(/var anime_info\s*=\s*(\[[^\]]*\]);/);
+    let estado = "Finalizado";
+    let proximo_episodio = null;
+    if (animeInfoMatch && animeInfoMatch[1]) {
+      try {
+        const animeInfo = vm.runInNewContext(animeInfoMatch[1]);
+        if (animeInfo.length === 4) {
+          estado = "En emisión";
+          proximo_episodio = animeInfo[3];
+        }
+      } catch(e){ log(`[TioAnime][${anime.titulo}] Error anime_info: ${e.message}`); }
+    }
+
+    return {
+      title: anime.titulo,
+      slug: anime.slug,
+      url,
+      image: anime.image || null,
+      episodes_count,
+      status: estado,
+      next_episode_date: proximo_episodio
+    };
+
+  } catch (e) {
+    registrarError("TioAnime", `anime:${anime.titulo}`, e.message, url);
+    return null;
+  }
 }
 
-async function scrapeTioAnime(log = console.log){
-  const queuePages = new PQueue({ concurrency: CONCURRENT_REQUESTS });
-  const queueAnimes = new PQueue({ concurrency: CONCURRENT_REQUESTS });
-  const paginas = await Promise.allSettled(Array.from({length:TIO_TOTAL_PAGES},(_,i)=>queuePages.add(()=>extraerTioanimesDePagina(i+1,log))));
-  const todos = paginas.filter(p=>p.status==="fulfilled").flatMap(p=>p.value);
-  const detalles = await Promise.allSettled(todos.map(a=>queueAnimes.add(()=>procesarTioanime(a,log))));
-  return detalles.filter(d=>d.status==="fulfilled").map(d=>d.value);
+
+
+async function scrapeTioAnime(log = console.log) {
+  const queuePages = new PQueue({ concurrency: CONCURRENT_REQUESTS });
+  const queueAnimes = new PQueue({ concurrency: CONCURRENT_REQUESTS });
+
+  const paginas = await Promise.allSettled(
+    Array.from({ length: TIO_TOTAL_PAGES }, (_, i) => queuePages.add(() => extraerTioanimesDePagina(i + 1, log)))
+  );
+  const todos = paginas.filter(p => p.status === "fulfilled").flatMap(p => p.value);
+
+  const detalles = await Promise.allSettled(todos.map(a => queueAnimes.add(() => procesarTioanime(a, log))));
+  return detalles.filter(d => d.status === "fulfilled" && d.value).map(d => d.value);
 }
+
 
 // --------------------------------------------
 // Filtrado de animes válidos
@@ -356,6 +417,8 @@ function filtrarAnimesValidos(animes){ return animes.filter(a=>a && a.title && t
 // --------------------------------------------
 async function obtenerEpsAnimeYTX(url, cookieVal, log = console.log, maxRetries = 2) {
   const headers = { 'User-Agent': 'Mozilla/5.0' }; 
+  console.log(`[AnimeYTX] Obteniendo episodes_count para ${url}`);
+  console.log(`[AnimeYTX] Usando cookie: ${cookieVal}`);
   if (cookieVal) headers['Cookie'] = `__test=${cookieVal}`;
   for (let i = 0; i <= maxRetries; i++) {
     try {
@@ -409,7 +472,9 @@ async function main({ log = console.log } = {}) {
   log(">> Iniciando AnimeYTX...");
   const cookieVal = await obtenerCookieAnimeYTX(`${ANIMEYTX_BASE_URL}1`);
   log(cookieVal ? "🔑 Cookie única AnimeYTX obtenida" : "🔑 No se necesita cookie AnimeYTX");
-  const animeYTXRaw = await scrapeAnimeYTX(cookieVal, log);
+  console.log(`[ANIMEYTX] Cookie usada: ${cookieVal}`);
+  const animeYTXRaw = await scrapeAnimeYTX(cookieVal, log);
+  console.log(`[ANIMEYTX] Animes obtenidos: ${animeYTXRaw.length}`);
   const animeYTX = filtrarAnimesValidos(animeYTXRaw);
   log(`AnimeYTX: obtenidos ${animeYTX.length} animes.`);
 
