@@ -17,7 +17,8 @@ const {
   streamVideo,
   downloadVideo,
   validateVideoUrl,
-  getCookie
+  getCookie,
+  getDescription
 } = require('../utils/helpers');
 
 const {
@@ -28,6 +29,7 @@ const {
 const { buildComplexToken } = require('../utils/token');
 const apiQueue = require('../services/queueService');
 const { default: axios } = require('axios');
+const e = require('express');
 
 // --- Helpers ---
 
@@ -127,6 +129,43 @@ router.post('/anime/list', (req, res) => {
 
   res.sendFile(getJSONPath('anime_list.json'));
 });
+router.post('/anime/description', async (req, res) => {
+  const { id } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ error: 'Falta parámetro id' });
+  }
+
+  const anime = getAnimeById(id);
+  if (!anime) {
+    return res.status(404).json({ error: `No se encontró anime con id=${id}` });
+  }
+
+  const sources = anime.sources || {};
+  const sourceKeys = Object.keys(sources);
+  let description = '';
+
+  // Tomar la primera fuente que no sea null
+  for (const key of sourceKeys) {
+    const url = sources[key];
+    if (!url) continue;
+
+    try {
+      description = await getDescription(url);
+      if (description) break; // detenerse al obtener la primera descripción válida
+    } catch (err) {
+      console.warn(`[DESCRIPTION] Error al obtener desde ${url}: ${err.message}`);
+    }
+  }
+
+  if (!description) {
+    return res.status(400).json({ error: 'No se pudo obtener la descripción de ninguna fuente' });
+  }
+
+  res.json({ description });
+});
+
+// Rutas para app cordova (beta)
 router.get('/anime/list/ext/beta/cordova/beta/anime/app/chikyqwe', (req, res) => {res.sendFile(getJSONPath('anime_list.json'));});
 router.get('/anime/last',(req, res) => {
   res.sendFile(getJSONPath('lastep.json'))

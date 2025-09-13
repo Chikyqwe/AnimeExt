@@ -568,33 +568,56 @@ function ajustarAlturaEpisodesList(eps) {
 async function openModal(data, animeTitle) {
     currentAnime = data;
     ajustarAlturaEpisodesList(currentAnime.episodes_count);
+
     const modalImage = document.getElementById('modalImage');
     const modalTitle = document.getElementById('modalTitle');
     const episodesList = document.getElementById('episodes-list');
-    const statusBtn = document.getElementById('modal-status-btn');
-    let favBtn = document.getElementById('modal-fav-btn');
+    const modalDescription = document.getElementById('modalDescription');
+    const favBtn = document.getElementById('favoriteBtn');
+    const shareBtn = document.getElementById('shareBtn');
 
     const proxyUrl = `https://animeext-m5lt.onrender.com/image?url=${encodeURIComponent(data.image)}`;
-
     if (modalImage) modalImage.src = proxyUrl;
     if (modalTitle) modalTitle.textContent = cleanTitle(animeTitle);
     if (episodesList) episodesList.innerHTML = '';
+
+    // Efecto "Cargando descripción..."
+    let loadingCounter = 1;
+    let loadingInterval;
+    if (modalDescription) {
+        modalDescription.textContent = 'Cargando descripción';
+        loadingInterval = setInterval(() => {
+            let dots = '.'.repeat(loadingCounter);
+            modalDescription.textContent = `Cargando descripción${dots}`;
+            loadingCounter++;
+            if (loadingCounter > 5) loadingCounter = 1; // reinicia 1..2..3..4..5..
+        }, 500); // cada medio segundo
+    }
+
     initFavoriteButton(animeTitle);
     initShareButton(animeTitle);
 
-    // Configurar botón de FAVORITO
+    // Botón de Favorito
     if (favBtn) {
         const isFavorite = await esFavoritoIndexed(animeTitle);
-        favBtn.textContent = isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos';
+        favBtn.textContent = isFavorite ? 'Quitar de Favoritos' : 'Agregar a Favoritos';
         favBtn.classList.toggle('btn-warning', isFavorite);
-        favBtn.classList.toggle('btn-outline-warning', !isFavorite);
+        favBtn.classList.toggle('btn-outline-light', !isFavorite);
         favBtn.onclick = (e) => {
             e.stopPropagation();
             toggleFavoritoIndexed(animeTitle, favBtn);
         };
     }
 
-    // Generar lista de episodios
+    // Botón de Compartir
+    if (shareBtn) {
+        shareBtn.onclick = (e) => {
+            e.stopPropagation();
+            shareAnime(animeTitle, data.id);
+        };
+    }
+
+    // Lista de episodios y estado
     if (episodesList) {
         const div = document.createElement('div');
         div.className = 'status-indicator';
@@ -608,7 +631,7 @@ async function openModal(data, animeTitle) {
             color = "#28a745";
         } else if (estado.includes("finalizado") || estado.includes("finished") || estado.includes("completed")) {
             texto = data.status;
-            color = "#fb3447"; // rojo personalizado
+            color = "#fb3447";
         }
 
         div.innerHTML = `
@@ -619,6 +642,7 @@ async function openModal(data, animeTitle) {
         `;
 
         episodesList.appendChild(div);
+
         for (let i = 1; i <= data.episodes_count; i++) {
             const btn = document.createElement('button');
             btn.type = 'button';
@@ -631,13 +655,36 @@ async function openModal(data, animeTitle) {
         }
     }
 
-    // Mostrar modal
+    // Mostrar modal inmediatamente
     const animeModalEl = document.getElementById('animeModal');
     if (animeModalEl) {
         const modal = new bootstrap.Modal(animeModalEl);
         modal.show();
     }
+
+    // Obtener descripción desde tu endpoint
+    try {
+        const response = await fetch('/anime/description', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: data.id })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            if (modalDescription) modalDescription.textContent = result.description || 'Sin descripción disponible.';
+        } else {
+            if (modalDescription) modalDescription.textContent = 'No se pudo cargar la descripción.';
+        }
+    } catch (err) {
+        if (modalDescription) modalDescription.textContent = 'Error al cargar la descripción.';
+        console.error(err);
+    } finally {
+        clearInterval(loadingInterval); // detener el efecto "cargando"
+    }
 }
+
+
 
 async function mostrarFavoritosEnModal() {
     try {

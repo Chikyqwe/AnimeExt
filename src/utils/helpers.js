@@ -229,9 +229,50 @@ async function getCookie(apiUrl) {
   const cookieVal = toHex(slowAES.decrypt(c, 2, a, b));
   return cookieVal;
 }
+
+async function getDescription(url) {
+  console.log(`[DESCRIPTION] Buscando descripción en ${url}`);
+  try {
+    const { data: html } = await axios.get(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    const $ = cheerio.load(html);
+
+    let description = '';
+
+    // 1️⃣ AnimeFLV
+    if ($('section.WdgtCn .Description p').length) {
+      description = $('section.WdgtCn .Description p').text().trim();
+      console.log('[SOURCE] AnimeFLV detectado');
+    }
+    // 2️⃣ Tio de aquí
+    else if ($('aside p.sinopsis').length) {
+      description = $('aside p.sinopsis').text().trim();
+      console.log('[SOURCE] Tio de aquí detectado');
+    }
+    // 3️⃣ YTX
+    else if ($('div.entry-content[itemprop="description"] p').length) {
+      description = $('div.entry-content[itemprop="description"] p').map((i, el) => $(el).text()).get().join('\n').trim();
+      console.log('[SOURCE] YTX detectado');
+    }
+    // 4️⃣ Fallback a meta description
+    else {
+      description = $('meta[name="description"]').attr('content') || '';
+      description = description.trim();
+      console.log('[SOURCE] Meta description fallback');
+    }
+
+    return description;
+  } catch (err) {
+    console.error(`[DESCRIPTION] Error al obtener descripción: ${err.message}`);
+    return '';
+  }
+}
+
 module.exports = {
   getCookie,
   proxyImage,
+  getDescription,
   streamVideo,
   downloadVideo,
   urlEpAX,
