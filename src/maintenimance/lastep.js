@@ -163,7 +163,7 @@ async function last() {
 
       return {
         ...anime,
-        unit_id
+        id: unit_id
       };
     })
     .filter(Boolean);
