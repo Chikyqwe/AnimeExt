@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const PQueue = require("p-queue").default;
 const vm = require("vm");
-const { slowAES } = require("../utils/aes"); // asegúrate de tener esta función
+const { slowAES } = require("../utils/aes");
 const { last } = require('./lastep');
 
 // --------------------------------------------
@@ -20,7 +20,7 @@ const TIO_TOTAL_PAGES = 209;
 const ANIMEYTX_TOTAL_PAGES = 34;
 
 const CONCURRENT_REQUESTS = 50;
-const CONCURRENT_ANIMEYTX = 9;
+const CONCURRENT_ANIMEYTX = 40;
 
 const erroresReportados = [];
 
@@ -45,8 +45,6 @@ function eliminarArchivo(filePath, log = console.log) {
 }
 
 function generarUnitIDExistenteOUnico(slug, usados, unitIDsExistentes) {
-  // Esta es una versión simplificada, se debe mantener la lógica original de tu proyecto
-  // para la generación y gestión de IDs únicos.
   if (unitIDsExistentes[slug]) {
     return unitIDsExistentes[slug];
   }
@@ -59,42 +57,39 @@ function generarUnitIDExistenteOUnico(slug, usados, unitIDsExistentes) {
   return newId;
 }
 
-/**
- * Normaliza el título de un anime para su comparación, incluyendo la temporada.
- * Esto asegura que cada temporada tenga una clave única, evitando la unión incorrecta de datos.
- * @param {string} titulo El título a normalizar.
- * @returns {string} El título normalizado con el número de temporada (ej. "karakaijouzunotakagisan-3").
- */
 function normalizarTituloConTemporada(titulo) {
   if (!titulo) return "";
   let normalizado = titulo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  // Busca número de temporada en varias formas
-  const match = normalizado.match(/\s*(?:temporada|season|saison|part)\s*(\d+)/)
-    || normalizado.match(/\s*(\d+)$/);
+  const match = normalizado.match(/\s*(?:temporada|season|saison|part)\s*(\d+)/) || normalizado.match(/\s*(\d+)$/);
   const numeroTemporada = match ? parseInt(match[1], 10) : 1;
-
-  // Quita "temporada/season/..." con número
   normalizado = normalizado.replace(/\s*(?:temporada|season|saison|part)\s*\d+/, "");
-
-  // Quita número suelto al final (para casos tipo "Takagi-san 3")
   normalizado = normalizado.replace(/\s*\d+$/, "");
-
-  // Limpia caracteres no alfanuméricos
   normalizado = normalizado.replace(/[^a-z0-9]/g, "");
-
   return normalizado.trim() + "-" + numeroTemporada;
 }
 
 function slugSimplificado(slugOrTitle) {
   if (!slugOrTitle) return "";
   return slugOrTitle
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]/g, "");
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+}
+function normalizarAnime(anime, sourceUrl = null) {
+  return {
+    title: anime.title || anime.titulo || "",
+    slug: anime.slug || (anime.url ? anime.url.split("/").filter(Boolean).pop() : ""),
+    url: sourceUrl || anime.url || null,
+    image: anime.image || null,
+    episodes_count: anime.episodes_count || 0,
+    status: anime.status || "En emisión",
+    next_episode_date: anime.next_episode_date || null
+  };
 }
 
 function UnityJsonsV4(datosTio, datosFlv, datosAnimeYTX, outputPath, log = console.log) {
+  console.log("🔗 Combinando datos de múltiples fuentes...");
+  console.log(`TioAnime: ${datosTio.length} animes, AnimeFLV: ${datosFlv.length} animes, AnimeYTX: ${datosAnimeYTX.length} animes.`);
   const unitIDPath = path.join(__dirname, "..", "..", "data", "UnitID.json");
   let unitIDsExistentes = {};
   if (fs.existsSync(unitIDPath)) {
@@ -108,13 +103,8 @@ function UnityJsonsV4(datosTio, datosFlv, datosAnimeYTX, outputPath, log = conso
   const mapa = new Map();
 
   function agregarDatos(anime, fuente) {
-    // 🔑 Clave principal normalizada con temporada
     let clave = normalizarTituloConTemporada(anime.title || anime.titulo);
-
-    // 🔑 Clave secundaria por slug simplificado (para fusionar similares)
     const claveSlug = slugSimplificado(anime.slug || anime.title || anime.titulo);
-
-    // Busca si ya existe un anime con misma clave o mismo slug simplificado
     let existingKey = null;
     for (let [k, v] of mapa.entries()) {
       const existingSlug = slugSimplificado(v.slug || v.title);
@@ -126,44 +116,28 @@ function UnityJsonsV4(datosTio, datosFlv, datosAnimeYTX, outputPath, log = conso
 
     if (existingKey) {
       const existing = mapa.get(existingKey);
-
-      // Actualiza las fuentes
       existing.sources[fuente] = anime.url || null;
-
-      // Episodes_count → mayor
       existing.episodes_count = Math.max(existing.episodes_count || 0, anime.episodes_count || 0);
-
-      // Status → "Finalizado" gana
       if (anime.status && (!existing.status || (existing.status === "En emisión" && anime.status === "Finalizado"))) {
         existing.status = anime.status;
       }
-
-      // Fecha próxima → si existe
       if (anime.next_episode_date) {
         existing.next_episode_date = anime.next_episode_date;
       }
-
-      // Imagen → FLV gana prioridad
       if (!existing.image && anime.image) {
         existing.image = anime.image;
       } else if (fuente === "FLV" && anime.image) {
         existing.image = anime.image;
       }
-
-      // Título → FLV o más largo
       if ((anime.title?.length || 0) > (existing.title?.length || 0) || (fuente === "FLV" && anime.title)) {
         existing.title = anime.title;
       }
-
-      // Slug → FLV siempre
       if (fuente === "FLV" && anime.slug) {
         existing.slug = anime.slug;
       }
-
     } else {
       const sources = { FLV: null, TIO: null, ANIMEYTX: null };
       sources[fuente] = anime.url || null;
-
       mapa.set(clave, {
         title: anime.title || anime.titulo,
         slug: anime.slug || null,
@@ -176,7 +150,6 @@ function UnityJsonsV4(datosTio, datosFlv, datosAnimeYTX, outputPath, log = conso
     }
   }
 
-  // Orden de prioridad
   datosFlv.forEach(a => agregarDatos(a, "FLV"));
   datosTio.forEach(a => agregarDatos(a, "TIO"));
   datosAnimeYTX.forEach(a => agregarDatos(a, "ANIMEYTX"));
@@ -188,68 +161,37 @@ function UnityJsonsV4(datosTio, datosFlv, datosAnimeYTX, outputPath, log = conso
   });
 
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-
   const resultadoFinal = {
     metadata: { creado_en: new Date().toISOString(), total_animes: combinado.length },
     animes: combinado
   };
   fs.writeFileSync(outputPath, JSON.stringify(resultadoFinal, null, 2), "utf-8");
   fs.writeFileSync(unitIDPath, JSON.stringify(unitIDsExistentes, null, 2), "utf-8");
-
   log(`✅ JSON combinado guardado en: ${outputPath}`);
   log(`🔒 UnitID.json actualizado con ${Object.keys(unitIDsExistentes).length} slugs.`);
 }
 
-
 // --------------------------------------------
-// AnimeYTX - Manejo de cookie y scraping
+// AnimeYTX
 // --------------------------------------------
-function toNumbers(d) { const e = []; d.replace(/(..)/g, m => e.push(parseInt(m, 16))); return e; }
-function toHex(arr) { return arr.map(v => (v < 16 ? '0' : '') + v.toString(16)).join('').toLowerCase(); }
-
-async function obtenerCookieAnimeYTX(urlPagina) {
-  try {
-    const { data: htmlCookie } = await axios.get(`https://animeext.xo.je/get_html.php?url=${encodeURIComponent(urlPagina)}`, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    const match = htmlCookie.match(/toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\)/s);
-    if (!match) return null;
-    const a = toNumbers(match[1]), b = toNumbers(match[2]), c = toNumbers(match[3]);
-    return toHex(slowAES.decrypt(c, 2, a, b));
-  } catch (e) { registrarError("AnimeYTX", "obtenerCookie", e.message, urlPagina); return null; }
-}
-
-async function obtenerHtmlConCookieAnimeYTX(urlPagina, cookieVal) {
-  const headers = { 'User-Agent': 'Mozilla/5.0' };
-  if (cookieVal) headers['Cookie'] = `__test=${cookieVal}`;
-  const { data: html } = await axios.get(`https://animeext.xo.je/get_html.php?url=${encodeURIComponent(urlPagina)}`, { headers });
-  return html;
-}
-
-async function extraerAnimeYTXDePagina(page, cookieVal, log = console.log) {
+async function extraerAnimeYTXDePagina(page, log = console.log) {
   const url = `${ANIMEYTX_BASE_URL}${page}`;
   try {
-    const html = await obtenerHtmlConCookieAnimeYTX(url, cookieVal);
+    const { data: html } = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     console.log(`[AnimeYTX] Procesando página ${page}`);
     const $ = cheerio.load(html);
     const animes = [];
-
     $('.listupd article.bs').each((_, el) => {
       let titulo = $(el).find('.tt').text().trim();
       titulo = titulo.split('\t').map(t => t.trim()).filter(Boolean)[0] || '';
-
       const enlace = $(el).find('a').attr('href') || '';
       const slug = enlace ? enlace.split('/').filter(Boolean).pop() : '';
-
       const imgEl = $(el).find('img');
       const imagen = imgEl.attr('data-src') || imgEl.attr('src') || '';
-
-      const estado = $(el).find('.status').text().trim();
-      const tipo = $(el).find('.typez').text().trim();
-
       if (titulo && slug) {
-        animes.push({ title: titulo, slug, url: enlace, image: imagen, status: estado, tipo });
+        animes.push({ title: titulo, slug, url: enlace, image: imagen });
       }
     });
-
     log(`[AnimeYTX][Página ${page}] ${animes.length} animes.`);
     return animes;
   } catch (err) {
@@ -258,15 +200,56 @@ async function extraerAnimeYTXDePagina(page, cookieVal, log = console.log) {
   }
 }
 
-async function scrapeAnimeYTX(cookieVal, log = console.log) {
-  const queue = new PQueue({ concurrency: CONCURRENT_ANIMEYTX });
-  const promesas = Array.from(
-    { length: ANIMEYTX_TOTAL_PAGES },
-    (_, i) => queue.add(() => extraerAnimeYTXDePagina(i + 1, cookieVal, log))
+async function procesarAnimeYTX(anime, log = console.log) {
+  const url = anime.url;
+  try {
+    const { data: html } = await axios.get(url, { timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const $ = cheerio.load(html);
+    const episodes_count = $('.episodios li').length;
+    const status = $('.infox .status').text().includes('Finalizado') ? 'Finalizado' : 'En emisión';
+    return {
+      title: anime.title,
+      slug: anime.slug,
+      url,
+      image: anime.image,
+      episodes_count,
+      status,
+      next_episode_date: null
+    };
+  } catch (err) {
+    registrarError("AnimeYTX", `anime:${anime.title}`, err.message, url);
+    return null;
+  }
+}
+
+async function scrapeAnimeYTX(log = console.log, existingAnimes = {}) {
+  const queuePages = new PQueue({ concurrency: CONCURRENT_ANIMEYTX });
+  const queueAnimes = new PQueue({ concurrency: 8 });
+
+  const paginas = await Promise.allSettled(
+    Array.from({ length: ANIMEYTX_TOTAL_PAGES }, (_, i) => queuePages.add(() => extraerAnimeYTXDePagina(i + 1, log)))
   );
 
-  const paginas = await Promise.all(promesas);
-  return paginas.flat().filter(a => a && a.title && a.slug);
+  const todos = paginas.filter(p => p.status === "fulfilled").flatMap(p => p.value);
+
+  const promesas = todos.map(anime => {
+    const existing = existingAnimes[anime.slug];
+    if (existing && existing.status === "Finalizado") {
+      log(`[AnimeYTX] ⏩ Saltando anime finalizado: ${anime.title}`);
+      return Promise.resolve(normalizarAnime({
+        ...existing,
+        url: anime.url
+      }));
+    } else {
+      return queueAnimes.add(async () => {
+        const proc = await procesarAnimeYTX(anime, log);
+        return normalizarAnime(proc);
+      });
+    }
+  });
+
+  const detalles = await Promise.allSettled(promesas);
+  return detalles.filter(d => d.status === "fulfilled" && d.value).map(d => d.value);
 }
 
 // --------------------------------------------
@@ -310,14 +293,36 @@ async function procesarAnimeflv(anime, log = console.log) {
   } catch (err) { registrarError("FLV", `anime:${anime.titulo}`, err.message, anime.url); return null; }
 }
 
-async function scrapeAnimeFLV(log = console.log) {
+async function scrapeAnimeFLV(log = console.log, existingAnimes = {}) {
   const queuePages = new PQueue({ concurrency: CONCURRENT_REQUESTS });
   const queueAnimes = new PQueue({ concurrency: CONCURRENT_REQUESTS });
-  const paginas = await Promise.allSettled(Array.from({ length: FLV_MAX_PAGES }, (_, i) => queuePages.add(() => extraerFlvDePagina(i + 1, log))));
+
+  const paginas = await Promise.allSettled(
+    Array.from({ length: FLV_MAX_PAGES }, (_, i) => queuePages.add(() => extraerFlvDePagina(i + 1, log)))
+  );
+
   const todos = paginas.filter(p => p.status === "fulfilled").flatMap(p => p.value);
-  const detalles = await Promise.allSettled(todos.map(a => queueAnimes.add(() => procesarAnimeflv(a, log))));
-  return detalles.filter(d => d.status === "fulfilled").map(d => d.value);
+
+  const promesas = todos.map(anime => {
+    const existing = existingAnimes[anime.slug];
+    if (existing && existing.status === "Finalizado") {
+      log(`[FLV] ⏩ Saltando anime finalizado: ${anime.titulo}`);
+      return Promise.resolve(normalizarAnime({
+        ...existing,
+        url: anime.url
+      }));
+    } else {
+      return queueAnimes.add(async () => {
+        const proc = await procesarAnimeflv(anime, log);
+        return normalizarAnime(proc);
+      });
+    }
+  });
+
+  const detalles = await Promise.allSettled(promesas);
+  return detalles.filter(d => d.status === "fulfilled" && d.value).map(d => d.value);
 }
+
 
 // --------------------------------------------
 // TioAnime
@@ -329,7 +334,6 @@ async function extraerTioanimesDePagina(pagina, log = console.log) {
     const resp = await axios.get(url, { timeout: 20000 });
     const $ = cheerio.load(resp.data);
     const animes = [];
-
     $("ul.animes.list-unstyled.row article.anime").each((_, article) => {
       const link = $(article).find("a");
       const href = link.attr("href") || "";
@@ -338,11 +342,9 @@ async function extraerTioanimesDePagina(pagina, log = console.log) {
         const titulo = link.find("h3.title").text().trim();
         let img = link.find("img").attr("src") || "";
         if (img && !img.startsWith("http")) img = TIO_BASE_URL + img;
-        console.log(`[TioAnime] Encontrado: ${titulo} imagen: ${img}`);
-        animes.push({ slug, titulo, image: img });
+        animes.push({ slug, titulo, image: img, url: TIO_BASE_URL + href });
       }
     });
-
     return animes;
   } catch (e) {
     registrarError("TioAnime", `Página ${pagina}`, e.message, url);
@@ -356,12 +358,8 @@ async function procesarTioanime(anime, log = console.log) {
   try {
     const resp = await axios.get(url, { timeout: 10000 });
     const html = resp.data;
-
-    // Episodes count
     const matchEpisodes = html.match(/var episodes\s*=\s*(\[[^\]]*\])/);
     const episodes_count = matchEpisodes ? JSON.parse(matchEpisodes[1]).length : 0;
-
-    // Anime info estilo FLV
     const animeInfoMatch = html.match(/var anime_info\s*=\s*(\[[^\]]*\]);/);
     let estado = "Finalizado";
     let proximo_episodio = null;
@@ -374,7 +372,6 @@ async function procesarTioanime(anime, log = console.log) {
         }
       } catch (e) { log(`[TioAnime][${anime.titulo}] Error anime_info: ${e.message}`); }
     }
-
     return {
       title: anime.titulo,
       slug: anime.slug,
@@ -384,25 +381,39 @@ async function procesarTioanime(anime, log = console.log) {
       status: estado,
       next_episode_date: proximo_episodio
     };
-
   } catch (e) {
     registrarError("TioAnime", `anime:${anime.titulo}`, e.message, url);
     return null;
   }
 }
 
-
-
-async function scrapeTioAnime(log = console.log) {
+async function scrapeTioAnime(log = console.log, existingAnimes = {}) {
   const queuePages = new PQueue({ concurrency: CONCURRENT_REQUESTS });
   const queueAnimes = new PQueue({ concurrency: CONCURRENT_REQUESTS });
 
   const paginas = await Promise.allSettled(
     Array.from({ length: TIO_TOTAL_PAGES }, (_, i) => queuePages.add(() => extraerTioanimesDePagina(i + 1, log)))
   );
+
   const todos = paginas.filter(p => p.status === "fulfilled").flatMap(p => p.value);
 
-  const detalles = await Promise.allSettled(todos.map(a => queueAnimes.add(() => procesarTioanime(a, log))));
+  const promesas = todos.map(anime => {
+    const existing = existingAnimes[anime.slug];
+    if (existing && existing.status === "Finalizado") {
+      log(`[TioAnime] ⏩ Saltando anime finalizado: ${anime.titulo}`);
+      return Promise.resolve(normalizarAnime({
+        ...existing,
+        url: `${TIO_BASE_URL}/anime/${anime.slug}`
+      }));
+    } else {
+      return queueAnimes.add(async () => {
+        const proc = await procesarTioanime(anime, log);
+        return normalizarAnime(proc);
+      });
+    }
+  });
+
+  const detalles = await Promise.allSettled(promesas);
   return detalles.filter(d => d.status === "fulfilled" && d.value).map(d => d.value);
 }
 
@@ -413,48 +424,32 @@ async function scrapeTioAnime(log = console.log) {
 function filtrarAnimesValidos(animes) { return animes.filter(a => a && a.title && typeof a.title === "string" && a.title.trim() !== ""); }
 
 // --------------------------------------------
-// Episodes_count desde API de AnimeYTX con cookie
-// --------------------------------------------
-async function obtenerEpsAnimeYTX(url, cookieVal, log = console.log, maxRetries = 2) {
-  const headers = { 'User-Agent': 'Mozilla/5.0' };
-  console.log(`[AnimeYTX] Obteniendo episodes_count para ${url}`);
-  console.log(`[AnimeYTX] Usando cookie: ${cookieVal}`);
-  if (cookieVal) headers['Cookie'] = `__test=${cookieVal}`;
-  for (let i = 0; i <= maxRetries; i++) {
-    try {
-      const { data } = await axios.get(`https://animeext.xo.je/get_ep_vid.php?url=${encodeURIComponent(url)}`, { timeout: 10000, headers });
-      if (data && typeof data.episodes_count === "number" && data.episodes_count > 0) return data.episodes_count;
-    } catch (e) { registrarError("AnimeYTX", "get_ep_vid", e.message, url); }
-  }
-  return 0;
-}
-
-// --------------------------------------------
-// Paso para completar episodes_count de AnimeYTX
-// --------------------------------------------
-async function completarEpsAnimeYTX(animes, cookieVal, log = console.log) {
-  const queue = new PQueue({ concurrency: 8 });
-  const promesas = animes.map(anime => queue.add(async () => {
-    if (anime.sources.ANIMEYTX && !anime.sources.FLV && !anime.sources.TIO) {
-      const eps = await obtenerEpsAnimeYTX(anime.sources.ANIMEYTX, cookieVal, log);
-      anime.episodes_count = eps;
-      log(`[AnimeYTX] ${anime.title}: episodes_count = ${eps}`);
-    }
-  }));
-  await Promise.all(promesas);
-}
-
-// --------------------------------------------
 // Main
 // --------------------------------------------
 async function main({ log = console.log } = {}) {
   log("📡 Iniciando scraping...");
-
+  const outputPath = path.join(__dirname, "..", "..", "data", "anime_list.json");
+  let existingAnimes = {};
+  try {
+    if (fs.existsSync(outputPath)) {
+      const data = fs.readFileSync(outputPath, "utf-8");
+      const json = JSON.parse(data);
+      if (json.animes) {
+        json.animes.forEach(anime => {
+          if (anime.slug) {
+            existingAnimes[anime.slug] = anime;
+          }
+        });
+      }
+    }
+  } catch (e) {
+    log(`⚠️ Error al cargar JSON existente: ${e.message}`);
+  }
   // ----------------------------
   // Scraping TioAnime
   // ----------------------------
   log(">> Iniciando TioAnime...");
-  const tioRaw = await scrapeTioAnime(log);
+  const tioRaw = await scrapeTioAnime(log, existingAnimes);
   const tio = filtrarAnimesValidos(tioRaw);
   log(`TioAnime: obtenidos ${tio.length} animes.`);
 
@@ -462,7 +457,7 @@ async function main({ log = console.log } = {}) {
   // Scraping AnimeFLV
   // ----------------------------
   log(">> Iniciando AnimeFLV...");
-  const flvRaw = await scrapeAnimeFLV(log);
+  const flvRaw = await scrapeAnimeFLV(log, existingAnimes);
   const flv = filtrarAnimesValidos(flvRaw);
   log(`AnimeFLV: obtenidos ${flv.length} animes.`);
 
@@ -470,28 +465,15 @@ async function main({ log = console.log } = {}) {
   // Scraping AnimeYTX
   // ----------------------------
   log(">> Iniciando AnimeYTX...");
-  const cookieVal = await obtenerCookieAnimeYTX(`${ANIMEYTX_BASE_URL}1`);
-  log(cookieVal ? "🔑 Cookie única AnimeYTX obtenida" : "🔑 No se necesita cookie AnimeYTX");
-  console.log(`[ANIMEYTX] Cookie usada: ${cookieVal}`);
-  const animeYTXRaw = await scrapeAnimeYTX(cookieVal, log);
-  console.log(`[ANIMEYTX] Animes obtenidos: ${animeYTXRaw.length}`);
+  const animeYTXRaw = await scrapeAnimeYTX(log, existingAnimes);
   const animeYTX = filtrarAnimesValidos(animeYTXRaw);
   log(`AnimeYTX: obtenidos ${animeYTX.length} animes.`);
 
   // ----------------------------
   // Generar JSON combinado
   // ----------------------------
-  const outputPath = path.join(__dirname, "..", "..", "data", "anime_list.json");
   UnityJsonsV4(tio, flv, animeYTX, outputPath, log);
   log(`✅ JSON combinado generado en: ${outputPath}`);
-
-  // ----------------------------
-  // Completar episodes_count de AnimeYTX
-  // ----------------------------
-  let jsonCombinado = JSON.parse(fs.readFileSync(outputPath, "utf-8"));
-  await completarEpsAnimeYTX(jsonCombinado.animes, cookieVal, log);
-  fs.writeFileSync(outputPath, JSON.stringify(jsonCombinado, null, 2), "utf-8");
-  log(`✅ Episodes_count de AnimeYTX completados y guardados en: ${outputPath}`);
 
   // ----------------------------
   // Ejecutar última función y reportar errores

@@ -15,8 +15,8 @@ router.get('/up', async (req, res) => {
     return res.status(401).sendFile(path.join(__dirname,'..','..', 'public/pass.html'));
   }
 
-  res.redirect('/maintenance');
-  console.log(`[UP] Mantenimiento iniciado, redirigiendo a /maintenance`);
+  res.redirect('/');
+  console.log(`[UP] Mantenimiento iniciado, redirigiendo a /`);
   iniciarMantenimiento();
 });
 

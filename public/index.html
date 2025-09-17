@@ -13,12 +13,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Delius+Swash+Caps&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Alice&display=swap" rel="stylesheet">
   <!-- Tus estilos CSS -->
-  <link rel="stylesheet" href="static/styles.css" />
-  <link rel="stylesheet" href="static/styles_index.css" />
+  <link rel="stylesheet" href="./static/styles.css" />
+  <link rel="stylesheet" href="./static/styles_index.css" />
 </head>
 
-<body>  
+<body>
+
 <div class="modal fade" id="continueWatchingModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-md">
     <div class="modal-content" style="background:#222; color:#fff; border-radius:12px; overflow:hidden;">
@@ -60,13 +62,15 @@
   </a>
 
   <!-- Botón hamburguesa para móvil -->
-  <button id="hamburgerBtn"class="btn btn-outline-light me-2" type="button" aria-label="Abrir menú">
+  <button id="hamburgerBtn" class="btn btn-outline-light me-2" type="button" aria-label="Abrir menú">
     <i class="fa fa-bars fa-lg"></i>
   </button>
 
   <nav class="main-nav d-none d-md-flex">
     <a href="#" id="navInicio" class="nav-item active" onclick="mostrarInicio(event)">Inicio</a>
     <a href="#" id="navDirectorio" class="nav-item" onclick="mostrarDirectorio(event)">Directory</a>
+  <a href="#" id="navHistorial" class="nav-item d-none" onclick="mostrarHistorial(event)">Historial</a>
+  <a href="#" id="navFavoritos" class="nav-item" onclick="mostrarFavoritos(event)">Favoritos</a>
   </nav>
 
   <form class="search-form d-flex ms-auto align-items-center" role="search" onsubmit="searchAnime(event)">
@@ -82,6 +86,8 @@
   <div id="mobileDropdownMenu" role="menu" aria-hidden="true">
     <a href="#" id="mobileNavInicio" class="active" role="menuitem" onclick="mostrarInicio(event); toggleMobileMenu(false)">Inicio</a>
     <a href="#" id="mobileNavDirectorio" role="menuitem" onclick="mostrarDirectorio(event); toggleMobileMenu(false)">Directory</a>
+  <a href="#" id="mobileNavHistorial" role="menuitem" class="d-none" onclick="mostrarHistorial(event); toggleMobileMenu(false)">Historial</a>
+  <a href="#" id="mobileNavFavoritos" role="menuitem" onclick="mostrarFavoritos(event); toggleMobileMenu(false)">Favoritos <i class="fa fa-heart"></i></a>
   </div> 
 </header>
 <div class="layout-container">
@@ -100,13 +106,29 @@
       <h2 class="section-title">Nuestros Animes</h2>
       <div class="card-container" id="card-container"></div>
     </div>
+
+      <div id="historial-section" class="d-none">
+        <h2 class="section-title">Historial</h2>
+        <div class="card-container" id="historial-container"></div>
+      </div>
+
+      <div id="favoritos-section" class="d-none">
+        <h2 class="section-title">Tus Favoritos</h2>
+        <div class="card-container" id="favoritos-container"></div>
+      </div>
+      <div id="search-section" class="d-none">
+        <h2 class="section-title" id="search-title">Resultados de tu busqueda</h2>
+        <div class="card-container" id="search-container"></div>
+      </div>
   </main>
 </div>
 
 <div class="bottom-bar">
   <button class="bottom-btn" onclick="abrirMenuOpciones()"><i class="fa fa-bars"></i></button>
   <div id="pagination-controls" class="pagination-controls d-none"></div>
-  <button class="bottom-btn" onclick="mostrarFavoritosEnModal()"><i class="fa fa-heart"></i></button>
+  <div id="bottomThemeIcon" onclick="toggleTheme()" class="bottom-btn">
+    <i id="themeIcon" class="fa fa-moon"></i>    
+  </div>
 </div>
 
 <div id="policyOverlay" class="policy-overlay d-none">
@@ -142,15 +164,13 @@
   <div class="policy-modal">
     <div class="policy-header d-flex justify-content-between align-items-center">
       <i class="fa fa-gear"></i>
-      <div><center><span>AnimeExt 14.7.1</span></center></div>
+      <div style="text-align:center;">
+        <span>Anime ext 6.2.0</span>
+      </div>
       <button onclick="cerrarOverlay('menuOverlay')" style="background:none;border:none;font-size:1.2rem;"><i class="fa fa-xmark"></i></button>
     </div>
     
     <div class="menu-grid">
-      <div id="bottomThemeIcon" class="menu-circle" onclick="toggleTheme()">
-        <i id="themeIcon" class="fa fa-moon"></i>
-        <div class="menu-text">Tema</div>
-      </div>
       <div class="menu-circle" onclick="verAds()">
         <i class="fa fa-tv"></i>
         <div class="menu-text">Anuncios</div>
@@ -179,7 +199,7 @@
           <h2 id="modalTitle" class="modal-title"></h2>
           <div class="modal-description">
             <h3 class="description-title">Descripción</h3>
-            <p id="modalDescription" class="description-text">Function in development, introduction for the next actualization.</p>
+            <p id="modalDescription" class="description-text"></p>
           </div>
           <div id="episodes-list" class="episodes-list"></div>
           <div class="d-flex justify-content-between align-items-center mt-3">
@@ -190,10 +210,12 @@
               <i class="fa fa-share-alt"></i> Compartir
             </button>
           </div>
-      </div>
-    </div>
-  </div>
-</div>
+        </div> <!-- cierre modal-info -->
+      </div> <!-- cierre modal-body -->
+    </div> <!-- cierre modal-content -->
+  </div> <!-- cierre modal-dialog -->
+</div> <!-- cierre #animeModal -->
+
 
 <div class="modal-dialog modal-lg modal-dialog-scrollable" style="display: none;">
   <div class="modal-content">
@@ -207,10 +229,17 @@
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="static/index.js"></script>
-<script src="static/functions_index.js"></script>
-<script>
-  console.info("%cAnime EXT - Tu Mundo Anime\n%cDesarrollado por Chiki & Chikiqwe","color: #3C873A; font-size: 1.5rem; font-weight: bold;","color: #888; font-size: 1rem;");
-</script>
+<script src="./static/index.js"></script>
+<script src="./static/functions_index.js"></script>
+  <script type="module">
+    // Tu script MJS con console.info estilizado
+    console.info(
+      "%cAnime %cEXT%c\n%cDesarrollado por Chiki & Chikiqwe",
+      "font-family: 'Alice', sans-serif; color: white; font-size: 1.5rem; font-weight: bold;",
+      "font-family: 'Alice', sans-serif; color: #00BFFF; font-size: 1.5rem; font-weight: bold;", // celeste
+      "font-family: 'Alice', sans-serif; color: white; font-size: 1.5rem; font-weight: bold;",
+      "color: #888; font-size: 1rem;"
+    );
+  </script>
 </body>
 </html>

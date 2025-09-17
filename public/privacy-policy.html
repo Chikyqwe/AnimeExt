@@ -35,7 +35,7 @@
             border-radius: 12px;
             max-width: 960px;
             padding: 3rem 2rem;
-            width: 100%;
+            width: 50%;
             /* Aquí es donde cambiamos el text-align predeterminado para el contenido del card */
             text-align: center; /* Centra todo el texto dentro del card por defecto */
             border-top: 5px solid var(--emerald-green);
@@ -134,52 +134,58 @@
                 font-size: 1.3em;
             }
         }
+        .background-elements { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 0}
+        .star { position: absolute; background: var(--light-gray); border-radius: 50%; opacity: 0; animation: twinkle 3s infinite ease-in-out forwards}
+        .star:nth-child(1) { top: 10%; left: 20%; width: 3px; height: 3px; animation-delay: 0s}
+        .star:nth-child(2) { top: 30%; left: 80%; width: 4px; height: 4px; animation-delay: .5s}
+        .star:nth-child(3) { top: 60%; left: 40%; width: 2px; height: 2px; animation-delay: 1s}
+        .star:nth-child(4) { top: 80%; left: 15%; width: 3px; height: 3px; animation-delay: 1.5s}
+        .star:nth-child(5) { top: 25%; left: 55%; width: 5px; height: 5px; animation-delay: 2s}
+        .star:nth-child(6) { top: 50%; left: 5%; width: 2px; height: 2px; animation-delay: 2.5s}
+        .star:nth-child(7) { top: 70%; left: 90%; width: 4px; height: 4px; animation-delay: 3s}
+        .star:nth-child(8) { top: 5%; left: 70%; width: 3px; height: 3px; animation-delay: 3.5s}
+        .star:nth-child(9) { top: 90%; left: 50%; width: 2px; height: 2px; animation-delay: 4s}
+        .star:nth-child(10) { top: 40%; left: 30%; width: 5px; height: 5px; animation-delay: 4.5s}
+        @keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(.8)}
+        50% { opacity: .7; transform: scale(1.2)}
+        }
     </style>
 </head>
 <body>
-    <div class="card">
+    <div class="background-elements">
+        <div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div>
+        <div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div>
+    </div>
+   <div class="card">
         <h1>Política de Privacidad de Anime<span>Ext</span></h1>
 
-        <p><strong>Última actualización:</strong> 26 de junio de 2025</p>
+        <p><strong>Fecha de la última actualización:</strong> 16 de septiembre de 2025</p>
 
-        <p>Esta Política de Privacidad tiene como objetivo informar de manera clara, exhaustiva y precisa a los usuarios sobre los principios, limitaciones y condiciones bajo las cuales opera este sitio web, incluyendo su gestión de contenido y la exención de responsabilidad legal completa con respecto a las acciones del usuario.</p>
+        <p>El presente documento establece los términos y condiciones bajo los cuales el sitio web AnimeExt opera su gestión de contenido y la exención de responsabilidad legal. El propósito es informar a los usuarios de manera clara y precisa sobre el funcionamiento de la plataforma y las responsabilidades que asumen al utilizarla.</p>
 
-        <h2>1. Naturaleza del Contenido</h2>
-        <p>Este sitio web funciona exclusivamente como una plataforma de indexación que proporciona referencias y redirecciones a contenido de terceros que ya está disponible públicamente en internet. No alojamos, almacenamos ni distribuimos material audiovisual en nuestros servidores. Cualquier referencia a obras protegidas por derechos de autor se realiza únicamente a través de enlaces externos que están fuera de nuestro control técnico o legal.</p>
+        <h2>1. Naturaleza y Funcionalidad del Servicio</h2>
+        <p>AnimeExt es una plataforma de indexación que proporciona referencias y enlaces directos a contenido de terceros que se encuentra disponible públicamente en Internet. La plataforma no aloja, almacena, ni distribuye material audiovisual en sus propios servidores. Todas las referencias a obras protegidas por derechos de autor se realizan exclusivamente mediante enlaces externos, sobre los cuales no se ejerce control técnico ni legal.</p>
 
-        <h2>2. Protección de Derechos de Autor</h2>
-        <p>Para respetar la propiedad intelectual y los derechos de los titulares de los derechos de autor, todo el contenido visual accesible a través de esta plataforma puede incluir **marcas de agua visibles** para **disuadir la redistribución ilegal** e identificar claramente la fuente original. No promovemos ni facilitamos el intercambio no autorizado de material protegido.</p>
+        <h2>2. Exención de Responsabilidad y Derechos de Autor</h2>
+        <p>Los administradores, el personal técnico y las entidades afiliadas a este sitio web declinan toda responsabilidad por el uso, la reproducción, la redistribución o el acceso al contenido de terceros proporcionado a través de la plataforma. La responsabilidad de asegurar que el acceso y la visualización de dicho contenido cumplen con las leyes vigentes en su jurisdicción recae exclusivamente en el usuario.</p>
+        <p>Todos los títulos, logotipos, personajes, obras audiovisuales y marcas registradas a los que se hace referencia o se enlaza a través del servicio son propiedad exclusiva de sus respectivos dueños. AnimeExt no reclama ninguna propiedad o representación de dicho material y actúa únicamente como un directorio pasivo para facilitar el acceso a contenido compartido públicamente.</p>
 
-        <h2>3. Exención de Responsabilidad</h2>
-        <p>Los administradores, el personal técnico y cualquier persona afiliada a este sitio web **no asumen ninguna responsabilidad** por el uso, reproducción, redistribución, descarga o acceso a contenido de terceros proporcionado a través de la plataforma. Los usuarios son los únicos responsables de asegurar que el acceso o la visualización del contenido enlazado cumple con las leyes aplicables en su región o jurisdicción.</p>
-        <p>Este sitio **no tiene control** sobre el contenido enlazado, ni sobre su disponibilidad, legalidad, integridad o precisión. El acceso a dichos enlaces es enteramente bajo el propio riesgo y responsabilidad del usuario.</p>
+        <h2>3. Recopilación de Datos y Uso de Cookies</h2>
+        <p>AnimeExt no recopila, almacena ni comparte datos personales de sus usuarios. La navegación en el sitio permanece completamente anónima.</p>
+        <p>El sitio utiliza **cookies técnicas** necesarias para el correcto funcionamiento de la plataforma. Estas cookies no recopilan información personal ni se utilizan para fines publicitarios o de seguimiento. Al utilizar el sitio, el usuario consiente explícitamente el uso de estas cookies funcionales.</p>
 
-        <h2>4. Propiedad Intelectual</h2>
-        <p>Todos los títulos, logotipos, personajes, obras audiovisuales y marcas registradas a los que se hace referencia o se enlazan en este sitio web son propiedad exclusiva de sus respectivos dueños. No se reclama ninguna propiedad o representación. Este sitio simplemente proporciona un directorio pasivo para facilitar el acceso a contenido compartido públicamente.</p>
+        <h2>4. Conducta del Usuario</h2>
+        <p>El uso de AnimeExt implica la aceptación expresa de no utilizar los enlaces, la plataforma o la información disponible para fines ilegales o que infrinjan los derechos de autor, las leyes de distribución u otros marcos legales aplicables. Cualquier uso indebido de la plataforma será responsabilidad exclusiva del usuario.</p>
 
-        <h2>5. Recopilación de Datos</h2>
-        <p>Este sitio web **no recopila, almacena ni comparte ningún dato personal**. No utilizamos cookies, sesiones de usuario, formularios de registro, scripts de seguimiento o cualquier mecanismo que identifique o monitoree a los visitantes. Su navegación permanece completamente anónima, sin establecerse ninguna conexión técnica entre su dispositivo y nuestra infraestructura.</p>
+        <h2>5. Jurisdicción y Leyes Aplicables</h2>
+        <p>El servicio se proporciona "tal cual", sin garantía de disponibilidad o legalidad del contenido enlazado en todas las jurisdicciones. El uso del sitio se considera una aceptación plena de las condiciones aquí expuestas. Cada usuario es responsable de verificar el estatus legal del acceso al material enlazado conforme a su normativa nacional.</p>
 
-        <h2>6. Conducta del Usuario</h2>
-        <p>Al utilizar este sitio web, los usuarios aceptan expresamente no utilizar los enlaces, la plataforma o la información disponible con fines ilegales o en violación de los derechos de autor, las leyes de distribución o cualquier otro marco legal aplicable. El uso indebido de esta plataforma será responsabilidad exclusiva del usuario.</p>
-
-        <h2>7. Jurisdicción y Leyes Aplicables</h2>
-        <p>Este sitio web se proporciona "tal cual", sin garantía de disponibilidad o legalidad del contenido enlazado en todas las jurisdicciones. El uso del sitio se considera plena aceptación de esta política. Cada usuario es responsable de verificar el estado legal del acceso al material enlazado de acuerdo con sus regulaciones nacionales.</p>
-
-        <h2>8. Modificaciones de la Política</h2>
-        <p>Nos reservamos el derecho de modificar esta política en cualquier momento sin previo aviso. Los usuarios son responsables de revisar periódicamente esta sección para mantenerse informados de las actualizaciones. El uso continuado del sitio constituye la aceptación de los términos revisados.</p>
+        <h2>6. Modificaciones de la Política</h2>
+        <p>La administración del sitio se reserva el derecho irrestricto de modificar, actualizar o reemplazar la presente Política de Privacidad en cualquier momento y a su entera discreción. Es responsabilidad de cada usuario revisar periódicamente este documento para mantenerse informado de los cambios. El uso continuado del servicio después de cualquier modificación constituye la aceptación de los términos revisados.</p>
         
-        <h2>9. Uso de Cookies</h2>
-        <p>Este sitio web utiliza cookies únicamente para mejorar la experiencia del usuario y proporcionar funcionalidad técnica básica. Estas cookies no recopilan datos personales y no se utilizan con fines publicitarios o de seguimiento. Al continuar navegando por este sitio web, el usuario consiente explícitamente el uso de estas cookies tal como se describe.</p>
-
-        <h2>10. Derechos Administrativos</h2>
-        <p>Los administradores de este sitio web se reservan el derecho irrestricto de modificar, actualizar o reemplazar completamente esta Política de Privacidad en cualquier momento, a su entera discreción y sin notificación previa a los usuarios. Es responsabilidad de cada usuario revisar periódicamente esta política para mantenerse informado de cualquier cambio. El uso continuado del sitio implica la aceptación de la versión más actual de la Política de Privacidad.</p>
-
-        <em>Gracias por su comprensión y uso responsable de nuestra plataforma.</em>
-
         <div class="signature">
             Atentamente,<br>
-            <div class="name">Administración del Sitio Web, Anime Ext</div>
+            <div class="name">Administración de AnimeExt</div>
         </div>
     </div>
 </body>

@@ -159,8 +159,8 @@ body.light-theme .logo-svg .ext-text{fill:#2e94dc}
 <header class="hero">
   <span class="hero-badge">¡No necesitas navegador!</span>
   <h1>Anime EXT App</h1>
-  <p>Abre la app y empieza a ver tus animes favoritos al instante, rápida, ligera y siempre a la mano. Anime Ext App 4.1.2</p>
-  <a href="https://animeext.unaux.com/app/beta/AnimeExt-4.1.2.apk" class="download-btn">
+  <p>Abre la app y empieza a ver tus animes favoritos al instante, rápida, ligera y siempre a la mano. Anime Ext App {version}</p>
+  <a href="https://animeext.xo.je/app/" class="download-btn">
     <i class="bi bi-download"></i> Descargar APK
   </a>
 </header>
@@ -206,6 +206,65 @@ body.light-theme .logo-svg .ext-text{fill:#2e94dc}
   </a>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// URL del endpoint de versión
+const versionURL = '/app/v';
+
+// Convierte dw.php a la URL completa
+function convertLink(link) {
+  return link.replace('dw.php', 'https://animeext.xo.je/app/beta/dw.php');
+}
+
+// Función para actualizar la info de la app y el carrusel
+async function updateAppInfo() {
+  try {
+    const res = await fetch(versionURL);
+    if (!res.ok) throw new Error('Error al obtener la versión');
+    const data = await res.json();
+    
+    const actual = data.actual;
+
+    // Actualizar botón de descarga y texto de versión
+    const downloadBtn = document.querySelector('.download-btn');
+    const heroText = document.querySelector('header.hero p');
+    downloadBtn.href = convertLink(actual.link);
+    heroText.textContent = `Abre la app y empieza a ver tus animes favoritos al instante, rápida, ligera y siempre a la mano. Anime Ext App ${actual.version}`;
+
+    // Crear carrusel dinámico de capturas si existen
+    const carouselInner = document.getElementById('carousel-inner');
+    const carouselIndicators = document.getElementById('carousel-indicators');
+
+    // Limpiar carrusel existente
+    carouselInner.innerHTML = '';
+    carouselIndicators.innerHTML = '';
+
+    screenshots.forEach((url, index) => {
+      const item = document.createElement('div');
+      item.className = 'carousel-item' + (index === 0 ? ' active' : '');
+      const img = document.createElement('img');
+      img.src = url;
+      img.className = 'd-block w-75';
+      img.alt = `Screenshot ${index+1}`;
+      item.appendChild(img);
+      carouselInner.appendChild(item);
+
+      const indicator = document.createElement('button');
+      indicator.type = 'button';
+      indicator.setAttribute('data-bs-target','#screenshotsCarousel');
+      indicator.setAttribute('data-bs-slide-to', index);
+      if(index===0) indicator.className='active';
+      carouselIndicators.appendChild(indicator);
+    });
+
+  } catch (err) {
+    console.error('No se pudo actualizar la app:', err);
+  }
+}
+
+// Ejecutar al cargar
+updateAppInfo();
+</script>
+
 <script>
 // Carrusel dinámico
 // Puedes cambiar 'localhost:2022' por la URL real de tu servidor si lo necesitas

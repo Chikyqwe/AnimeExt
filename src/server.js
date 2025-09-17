@@ -5,85 +5,49 @@ const { iniciarMantenimiento } = require('./services/maintenanceService');
 const readline = require('readline');
 
 // =================== VARIABLES GLOBALES ===================
-const mantenimientoData = {
-  '1:0': { proximo: null, ultimo: null },
-  '12:0': { proximo: null, ultimo: null }
-};
+let ultimoMantenimiento = null;
 
 // =================== FUNCION DE MANTENIMIENTO ===================
-async function programarMantenimiento(hora, minuto) {
-  const ahora = new Date();
-  const proxima = new Date();
+async function ejecutarMantenimiento() {
+  console.log(`[AUTO MANTENIMIENTO] Ejecutando mantenimiento programado...`);
+  try {
+    await iniciarMantenimiento();
+    ultimoMantenimiento = new Date();
+  } catch (err) {
+    console.error('[AUTO MANTENIMIENTO] Error durante el mantenimiento:', err);
+  }
 
-  proxima.setHours(hora);
-  proxima.setMinutes(minuto);
-  proxima.setSeconds(0);
-  proxima.setMilliseconds(0);
-
-  if (proxima <= ahora) proxima.setDate(proxima.getDate() + 1);
-
-  const key = `${hora}:${minuto}`;
-  mantenimientoData[key].proximo = proxima;
-
-  const delay = proxima - ahora;
-  console.log(`[AUTO MANTENIMIENTO] Próxima ejecución a ${hora}:${minuto} en ${Math.round(delay / 60000)} min`);
-
-  setTimeout(async () => {
-    console.log(`[AUTO MANTENIMIENTO] Ejecutando mantenimiento programado (${hora}:${minuto})...`);
-    try {
-      await iniciarMantenimiento();
-      mantenimientoData[key].ultimo = new Date(); // guardamos la fecha de ejecución
-    } catch (err) {
-      console.error('[AUTO MANTENIMIENTO] Error durante el mantenimiento:', err);
-    }
-
-    // Recordatorio cada 10 min durante 2h
-    let minutos = 0;
-    const recordatorio = setInterval(() => {
-      minutos += 10;
-      console.log(`[AUTO MANTENIMIENTO] Han pasado ${minutos} min desde el último mantenimiento (${hora}:${minuto})`);
-      if (minutos >= 120) clearInterval(recordatorio);
-    }, 10 * 60 * 1000);
-
-    programarMantenimiento(hora, minuto); // reprogramamos
-  }, delay);
+  // Recordatorio cada 10 min durante 2h
+  let minutos = 0;
+  const recordatorio = setInterval(() => {
+    minutos += 10;
+    console.log(`[AUTO MANTENIMIENTO] Han pasado ${minutos} min desde el último mantenimiento`);
+    if (minutos >= 120) clearInterval(recordatorio);
+  }, 10 * 60 * 1000);
 }
 
-// =================== PROGRAMAR MANTENIMIENTOS ===================
-programarMantenimiento(1, 0);
-programarMantenimiento(12, 0);
+// =================== PROGRAMAR MANTENIMIENTO CADA 45 MIN ===================
+const INTERVALO = 45 * 60 * 1000; // 45 minutos en ms
+setInterval(ejecutarMantenimiento, INTERVALO);
 
+// Ejecutar una vez al inicio
+ejecutarMantenimiento();
+// =================== ENDPOINT DE MANTENIMIENTO ===================
+app.get('/mantenimiento', (req, res) => {
+  const ahora = new Date();
+  const diffMs = ultimoMantenimiento ? ahora - ultimoMantenimiento : null;
+  const minutos = diffMs ? Math.floor(diffMs / (1000*60)) : null;
+
+  res.json({
+    ahora: ahora.toISOString(),
+    ultimoMantenimiento: ultimoMantenimiento ? ultimoMantenimiento.toISOString() : null,
+    minutosDesdeUltimo: minutos
+  });
+});
 // =================== SERVIDOR INICIADO ===================
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[SUCCESS] Servidor corriendo en http://localhost:${PORT}`);
   console.log(`[INFO] Contraseña para mantenimiento (/up): ${MAINTENANCE_PASSWORD}`);
-});
-
-// =================== ENDPOINT DE MANTENIMIENTO ===================
-app.get('/mantenimiento', (req, res) => {
-  const ahora = new Date();
-
-  const data = Object.entries(mantenimientoData).map(([key, val]) => {
-    if (!val.proximo) return null;
-
-    let diffMs = val.proximo - ahora;
-    if (diffMs < 0) diffMs = 0;
-
-    const dias = Math.floor(diffMs / (1000*60*60*24));
-    const horas = Math.floor((diffMs % (1000*60*60*24)) / (1000*60*60));
-    const minutos = Math.floor((diffMs % (1000*60*60)) / (1000*60));
-
-    return {
-      horario: key,
-      faltan: { dias, horas, minutos },
-      ultimo: val.ultimo ? val.ultimo.toISOString() : null
-    };
-  }).filter(Boolean);
-
-  res.json({
-    ahora: ahora.toISOString(),
-    mantenimientos: data
-  });
 });
 
 // =================== CONSOLA INTERACTIVA ===================
@@ -110,7 +74,7 @@ rl.on('line', (line) => {
   switch (command) {
     case 'up':
       console.log('[CONSOLE] Ejecutando mantenimiento manual...');
-      iniciarMantenimiento();
+      ejecutarMantenimiento();
       break;
     case 'clear':
       console.clear();
