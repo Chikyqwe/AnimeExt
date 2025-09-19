@@ -29,9 +29,6 @@ async function ejecutarMantenimiento() {
 // =================== PROGRAMAR MANTENIMIENTO CADA 45 MIN ===================
 const INTERVALO = 45 * 60 * 1000; // 45 minutos en ms
 setInterval(ejecutarMantenimiento, INTERVALO);
-
-// Ejecutar una vez al inicio
-ejecutarMantenimiento();
 // =================== ENDPOINT DE MANTENIMIENTO ===================
 app.get('/mantenimiento', (req, res) => {
   const ahora = new Date();

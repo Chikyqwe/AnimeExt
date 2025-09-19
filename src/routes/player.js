@@ -1,9 +1,9 @@
 const express = require('express');
-const { readAnimeList, buildEpisodeUrl } = require('../services/jsonService');
-
+const { readAnimeList, buildEpisodeUrl} = require('../services/jsonService');
+const { getEpisodes } = require('../utils/helpers');
 const router = express.Router();
 
-router.get('/api/player', (req, res) => {
+router.get('/api/player', async (req, res) => {
   const uid = parseInt(req.query.uid, 10);
   const animeId = parseInt(req.query.id, 10);
   const ep = parseInt(req.query.ep, 10);
@@ -28,8 +28,24 @@ router.get('/api/player', (req, res) => {
     if (!anime_data) {
       return res.status(404).json({ error: "Anime no encontrado" });
     }
+    let maxEpisodes = 1;      // default mínimo 1
+    let selectedSource = null;
 
-    const episodes_count = anime_data.episodes_count || 1;
+    for (const source of ['FLV', 'TIO', 'ANIMEYTX']) {
+        if (anime_data.sources && anime_data.sources[source]) {
+            const epData = await getEpisodes(anime_data.sources[source]);
+
+            if (epData.episodes && epData.episodes.length > maxEpisodes) {
+                maxEpisodes = epData.episodes.length;
+                selectedSource = source;
+            }
+        }
+    }
+
+    console.log(`[API PLAYER] Fuente seleccionada: ${selectedSource} con ${maxEpisodes} episodios`);
+
+    const episodes_count = maxEpisodes;
+
     if (ep <= 0 || ep > episodes_count) {
       return res.status(406).json({
         error: "Episodio inválido",

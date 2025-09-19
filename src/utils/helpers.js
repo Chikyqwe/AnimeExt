@@ -268,9 +268,78 @@ async function getDescription(url) {
     return '';
   }
 }
+// GET EPS
 
+// Axios optimizado con KeepAlive
+const instance = axios.create({
+  httpAgent: new http.Agent({ keepAlive: true }),
+  httpsAgent: new https.Agent({ keepAlive: true }),
+  headers: { "Accept-Encoding": "gzip, deflate, br" }
+});
+
+async function getEpisodes(url) {
+  const { data } = await instance.get(url);
+
+  // ==============================
+  // CASO 1 y 2 (AnimeFLV con <script>)
+  // ==============================
+  const animeInfoMatch = data.match(/var\s+anime_info\s*=\s*(\[[^\]]+\])/);
+  const episodesMatch = data.match(/var\s+episodes\s*=\s*(\[[\s\S]*?\]);/);
+
+  if (animeInfoMatch && episodesMatch) {
+    const anime_info = Function(`return ${animeInfoMatch[1]}`)();
+    const episodesRaw = Function(`return ${episodesMatch[1]}`)();
+
+    // Caso 1: episodes = [[num,id], ...]
+    // Caso 2: episodes = [4,3,2,1]
+    const episodes =
+      Array.isArray(episodesRaw[0])
+        ? episodesRaw.map(e => ({ number: e[0], id: e[1] }))
+        : episodesRaw.map(num => ({ number: num }));
+
+    return {
+      raw: anime_info,
+      source: "AnimeFLV",
+      title: anime_info[2],
+      slug: anime_info[1],
+      isNewEP: anime_info[3], // 4 = nuevo episodio
+      isEnd: anime_info.length === 3, // 3 = finalizado, 4 = en emisión
+      episodes_count: episodes.length,
+      episodes
+    };
+  }
+
+  // ==============================
+  // CASO 3 (AnimeYTX con <li>)
+  // ==============================
+  const $ = cheerio.load(data);
+  const eps = [];
+
+  $("li[data-index]").each((i, el) => {
+    const num = parseInt($(el).find(".epl-num").text().trim(), 10);
+    eps.push({ number: num});
+  });
+
+  if (eps.length > 0) {
+    return {
+      source: "AnimeYTX",
+      title: $("title").text().replace(" - AnimeYT", "").trim(),
+      isEnd: false, // difícil saber desde aquí → siempre asumimos emisión
+      episodes_count: eps.length,
+      episodes: eps
+    };
+  }
+
+  // ==============================
+  // SI NO ENCAJA EN NINGÚN CASO
+  // ==============================
+  return {
+    success: false
+  };
+}
 module.exports = {
   getCookie,
+  getEpisodes,
   proxyImage,
   getDescription,
   streamVideo,

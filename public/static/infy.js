@@ -266,69 +266,173 @@ document.addEventListener('click', e => {
         suggestionBox.style.display = 'none';
     }
 });
+function ajustarAlturaEpisodesList(eps) {
+    var episodesList = document.getElementById('episodes-list');
+    if (episodesList) {
+      console.log("Número de episodios encontrados:", eps);
+      if (eps > 0 && eps < 12) {
+        console.log("Ajustando altura de episodes-list para menos de 12 episodios");
+        episodesList.style.height = 'auto';
+      } else {
+        console.log("Ajustando altura de episodes-list para 12 o más episodios");
+        episodesList.style.height = '645px';
+      }
+    }
+}
 async function openModal(data, animeTitle) {
     currentAnime = data;
+    ajustarAlturaEpisodesList(currentAnime.episodes_count);
 
     const modalImage = document.getElementById('modalImage');
     const modalTitle = document.getElementById('modalTitle');
     const episodesList = document.getElementById('episodes-list');
+    const modalDescription = document.getElementById('modalDescription');
+    const favBtn = document.getElementById('favoriteBtn');
+    const shareBtn = document.getElementById('shareBtn');
 
+    // Imagen y título
     const proxyUrl = `/image?url=${encodeURIComponent(data.image)}`;
+    if (modalImage) modalImage.src = proxyUrl;
+    if (modalTitle) modalTitle.textContent = cleanTitle(animeTitle);
+    if (episodesList) episodesList.innerHTML = '';
 
-    modalImage.src = proxyUrl;
-    modalTitle.textContent = cleanTitle(animeTitle);
-    episodesList.innerHTML = '';
-
-    // Botón favorito dinámico
-    let favBtn = document.getElementById('modal-fav-btn');
-    if (!favBtn) {
-        favBtn = document.createElement('button');
-        favBtn.id = 'modal-fav-btn';
-        favBtn.type = 'button';
-        favBtn.className = 'btn btn-sm mx-1';
-        favBtn.style.marginTop = '5px';
-        modalTitle.insertAdjacentElement('afterend', favBtn);
-    }
-
-    // Reemplazar botón para evitar listeners viejos
-    const newFavBtn = favBtn.cloneNode(true);
-    favBtn.replaceWith(newFavBtn);
-    favBtn = newFavBtn;
-
-    favBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        toggleFavoritoIndexed(animeTitle, favBtn);
-    });
-
-    // Actualizar texto y clase según favorito
-    const favoritos = await cargarFavoritosIndexed();
-    if (favoritos.includes(animeTitle)) {
-        favBtn.textContent = 'Quitar de favoritos';
-        favBtn.classList.remove('btn-outline-warning');
-        favBtn.classList.add('btn-warning');
-    } else {
-        favBtn.textContent = 'Agregar a favoritos';
-        favBtn.classList.remove('btn-warning');
-        favBtn.classList.add('btn-outline-warning');
-    }
-
-    // Lista de episodios
-    for (let i = 1; i <= data.episodes_count; i++) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'episode-button';
-        btn.textContent = `Episodio ${i}`;
-        btn.addEventListener('click', () => {
-            const url = `/player?id=${encodeURIComponent(data.id)}&ep=${i}`;
-            window.location.href = url;
-        });
-        episodesList.appendChild(btn);
-    }
-
+    // Mostrar modal **inmediatamente**
     const animeModalEl = document.getElementById('animeModal');
-    const modal = new bootstrap.Modal(animeModalEl);
-    modal.show();
+    let modal;
+    if (animeModalEl) {
+        modal = new bootstrap.Modal(animeModalEl);
+        modal.show();
+    }
+
+    // Inicializar botones
+    initFavoriteButton(animeTitle);
+    initShareButton(animeTitle);
+
+    if (favBtn) {
+        const isFavorite = await esFavoritoIndexed(animeTitle);
+        favBtn.textContent = isFavorite ? 'Quitar de Favoritos' : 'Agregar a Favoritos';
+        favBtn.classList.toggle('btn-warning', isFavorite);
+        favBtn.classList.toggle('btn-outline-light', !isFavorite);
+        favBtn.onclick = (e) => {
+            e.stopPropagation();
+            toggleFavoritoIndexed(animeTitle, favBtn);
+        };
+    }
+
+    if (shareBtn) {
+        shareBtn.onclick = (e) => {
+            e.stopPropagation();
+            shareAnime(animeTitle, data.id);
+        };
+    }
+
+    // Mostrar estado mientras se cargan episodios
+    if (episodesList) {
+        const div = document.createElement('div');
+        div.className = 'status-indicator';
+        const estado = (data.status || "Desconocido").toLowerCase();
+        let texto = "Desconocido";
+        let color = "#343a40";
+        if (estado.includes("emisión") || estado.includes("emision") || estado.includes("ongoing")) {
+            texto = `Próxima emisión: ${data.next_episode_date || "Desconocida"}`;
+            color = "#28a745";
+        } else if (estado.includes("finalizado") || estado.includes("finished") || estado.includes("completed")) {
+            texto = data.status;
+            color = "#fb3447";
+        }
+        div.innerHTML = `
+        <button type="button" class="episode-status status" 
+                style="background-color:${color} !important; cursor: default; font-weight:600; color:#fff;">
+            ${texto}
+        </button>
+        `;
+        episodesList.appendChild(div);
+    }
+
+    // Mostrar "Cargando descripción..."
+    let loadingCounter = 1;
+    let loadingInterval;
+    if (modalDescription) {
+        modalDescription.textContent = 'Cargando descripción';
+        loadingInterval = setInterval(() => {
+            let dots = '.'.repeat(loadingCounter);
+            modalDescription.textContent = `Cargando descripción${dots}`;
+            loadingCounter++;
+            if (loadingCounter > 5) loadingCounter = 1;
+        }, 500);
+    }
+
+    // --- FETCH DE DESCRIPCIÓN ---
+    (async () => {
+        try {
+            const response = await fetch('/anime/description', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: data.id })
+            });
+            if (response.ok) {
+                const result = await response.json();
+                if (modalDescription) modalDescription.textContent = result.description || 'Sin descripción disponible.';
+            } else {
+                if (modalDescription) modalDescription.textContent = 'No se pudo cargar la descripción.';
+            }
+        } catch (err) {
+            if (modalDescription) modalDescription.textContent = 'Error al cargar la descripción.';
+            console.error(err);
+        } finally {
+            clearInterval(loadingInterval);
+        }
+    })();
+
+    // --- FETCH DE EPISODIOS ---
+    (async () => {
+        let episodes = [];
+        let selectedSource = null;
+        const sources = ['FLV', 'TIO', 'ANIMEYTX'];
+
+        for (const src of sources) {
+            if (data.sources && data.sources[src]) {
+                try {
+                    const epResponse = await fetch(`/api/episodes`, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ src, Uid: data.unit_id }) 
+                    });
+
+                    if (epResponse.ok) {
+                        const result = await epResponse.json();
+                        if (result.episodes && Array.isArray(result.episodes.episodes) && result.episodes.episodes.length > 0) {
+                            episodes = result.episodes.episodes;
+                            selectedSource = src;
+                            console.log(`[API PLAYER] Fuente seleccionada: ${src} con ${episodes.length} episodios`);
+                            break;
+                        }
+                    } else {
+                        console.warn(`No se pudieron cargar episodios de ${src}`);
+                    }
+                } catch (err) {
+                    console.error(`Error obteniendo episodios de ${src}:`, err);
+                }
+            }
+        }
+
+        // Renderizar episodios cuando estén listos
+        if (episodesList && episodes.length > 0) {
+            episodes.forEach(ep => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'episode-button';
+                btn.textContent = `Episodio ${ep.number}`;
+                btn.addEventListener('click', () => {
+                    window.location.href = `./player?id=${encodeURIComponent(data.id)}&ep=${ep.number}`;
+                });
+                episodesList.appendChild(btn);
+            });
+        }
+    })();
+
 }
+
 function cleanTitle(title) {
     return title.trim();
 }
@@ -351,77 +455,163 @@ async function cargarFavoritosIndexed() {
  * @param {string} animeTitle - El título del anime.
  * @returns {Promise<boolean>} Una promesa que se resuelve en `true` si es favorito, `false` si no.
  */
-async function esFavoritoIndexed(animeTitle) {
-    const db = await abrirDB();
+function abrirDB() {
     return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME_I, 'readonly');
-        const store = tx.objectStore(STORE_NAME_I);
-        const request = store.get(animeTitle);
-        request.onsuccess = () => resolve(!!request.result);
-        request.onerror = () => reject('Error verificando favorito');
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onerror = () => reject('Error al abrir DB');
+        request.onsuccess = () => resolve(request.result);
+        request.onupgradeneeded = e => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: 'title' });
+            }
+        };
     });
 }
 
-/**
- * Alterna el estado de favorito de un anime y actualiza el botón.
- * @param {string} animeTitle - El título del anime.
- * @param {HTMLElement} btn - El botón a actualizar.
- */
-async function toggleFavoritoIndexed(animeTitle, btn) {
-    try {
-        const favorito = await esFavoritoIndexed(animeTitle);
-        if (favorito) {
-            await eliminarFavoritoIndexed(animeTitle);
-            btn.textContent = 'Agregar a favoritos';
-            btn.classList.remove('btn-warning');
-            btn.classList.add('btn-outline-warning');
-        } else {
-            await agregarFavoritoIndexed(animeTitle);
-            btn.textContent = 'Quitar de favoritos';
-            btn.classList.remove('btn-outline-warning');
-            btn.classList.add('btn-warning');
-        }
-    } catch (err) {
-        console.error('Error toggling favorito:', err);
-    }
-}
 async function agregarFavoritoIndexed(animeTitle) {
     const db = await abrirDB();
     return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME_I, 'readwrite');
-        const store = tx.objectStore(STORE_NAME_I);
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
         const request = store.add({ title: animeTitle });
         request.onsuccess = () => resolve(true);
         request.onerror = () => reject('Error agregando favorito');
     });
 }
 
-/**
- * Elimina un anime de la base de datos de favoritos.
- * @param {string} animeTitle - El título del anime.
- * @returns {Promise<boolean>} Promesa que indica si la operación fue exitosa.
- */
 async function eliminarFavoritoIndexed(animeTitle) {
     const db = await abrirDB();
     return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME_I, 'readwrite');
-        const store = tx.objectStore(STORE_NAME_I);
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
         const request = store.delete(animeTitle);
         request.onsuccess = () => resolve(true);
         request.onerror = () => reject('Error eliminando favorito');
     });
 }
-function abrirDB() {
+
+async function cargarFavoritosIndexed() {
+    const db = await abrirDB();
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME_I, DB_VERSION_I);
-        request.onerror = () => reject('Error al abrir DB');
-        request.onsuccess = () => resolve(request.result);
-        request.onupgradeneeded = e => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME_I)) {
-                db.createObjectStore(STORE_NAME_I, { keyPath: 'title' });
-            }
-        };
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result.map(item => item.title));
+        request.onerror = () => reject('Error cargando favoritos');
     });
+}
+
+async function esFavoritoIndexed(animeTitle) {
+    const db = await abrirDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.get(animeTitle);
+        request.onsuccess = () => resolve(!!request.result);
+        request.onerror = () => reject('Error verificando favorito');
+    });
+}
+
+async function toggleFavoritoIndexed(animeTitle, btn) {
+    try {
+        const favorito = await esFavoritoIndexed(animeTitle);
+        if (favorito) {
+            // eliminar de IndexedDB
+            await eliminarFavoritoIndexed(animeTitle);
+
+            // ⚡ quitar la card del DOM si existe en la sección favoritos
+            const favContainer = document.getElementById('favoritos-container');
+            if (favContainer) {
+                const cards = Array.from(favContainer.querySelectorAll('[data-anime]'));
+                const card = cards.find(c => c.dataset.anime === animeTitle);
+                if (card) {
+                    card.remove();
+                } else {
+                    // fallback: si no encontramos la card, opcionalmente recargar la vista completa
+                    // mostrarFavoritos(); // <-- descomenta si quieres fallback automático
+                }
+            }
+        } else {
+            // agregar a IndexedDB
+            await agregarFavoritoIndexed(animeTitle);
+
+            // si el usuario está viendo la sección FAVORITOS, añadimos la card al instante (opcional)
+            const favContainer = document.getElementById('favoritos-container');
+            if (favContainer && !favContainer.classList.contains('d-none')) {
+                const animeObj = fullAnimeList.find(a => a.title === animeTitle);
+                if (animeObj) {
+                    favContainer.appendChild(createFavoriteCard(animeObj));
+                }
+            }
+        }
+
+        // actualizar visual del botón que se pasó como parámetro
+        const nuevoFavorito = !favorito;
+        if (btn) {
+            btn.innerHTML = nuevoFavorito
+                ? '<i class="fa fa-heart"></i> Quitar de Favoritos'
+                : '<i class="fa fa-heart"></i> Agregar a Favoritos';
+            btn.classList.toggle('btn-dark', nuevoFavorito);
+            btn.classList.toggle('btn-outline-light', !nuevoFavorito);
+        }
+    } catch (err) {
+        console.error('Error toggling favorito:', err);
+    }
+}
+
+/**
+ * =======================================================
+ * BOTONES DEL MODAL
+ * =======================================================
+ */
+
+// Inicializar el botón de favoritos en el modal
+async function initFavoriteButton(animeTitle) {
+    const btn = document.getElementById('favoriteBtn');
+    if (!btn) return;
+
+    const favorito = await esFavoritoIndexed(animeTitle);
+
+    // Estado inicial
+    btn.innerHTML = favorito
+        ? '<i class="fa fa-heart"></i> Quitar de Favoritos'
+        : '<i class="fa fa-heart"></i> Agregar a Favoritos';
+
+    btn.classList.toggle('btn-dark', favorito);
+    btn.classList.toggle('btn-outline-light', !favorito);
+
+    // Listener click
+    btn.onclick = (e) => {
+        e.stopPropagation();
+        toggleFavoritoIndexed(animeTitle, btn);
+    };
+}
+
+// Inicializar el botón de compartir
+function initShareButton(animeTitle) {
+    const btn = document.getElementById('shareBtn');
+    if (!btn) return;
+
+    btn.onclick = async (e) => {
+        e.stopPropagation();
+
+        const shareUrl = `${window.location.origin}/?anime=${encodeURIComponent(animeTitle)}`;
+
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: animeTitle,
+                    text: `Mira este anime: ${animeTitle}`,
+                    url: shareUrl
+                });
+            } else {
+                await navigator.clipboard.writeText(shareUrl);
+                alert('Link copiado al portapapeles ✅');
+            }
+        } catch (err) {
+            console.error('Error compartiendo:', err);
+        }
+    };
 }
 fetchJsonList()

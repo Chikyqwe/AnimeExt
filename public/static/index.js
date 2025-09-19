@@ -74,11 +74,15 @@ function mainInit() {
  */
 
 function mainDOMContentLoadedLogic() {
-    fetch("https://animeext-m5lt.onrender.com/anime/last")
+    fetch("/anime/last")
         .then(res => res.json())
         .then(data => {
             const container = document.getElementById("anime-list");
-            if (!Array.isArray(data) || !container) return;
+            const sidebarList = document.querySelector(".sidebar-menu");
+
+            if (!Array.isArray(data) || !container || !sidebarList) return;
+
+            // Llenar la lista principal
             data.forEach(anime => {
                 const card = document.createElement('div');
                 card.className = "anime-card-init";
@@ -91,33 +95,27 @@ function mainDOMContentLoadedLogic() {
                     </div>`;
                 container.appendChild(card);
             });
-        })
-        .catch(error => console.error("Error al obtener datos de los últimos animes:", error));
 
-    const sidebarList = document.querySelector(".sidebar-menu");
-    if (!sidebarList) return;
-
-    const checkInterval = setInterval(() => {
-        if (fullAnimeList.length > 0) {
-            clearInterval(checkInterval);
-            const animesEnEmision = fullAnimeList.filter(anime => anime.status && anime.status.includes("emisión")).slice(0, 15);
-            showContinueWatching();
-            animesEnEmision.forEach(anime => {
+            // Llenar la sidebar con la misma info y ejecutar función al hacer clic
+            data.slice(0, 15).forEach(anime => {
                 const li = document.createElement("li");
                 li.classList.add("mb-2");
                 li.style.cursor = "pointer";
                 li.innerHTML = `
-                        <div class="text-decoration-none d-flex align-items-center anime-link">
-                            <i class="fa fa-play me-2 text-danger"></i>
-                            <span class="text-truncate">${anime.title}</span>
-                        </div>
-                    `;
-                li.addEventListener('click', () => openModal(findAnimeById(anime.id), anime.title));
+                    <div class="text-decoration-none d-flex align-items-center anime-link">
+                        <i class="fa fa-play me-2 text-danger"></i>
+                        <span class="text-truncate">${anime.titulo}</span>
+                    </div>
+                `;
+                li.addEventListener('click', () => openModal(findAnimeByUId(anime.id), anime.titulo)); // <-- Aquí ejecuta la función
                 sidebarList.appendChild(li);
             });
-        }
-    }, 300);
+
+            showContinueWatching(); // Si quieres mostrar algo extra
+        })
+        .catch(error => console.error("Error al obtener datos de los últimos animes:", error));
 }
+
 
 async function mainWindowLoad() {
     const loader = document.getElementById('loader');
@@ -265,7 +263,7 @@ async function mostrarHistorial(e) {
             card.className = 'anime-card';
             card.tabIndex = 0;
             card.setAttribute('role', 'button');
-            const proxyUrl = `https://animeext-m5lt.onrender.com/image?url=${encodeURIComponent(anime.image)}`;
+            const proxyUrl = `/image?url=${encodeURIComponent(anime.image)}`;
             card.innerHTML = `
                 <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(anime.title)}" class="anime-image" />
                 <div class="anime-title">${cleanTitle(anime.title)}</div>
@@ -294,7 +292,7 @@ function createFavoriteCard(anime) {
     if (anime.unit_id) card.dataset.uid = anime.unit_id;
     if (anime.id) card.dataset.id = anime.id;
 
-    const proxyUrl = `https://animeext-m5lt.onrender.com/image?url=${encodeURIComponent(anime.image)}`;
+    const proxyUrl = `/image?url=${encodeURIComponent(anime.image)}`;
     card.innerHTML = `
         <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(anime.title)}" class="anime-image" style="width: 100%; border-radius: 4px;" />
         <div class="anime-title" style="text-align:center; font-size: 0.9rem; margin-top: 5px;">${cleanTitle(anime.title)}</div>
@@ -401,7 +399,7 @@ function searchSuggestionsInput() {
     const results = fullAnimeList.filter(anime => normalizeText(anime.title).includes(value)).slice(0, 4);
     results.forEach(anime => {
         const item = document.createElement('li');
-        const proxyUrl = `https://animeext-m5lt.onrender.com/image?url=${encodeURIComponent(anime.image)}`;
+        const proxyUrl = `/image?url=${encodeURIComponent(anime.image)}`;
         item.innerHTML = `<img src="${proxyUrl}" alt="${anime.title}" /><span>${anime.title}</span>`;
         item.addEventListener('click', () => {
             openModal(anime, anime.title);
@@ -492,7 +490,7 @@ async function search_selecion(s,t) {
             card.tabIndex = 0;
             card.setAttribute('role', 'button');
 
-            const proxyUrl = `https://animeext-m5lt.onrender.com/image?url=${encodeURIComponent(item.image)}`;
+            const proxyUrl = `/image?url=${encodeURIComponent(item.image)}`;
 
             card.innerHTML = `
                 <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(item.title)}" class="anime-image" />
@@ -517,7 +515,7 @@ async function search_selecion(s,t) {
 
 async function fetchJsonList() {
     try {
-        const resp = await fetch('https://animeext-m5lt.onrender.com/anime/list/ext/beta/cordova/beta/anime/app/chikyqwe');
+        const resp = await fetch('/anime/list/ext/beta/cordova/beta/anime/app/chikyqwe');
         if (!resp.ok) {
             throw new Error('Error al cargar la lista de animes');
         }
@@ -593,7 +591,7 @@ function renderCards(animes) {
         card.className = 'anime-card';
         card.tabIndex = 0;
         card.setAttribute('role', 'button');
-        const proxyUrl = `https://animeext-m5lt.onrender.com/image?url=${encodeURIComponent(anime.image)}`;
+        const proxyUrl = `/image?url=${encodeURIComponent(anime.image)}`;
         card.innerHTML = `
             <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(anime.title)}" class="anime-image" />
             <div class="anime-title">${cleanTitle(anime.title)}</div>
@@ -642,28 +640,24 @@ async function openModal(data, animeTitle) {
     const favBtn = document.getElementById('favoriteBtn');
     const shareBtn = document.getElementById('shareBtn');
 
-    const proxyUrl = `https://animeext-m5lt.onrender.com/image?url=${encodeURIComponent(data.image)}`;
+    // Imagen y título
+    const proxyUrl = `/image?url=${encodeURIComponent(data.image)}`;
     if (modalImage) modalImage.src = proxyUrl;
     if (modalTitle) modalTitle.textContent = cleanTitle(animeTitle);
     if (episodesList) episodesList.innerHTML = '';
 
-    // Efecto "Cargando descripción..."
-    let loadingCounter = 1;
-    let loadingInterval;
-    if (modalDescription) {
-        modalDescription.textContent = 'Cargando descripción';
-        loadingInterval = setInterval(() => {
-            let dots = '.'.repeat(loadingCounter);
-            modalDescription.textContent = `Cargando descripción${dots}`;
-            loadingCounter++;
-            if (loadingCounter > 5) loadingCounter = 1; // reinicia 1..2..3..4..5..
-        }, 500); // cada medio segundo
+    // Mostrar modal **inmediatamente**
+    const animeModalEl = document.getElementById('animeModal');
+    let modal;
+    if (animeModalEl) {
+        modal = new bootstrap.Modal(animeModalEl);
+        modal.show();
     }
 
+    // Inicializar botones
     initFavoriteButton(animeTitle);
     initShareButton(animeTitle);
 
-    // Botón de Favorito
     if (favBtn) {
         const isFavorite = await esFavoritoIndexed(animeTitle);
         favBtn.textContent = isFavorite ? 'Quitar de Favoritos' : 'Agregar a Favoritos';
@@ -675,7 +669,6 @@ async function openModal(data, animeTitle) {
         };
     }
 
-    // Botón de Compartir
     if (shareBtn) {
         shareBtn.onclick = (e) => {
             e.stopPropagation();
@@ -683,72 +676,118 @@ async function openModal(data, animeTitle) {
         };
     }
 
-    // Lista de episodios y estado
-    if (episodesList) {
-        const div = document.createElement('div');
-        div.className = 'status-indicator';
+    // Mostrar "Cargando descripción..."
+    let loadingCounter = 1;
+    let loadingInterval;
+    if (modalDescription) {
+        modalDescription.textContent = 'Cargando descripción';
+        loadingInterval = setInterval(() => {
+            let dots = '.'.repeat(loadingCounter);
+            modalDescription.textContent = `Cargando descripción${dots}`;
+            loadingCounter++;
+            if (loadingCounter > 5) loadingCounter = 1;
+        }, 500);
+    }
 
-        const estado = (data.status || "Desconocido").toLowerCase();
-        let texto = "Desconocido";
-        let color = "#343a40";
-
-        if (estado.includes("emisión") || estado.includes("emision") || estado.includes("ongoing")) {
-            texto = `Próxima emisión: ${data.next_episode_date || "Desconocida"}`;
-            color = "#28a745";
-        } else if (estado.includes("finalizado") || estado.includes("finished") || estado.includes("completed")) {
-            texto = data.status;
-            color = "#fb3447";
-        }
-
-        div.innerHTML = `
-        <button type="button" class="episode-status status" 
-                style="background-color:${color} !important; cursor: default; font-weight:600; color:#fff;">
-            ${texto}
-        </button>
-        `;
-
-        episodesList.appendChild(div);
-
-        for (let i = 1; i <= data.episodes_count; i++) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'episode-button';
-            btn.textContent = `Episodio ${i}`;
-            btn.addEventListener('click', () => {
-                window.location.href = `./player?id=${encodeURIComponent(data.id)}&ep=${i}`;
+    // --- FETCH DE DESCRIPCIÓN ---
+    (async () => {
+        try {
+            const response = await fetch('/anime/description', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: data.id })
             });
-            episodesList.appendChild(btn);
+            if (response.ok) {
+                const result = await response.json();
+                if (modalDescription) modalDescription.textContent = result.description || 'Sin descripción disponible.';
+            } else {
+                if (modalDescription) modalDescription.textContent = 'No se pudo cargar la descripción.';
+            }
+        } catch (err) {
+            if (modalDescription) modalDescription.textContent = 'Error al cargar la descripción.';
+            console.error(err);
+        } finally {
+            clearInterval(loadingInterval);
         }
-    }
+    })();
 
-    // Mostrar modal inmediatamente
-    const animeModalEl = document.getElementById('animeModal');
-    if (animeModalEl) {
-        const modal = new bootstrap.Modal(animeModalEl);
-        modal.show();
-    }
+    // --- FETCH DE EPISODIOS ---
+    (async () => {
+        let episodes = [];
+        let selectedSource = null;
+        let status = null;
+        let PFP = null;
+        const sources = ['FLV', 'TIO', 'ANIMEYTX'];
 
-    // Obtener descripción desde tu endpoint
-    try {
-        const response = await fetch('https://animeext-m5lt.onrender.com/anime/description', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: data.id })
-        });
+        for (const src of sources) {
+            if (data.sources && data.sources[src]) {
+                try {
+                    const epResponse = await fetch(`/api/episodes`, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ src, Uid: data.unit_id }) 
+                    });
 
-        if (response.ok) {
-            const result = await response.json();
-            if (modalDescription) modalDescription.textContent = result.description || 'Sin descripción disponible.';
-        } else {
-            if (modalDescription) modalDescription.textContent = 'No se pudo cargar la descripción.';
+                    if (epResponse.ok) {
+                        const result = await epResponse.json();
+                        status = result.episodes.isEnd ? "Finalizado" : "En emisión";
+                        PFP = result.episodes.isNewEP;
+                        console.log(`[API PLAYER] date de emisión próxima: ${PFP}`);
+                        console.log(`[API PLAYER] Estado del anime: ${status}`);
+                        if (result.episodes && Array.isArray(result.episodes.episodes) && result.episodes.episodes.length > 0) {
+                            episodes = result.episodes.episodes;
+                            selectedSource = src;
+                            console.log(`[API PLAYER] Fuente seleccionada: ${src} con ${episodes.length} episodios`);
+                            break;
+                        }
+                    } else {
+                        console.warn(`No se pudieron cargar episodios de ${src}`);
+                    }
+                } catch (err) {
+                    console.error(`Error obteniendo episodios de ${src}:`, err);
+                }
+            }
         }
-    } catch (err) {
-        if (modalDescription) modalDescription.textContent = 'Error al cargar la descripción.';
-        console.error(err);
-    } finally {
-        clearInterval(loadingInterval); // detener el efecto "cargando"
-    }
+        // Mostrar estado mientras se cargan episodios
+        if (episodesList) {
+            const div = document.createElement('div');
+            div.className = 'status-indicator';
+            const estado = status.toLowerCase();
+            console.log(`[API PLAYER] Estado procesado: ${estado}`);
+            let texto = "Desconocido";
+            let color = "#343a40";
+            if (estado.includes("emisión") || estado.includes("emision") || estado.includes("ongoing")) {
+                texto = `Próxima emisión: ${PFP || "Desconocida"}`;
+                color = "#28a745";
+            } else if (estado.includes("finalizado") || estado.includes("finished") || estado.includes("completed")) {
+                texto = status;
+                color = "#fb3447";
+            }
+            div.innerHTML = `
+            <button type="button" class="episode-status status" 
+                    style="background-color:${color} !important; cursor: default; font-weight:600; color:#fff;">
+                ${texto}
+            </button>
+            `;
+            episodesList.appendChild(div);
+        }
+        // Renderizar episodios cuando estén listos
+        if (episodesList && episodes.length > 0) {
+            episodes.forEach(ep => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'episode-button';
+                btn.textContent = `Episodio ${ep.number}`;
+                btn.addEventListener('click', () => {
+                    window.location.href = `./player?id=${encodeURIComponent(data.id)}&ep=${ep.number}`;
+                });
+                episodesList.appendChild(btn);
+            });
+        }
+    })();
+
 }
+
 
 /**
  * =======================================================
