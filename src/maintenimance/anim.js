@@ -263,7 +263,7 @@ function filtrarAnimesValidos(animes) { return animes.filter(a => a && a.title &
 // Main
 // --------------------------------------------
 async function main({ log = console.log } = {}) {
-  log("📡 Iniciando scraping de directorios...");
+  log("📡 Iniciando scraping....");
   const outputPath = path.join(__dirname, "..", "..", "data", "anime_list.json");
 
   // ----------------------------

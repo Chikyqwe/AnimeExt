@@ -17,7 +17,7 @@ console.log('[INFO] Librerías cargadas.');
 let maintenanceBlock, viewsRoutes, maintenanceRoutes, playerRoutes, apiRoutes, WakeUP;
 
 try {
-  maintenanceBlock = require('./middleware/maintenanceBlock').maintenanceBlock;
+  maintenanceBlock = require('./middleware/maintenanceBlock');
   console.log('[MIDDLEWARE] maintenanceBlock importado correctamente.');
 } catch (err) {
   console.error('[ERROR] No se pudo cargar maintenanceBlock:', err.message);
