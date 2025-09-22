@@ -64,11 +64,6 @@ const app = express();
 
 console.log('[INFO] Configurando middleware...');
 
-if (maintenanceBlock) {
-  app.use(maintenanceBlock);
-  console.log('[MIDDLEWARE] maintenanceBlock aplicado.');
-}
-
 app.use(favicon(path.join('./public', 'img', 'favicon.png')));
 console.log('[MIDDLEWARE] Favicon configurado.');
 
