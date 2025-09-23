@@ -1,191 +1,200 @@
 [
   {
-    "titulo": "Turkey!",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/turkey-11",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4218.jpg",
-    "alt": "Turkey!",
-    "id": 533
-  },
-  {
-    "titulo": "Osomatsu-san 4th Season",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/osomatsusan-4th-season-11",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4217.jpg",
-    "alt": "Osomatsu-san 4th Season",
-    "id": 299
-  },
-  {
-    "titulo": "Necronomico no Cosmic Horror Show",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/necronomico-no-cosmic-horror-show-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4181.jpg",
-    "alt": "Necronomico no Cosmic Horror Show",
-    "id": 2105
-  },
-  {
-    "titulo": "Mattaku Saikin no Tantei to Kitara",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/mattaku-saikin-no-tantei-to-kitara-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4180.jpg",
-    "alt": "Mattaku Saikin no Tantei to Kitara",
-    "id": 2066
-  },
-  {
-    "titulo": "Kakkou no Iinazuke Season 2",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/kakkou-no-iinazuke-season-2-11",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4216.jpg",
-    "alt": "Kakkou no Iinazuke Season 2",
-    "id": 9857
-  },
-  {
-    "titulo": "Kanojo, Okarishimasu 4th Season",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/kanojo-okarishimasu-4th-season-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4179.jpg",
-    "alt": "Kanojo, Okarishimasu 4th Season",
-    "id": 8369
-  },
-  {
     "titulo": "Watashi ga Koibito ni Nareru Wake Nai jan, Muri Muri! (※Muri ja Nakatta!?)",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/watashi-ga-koibito-ni-nareru-wake-nai-jan-muri-muri-muri-ja-nakatta-11",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/watashi-ga-koibito-ni-nareru-wake-nai-jan-muri-muri-muri-ja-nakatta-12",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4215.jpg",
     "alt": "Watashi ga Koibito ni Nareru Wake Nai jan, Muri Muri! (※Muri ja Nakatta!?)",
     "id": 3390
   },
   {
     "titulo": "Grand Blue Season 2",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/grand-blue-season-2-11",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/grand-blue-season-2-12",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4214.jpg",
     "alt": "Grand Blue Season 2",
     "id": 3611
   },
   {
-    "titulo": "Sakamoto Days",
-    "episodio": "Episodio 22",
-    "episodioNum": 22,
-    "url": "https://www3.animeflv.net/ver/sakamoto-days-22",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4125.jpg",
-    "alt": "Sakamoto Days",
-    "id": 9831
-  },
-  {
     "titulo": "Summer Pockets",
-    "episodio": "Episodio 24",
-    "episodioNum": 24,
-    "url": "https://www3.animeflv.net/ver/summer-pockets-24",
+    "episodio": "Episodio 25",
+    "episodioNum": 25,
+    "url": "https://www3.animeflv.net/ver/summer-pockets-25",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4162.jpg",
     "alt": "Summer Pockets",
     "id": 8477
   },
   {
     "titulo": "City The Animation",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/city-the-animation-11",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/city-the-animation-12",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4212.jpg",
     "alt": "City The Animation",
     "id": 3551
   },
   {
     "titulo": "Hotel Inhumans",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/hotel-inhumans-11",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/hotel-inhumans-12",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4211.jpg",
     "alt": "Hotel Inhumans",
     "id": 5787
   },
   {
     "titulo": "Busamen Gachi Fighter",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/busamen-gachi-fighter-11",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/busamen-gachi-fighter-12",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4210.jpg",
     "alt": "Busamen Gachi Fighter",
     "id": 7019
   },
   {
     "titulo": "Gachiakuta",
-    "episodio": "Episodio 10",
-    "episodioNum": 10,
-    "url": "https://www3.animeflv.net/ver/gachiakuta-10",
+    "episodio": "Episodio 11",
+    "episodioNum": 11,
+    "url": "https://www3.animeflv.net/ver/gachiakuta-11",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4209.jpg",
     "alt": "Gachiakuta",
     "id": 1888
   },
   {
     "titulo": "Game Center Shoujo to Ibunka Kouryuu",
-    "episodio": "Episodio 10",
-    "episodioNum": 10,
-    "url": "https://www3.animeflv.net/ver/game-center-shoujo-to-ibunka-kouryuu-10",
+    "episodio": "Episodio 11",
+    "episodioNum": 11,
+    "url": "https://www3.animeflv.net/ver/game-center-shoujo-to-ibunka-kouryuu-11",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4208.jpg",
     "alt": "Game Center Shoujo to Ibunka Kouryuu",
     "id": 1638
   },
   {
     "titulo": "Nyaight of the Living Cat",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/nyaight-of-the-living-cat-11",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/nyaight-of-the-living-cat-12",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4207.jpg",
     "alt": "Nyaight of the Living Cat",
     "id": 1594
   },
   {
     "titulo": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku-11",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku-12",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4206.jpg",
     "alt": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
     "id": 5085
   },
   {
     "titulo": "Ruri no Houseki",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/ruri-no-houseki-11",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/ruri-no-houseki-12",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4204.jpg",
     "alt": "Ruri no Houseki",
     "id": 3129
   },
   {
     "titulo": "Dekin no Mogura",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/dekin-no-mogura-11",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/dekin-no-mogura-12",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4205.jpg",
     "alt": "Dekin no Mogura",
     "id": 9246
   },
   {
-    "titulo": "Kakkou no Iinazuke Season 2 11",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://tioanime.com/ver/kakkou-no-iinazuke-season-2-11",
-    "imagen": "https://tioanime.com/uploads/thumbs/4253.jpg",
-    "alt": "Kakkou no Iinazuke Season 2 11",
-    "id": 9857
+    "titulo": "Puniru wa Kawaii Slime",
+    "episodio": "Episodio 24",
+    "episodioNum": 24,
+    "url": "https://www3.animeflv.net/ver/puniru-wa-kawaii-slime-24",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4072.jpg",
+    "alt": "Puniru wa Kawaii Slime",
+    "id": 635
   },
   {
-    "titulo": "Grand Blue Season 2 11",
+    "titulo": "Jibaku Shounen Hanako-kun 2",
+    "episodio": "Episodio 24",
+    "episodioNum": 24,
+    "url": "https://www3.animeflv.net/ver/jibaku-shounen-hanakokun-2-24",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4129.jpg",
+    "alt": "Jibaku Shounen Hanako-kun 2",
+    "id": 9169
+  },
+  {
+    "titulo": "Witch Watch",
+    "episodio": "Episodio 24",
+    "episodioNum": 24,
+    "url": "https://www3.animeflv.net/ver/witch-watch-24",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4153.jpg",
+    "alt": "Witch Watch",
+    "id": 6745
+  },
+  {
+    "titulo": "Bad Girl",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/bad-girl-12",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4202.jpg",
+    "alt": "Bad Girl",
+    "id": 979
+  },
+  {
+    "titulo": "Ame to Kimi to",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/ame-to-kimi-to-12",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4201.jpg",
+    "alt": "Ame to Kimi to",
+    "id": 59
+  },
+  {
+    "titulo": "Fermat no Ryouri",
     "episodio": "Episodio 11",
     "episodioNum": 11,
-    "url": "https://tioanime.com/ver/grand-blue-season-2-11",
+    "url": "https://www3.animeflv.net/ver/fermat-no-ryouri-11",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4203.jpg",
+    "alt": "Fermat no Ryouri",
+    "id": 778
+  },
+  {
+    "titulo": "Hikaru ga Shinda Natsu",
+    "episodio": "Episodio 11",
+    "episodioNum": 11,
+    "url": "https://www3.animeflv.net/ver/hikaru-ga-shinda-natsu-11",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4200.jpg",
+    "alt": "Hikaru ga Shinda Natsu",
+    "id": 6163
+  },
+  {
+    "titulo": "Grand Blue Season 2 12",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://tioanime.com/ver/grand-blue-season-2-12",
     "imagen": "https://tioanime.com/uploads/thumbs/4251.jpg",
-    "alt": "Grand Blue Season 2 11",
+    "alt": "Grand Blue Season 2 12",
     "id": 3611
+  },
+  {
+    "titulo": "Jibaku Shounen Hanako-kun 2 24",
+    "episodio": "Episodio 24",
+    "episodioNum": 24,
+    "url": "https://tioanime.com/ver/jibaku-shounen-hanakokun-2-24",
+    "imagen": "https://tioanime.com/uploads/thumbs/4165.jpg",
+    "alt": "Jibaku Shounen Hanako-kun 2 24",
+    "id": 9169
+  },
+  {
+    "titulo": "Koujo Denka no Kateikyoushi 12",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://tioanime.com/ver/56907-12",
+    "imagen": "https://tioanime.com/uploads/thumbs/4214.jpg",
+    "alt": "Koujo Denka no Kateikyoushi 12",
+    "id": 9584
   }
 ]

@@ -4,10 +4,10 @@ const cheerio = require("cheerio");
 const fs = require("fs");
 const path = require("path");
 const PQueue = require("p-queue").default;
-
+const { last } = require("./lastep")
 // --------------------------------------------
 // Configuración general
-// --------------------------------------------
+// ------------------------------------- -------
 const FLV_BASE_URL = "https://www3.animeflv.net";
 const TIO_BASE_URL = "https://tioanime.com";
 const ANIMEYTX_BASE_URL = "https://animeytx.com/tv/?page=";
@@ -301,7 +301,7 @@ async function main({ log = console.log } = {}) {
   } else {
     eliminarArchivo(outReporte, log);
   }
-
+  await last();
   log("✅ Scraping y combinación completados.");
   process.exit(0);
 }

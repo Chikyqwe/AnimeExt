@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "creado_en": "2025-09-19T03:02:59.464Z",
-    "total_animes": 4524
+    "creado_en": "2025-09-22T21:21:49.878Z",
+    "total_animes": 4525
   },
   "animes": [
     {
@@ -173,18 +173,6 @@
       "unit_id": 4392
     },
     {
-      "title": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
-      "slug": "isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku",
-      "image": "https://animeflv.net/uploads/animes/covers/4206.jpg",
-      "sources": {
-        "FLV": "https://www3.animeflv.net/anime/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku",
-        "TIO": "https://tioanime.com/anime/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku",
-        "ANIMEYTX": "https://animeytx.net/tv/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku/"
-      },
-      "id": 15,
-      "unit_id": 5085
-    },
-    {
       "title": "Dekin no Mogura",
       "slug": "dekin-no-mogura",
       "image": "https://animeflv.net/uploads/animes/covers/4205.jpg",
@@ -193,8 +181,20 @@
         "TIO": "https://tioanime.com/anime/dekin-no-mogura",
         "ANIMEYTX": "https://animeytx.net/tv/dekin-no-mogura/"
       },
-      "id": 16,
+      "id": 15,
       "unit_id": 9246
+    },
+    {
+      "title": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
+      "slug": "isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku",
+      "image": "https://animeflv.net/uploads/animes/covers/4206.jpg",
+      "sources": {
+        "FLV": "https://www3.animeflv.net/anime/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku",
+        "TIO": "https://tioanime.com/anime/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku",
+        "ANIMEYTX": "https://animeytx.net/tv/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku/"
+      },
+      "id": 16,
+      "unit_id": 5085
     },
     {
       "title": "Game Center Shoujo to Ibunka Kouryuu",
@@ -245,18 +245,6 @@
       "unit_id": 3129
     },
     {
-      "title": "Busamen Gachi Fighter",
-      "slug": "busamen-gachi-fighter",
-      "image": "https://animeflv.net/uploads/animes/covers/4210.jpg",
-      "sources": {
-        "FLV": "https://www3.animeflv.net/anime/busamen-gachi-fighter",
-        "TIO": "https://tioanime.com/anime/busamen-gachi-fighter",
-        "ANIMEYTX": "https://animeytx.net/tv/busamen-gachi-fighter/"
-      },
-      "id": 21,
-      "unit_id": 7019
-    },
-    {
       "title": "City The Animation",
       "slug": "city-the-animation",
       "image": "https://animeflv.net/uploads/animes/covers/4212.jpg",
@@ -265,8 +253,20 @@
         "TIO": "https://tioanime.com/anime/city-the-animation",
         "ANIMEYTX": "https://animeytx.net/tv/city-the-animation/"
       },
-      "id": 22,
+      "id": 21,
       "unit_id": 3551
+    },
+    {
+      "title": "Busamen Gachi Fighter",
+      "slug": "busamen-gachi-fighter",
+      "image": "https://animeflv.net/uploads/animes/covers/4210.jpg",
+      "sources": {
+        "FLV": "https://www3.animeflv.net/anime/busamen-gachi-fighter",
+        "TIO": "https://tioanime.com/anime/busamen-gachi-fighter",
+        "ANIMEYTX": "https://animeytx.net/tv/busamen-gachi-fighter/"
+      },
+      "id": 22,
+      "unit_id": 7019
     },
     {
       "title": "Nyaight of the Living Cat",
@@ -293,16 +293,16 @@
       "unit_id": 2504
     },
     {
-      "title": "Fermat no Ryouri",
-      "slug": "fermat-no-ryouri",
-      "image": "https://animeflv.net/uploads/animes/covers/4203.jpg",
+      "title": "Hikaru ga Shinda Natsu",
+      "slug": "hikaru-ga-shinda-natsu",
+      "image": "https://animeflv.net/uploads/animes/covers/4200.jpg",
       "sources": {
-        "FLV": "https://www3.animeflv.net/anime/fermat-no-ryouri",
-        "TIO": "https://tioanime.com/anime/fermat-no-ryouri",
-        "ANIMEYTX": "https://animeytx.net/tv/fermat-no-ryouri/"
+        "FLV": "https://www3.animeflv.net/anime/hikaru-ga-shinda-natsu",
+        "TIO": "https://tioanime.com/anime/hikaru-ga-shinda-natsu",
+        "ANIMEYTX": "https://animeytx.net/tv/hikaru-ga-shinda-natsu/"
       },
       "id": 25,
-      "unit_id": 778
+      "unit_id": 6163
     },
     {
       "title": "Bad Girl",
@@ -329,28 +329,16 @@
       "unit_id": 59
     },
     {
-      "title": "Hikaru ga Shinda Natsu",
-      "slug": "hikaru-ga-shinda-natsu",
-      "image": "https://animeflv.net/uploads/animes/covers/4200.jpg",
+      "title": "Fermat no Ryouri",
+      "slug": "fermat-no-ryouri",
+      "image": "https://animeflv.net/uploads/animes/covers/4203.jpg",
       "sources": {
-        "FLV": "https://www3.animeflv.net/anime/hikaru-ga-shinda-natsu",
-        "TIO": "https://tioanime.com/anime/hikaru-ga-shinda-natsu",
-        "ANIMEYTX": "https://animeytx.net/tv/hikaru-ga-shinda-natsu/"
+        "FLV": "https://www3.animeflv.net/anime/fermat-no-ryouri",
+        "TIO": "https://tioanime.com/anime/fermat-no-ryouri",
+        "ANIMEYTX": "https://animeytx.net/tv/fermat-no-ryouri/"
       },
       "id": 28,
-      "unit_id": 6163
-    },
-    {
-      "title": "Yuusha Party wo Tsuihou sareta Shiromadoushi",
-      "slug": "yuusha-party-wo-tsuihou-sareta-shiromadoushi",
-      "image": "https://animeflv.net/uploads/animes/covers/4198.jpg",
-      "sources": {
-        "FLV": "https://www3.animeflv.net/anime/yuusha-party-wo-tsuihou-sareta-shiromadoushi",
-        "TIO": "https://tioanime.com/anime/yuusha-party-wo-tsuihou-sareta-shiromadoushi",
-        "ANIMEYTX": null
-      },
-      "id": 29,
-      "unit_id": 9086
+      "unit_id": 778
     },
     {
       "title": "Kizetsu Yuusha to Ansatsu Hime",
@@ -361,8 +349,20 @@
         "TIO": "https://tioanime.com/anime/kizetsu-yuusha-to-ansatsu-hime",
         "ANIMEYTX": "https://animeytx.net/tv/kizetsu-yuusha-to-ansatsu-hime/"
       },
-      "id": 30,
+      "id": 29,
       "unit_id": 4477
+    },
+    {
+      "title": "Yuusha Party wo Tsuihou sareta Shiromadoushi",
+      "slug": "yuusha-party-wo-tsuihou-sareta-shiromadoushi",
+      "image": "https://animeflv.net/uploads/animes/covers/4198.jpg",
+      "sources": {
+        "FLV": "https://www3.animeflv.net/anime/yuusha-party-wo-tsuihou-sareta-shiromadoushi",
+        "TIO": "https://tioanime.com/anime/yuusha-party-wo-tsuihou-sareta-shiromadoushi",
+        "ANIMEYTX": null
+      },
+      "id": 30,
+      "unit_id": 9086
     },
     {
       "title": "Watari-kun no xx ga Houkai Sunzen",
@@ -377,18 +377,6 @@
       "unit_id": 1085
     },
     {
-      "title": "Yofukashi no Uta Temporada 2",
-      "slug": "yofukashi-no-uta-season-2",
-      "image": "https://animeflv.net/uploads/animes/covers/4196.jpg",
-      "sources": {
-        "FLV": "https://www3.animeflv.net/anime/yofukashi-no-uta-season-2",
-        "TIO": "https://tioanime.com/anime/yofukashi-no-uta-season-2",
-        "ANIMEYTX": "https://animeytx.net/tv/yofukashi-no-uta-temporada-2/"
-      },
-      "id": 32,
-      "unit_id": 5931
-    },
-    {
       "title": "Arknights: Rise from Ember",
       "slug": "arknights-rise-from-ember",
       "image": "https://animeflv.net/uploads/animes/covers/4191.jpg",
@@ -397,8 +385,20 @@
         "TIO": "https://tioanime.com/anime/arknights-rise-from-ember",
         "ANIMEYTX": "https://animeytx.net/tv/arknights-rise-from-ember/"
       },
-      "id": 33,
+      "id": 32,
       "unit_id": 7788
+    },
+    {
+      "title": "Yofukashi no Uta Temporada 2",
+      "slug": "yofukashi-no-uta-season-2",
+      "image": "https://animeflv.net/uploads/animes/covers/4196.jpg",
+      "sources": {
+        "FLV": "https://www3.animeflv.net/anime/yofukashi-no-uta-season-2",
+        "TIO": "https://tioanime.com/anime/yofukashi-no-uta-season-2",
+        "ANIMEYTX": "https://animeytx.net/tv/yofukashi-no-uta-temporada-2/"
+      },
+      "id": 33,
+      "unit_id": 5931
     },
     {
       "title": "Zutaboro Reijou wa Ane no Moto Konyakusha ni Dekiai sareru",
@@ -51881,6 +51881,18 @@
       "unit_id": 620
     },
     {
+      "title": "Kaiju No. 8 Temporada 2·",
+      "slug": "kaiju-no-8-temporada-2%c2%b7",
+      "image": "https://i2.wp.com/animeytx.net/wp-content/uploads/2025/07/h5498gh4590452hj4h.jpg?resize=247,350",
+      "sources": {
+        "FLV": null,
+        "TIO": null,
+        "ANIMEYTX": "https://animeytx.net/tv/kaiju-no-8-temporada-2%c2%b7/"
+      },
+      "id": 4324,
+      "unit_id": 8140
+    },
+    {
       "title": "Kaiju No. 8: Mission Recon",
       "slug": "kaiju-no-8-mission-recon",
       "image": "https://i0.wp.com/animeytx.net/wp-content/uploads/2025/07/h054kh452kh450h45h.jpg?resize=247,350",
@@ -51889,7 +51901,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kaiju-no-8-mission-recon/"
       },
-      "id": 4324,
+      "id": 4325,
       "unit_id": 6802
     },
     {
@@ -51901,7 +51913,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kaizoku-oujo/"
       },
-      "id": 4325,
+      "id": 4326,
       "unit_id": 5682
     },
     {
@@ -51913,7 +51925,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kakuriyo-no-yadomeshi-ni/"
       },
-      "id": 4326,
+      "id": 4327,
       "unit_id": 8865
     },
     {
@@ -51925,7 +51937,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kakushigoto-movie-2021/"
       },
-      "id": 4327,
+      "id": 4328,
       "unit_id": 9313
     },
     {
@@ -51937,7 +51949,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kami-tachi-ni-hirowareta-otoko-temporada-2/"
       },
-      "id": 4328,
+      "id": 4329,
       "unit_id": 5080
     },
     {
@@ -51949,7 +51961,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kamierabi-temporada-2/"
       },
-      "id": 4329,
+      "id": 4330,
       "unit_id": 859
     },
     {
@@ -51961,7 +51973,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kamonohashi-ron-no-kindan-suiri-temporada-2/"
       },
-      "id": 4330,
+      "id": 4331,
       "unit_id": 561
     },
     {
@@ -51973,7 +51985,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kanchigai-no-atelier-meister-eiyuu-party-no-moto-zatsuyougakari-ga-jitsu-wa-sentou-igai-ga-sss-rank-datta-to-iu-yoku-aru-hanashi/"
       },
-      "id": 4331,
+      "id": 4332,
       "unit_id": 4234
     },
     {
@@ -51985,7 +51997,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kanojo-okarishimasu-temporada-2/"
       },
-      "id": 4332,
+      "id": 4333,
       "unit_id": 6585
     },
     {
@@ -51997,7 +52009,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kanojo-okarishimasu-temporada-3/"
       },
-      "id": 4333,
+      "id": 4334,
       "unit_id": 7178
     },
     {
@@ -52009,7 +52021,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kanojo-okarishimasu-temporada-4/"
       },
-      "id": 4334,
+      "id": 4335,
       "unit_id": 5588
     },
     {
@@ -52021,7 +52033,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kaoru-hana-wa-rin-to-saku/"
       },
-      "id": 4335,
+      "id": 4336,
       "unit_id": 4322
     },
     {
@@ -52033,7 +52045,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kengan-ashura-temporada-2/"
       },
-      "id": 4336,
+      "id": 4337,
       "unit_id": 4475
     },
     {
@@ -52045,7 +52057,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kimetsu-no-yaiba-movie-mugen-jou-hen/"
       },
-      "id": 4337,
+      "id": 4338,
       "unit_id": 8934
     },
     {
@@ -52057,7 +52069,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kimetsu-no-yaiba-mugen-ressha-hen-tv/"
       },
-      "id": 4338,
+      "id": 4339,
       "unit_id": 6739
     },
     {
@@ -52069,7 +52081,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kimi-ni-todoke-temporada-3%c2%b7/"
       },
-      "id": 4339,
+      "id": 4340,
       "unit_id": 7978
     },
     {
@@ -52081,7 +52093,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kimi-no-koto-ga-daidaidaidaidaisuki-na-100-nin-no-kanojo-temporada-2/"
       },
-      "id": 4340,
+      "id": 4341,
       "unit_id": 6762
     },
     {
@@ -52093,7 +52105,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kimi-to-boku-no-saigo-no-senjou-aruiwa-sekai-ga-hajimaru-seisen-temporada-2/"
       },
-      "id": 4341,
+      "id": 4342,
       "unit_id": 4490
     },
     {
@@ -52105,7 +52117,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kingdom-temporada-4/"
       },
-      "id": 4342,
+      "id": 4343,
       "unit_id": 1790
     },
     {
@@ -52117,7 +52129,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kingdom-temporada-5/"
       },
-      "id": 4343,
+      "id": 4344,
       "unit_id": 3334
     },
     {
@@ -52129,7 +52141,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kinnikuman-kanpeki-ch%d0%beujin-shiso-hen-temporada-2/"
       },
-      "id": 4344,
+      "id": 4345,
       "unit_id": 8833
     },
     {
@@ -52141,7 +52153,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kizu-darake-seijo-yori-houfuku-wo-komete/"
       },
-      "id": 4345,
+      "id": 4346,
       "unit_id": 3848
     },
     {
@@ -52153,7 +52165,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kizumonogatari-koyomi-vamp/"
       },
-      "id": 4346,
+      "id": 4347,
       "unit_id": 7469
     },
     {
@@ -52165,7 +52177,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kj-file/"
       },
-      "id": 4347,
+      "id": 4348,
       "unit_id": 9346
     },
     {
@@ -52177,7 +52189,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/knights-of-the-zodiac-saint-seiya-battle-for-sanctuary/"
       },
-      "id": 4348,
+      "id": 4349,
       "unit_id": 2608
     },
     {
@@ -52189,7 +52201,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kobayashi-san-chi-no-maid-dragon-s-ova/"
       },
-      "id": 4349,
+      "id": 4350,
       "unit_id": 2107
     },
     {
@@ -52201,7 +52213,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/koisuru-one-piece/"
       },
-      "id": 4350,
+      "id": 4351,
       "unit_id": 2206
     },
     {
@@ -52213,7 +52225,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/komi-san-wa-comyushou-desu-temporada-2/"
       },
-      "id": 4351,
+      "id": 4352,
       "unit_id": 5961
     },
     {
@@ -52225,7 +52237,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kouryaku-wanted-isekai-sukuimasu/"
       },
-      "id": 4352,
+      "id": 4353,
       "unit_id": 319
     },
     {
@@ -52237,7 +52249,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kpop-demon-hunters/"
       },
-      "id": 4353,
+      "id": 4354,
       "unit_id": 947
     },
     {
@@ -52249,7 +52261,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kuramerukagari/"
       },
-      "id": 4354,
+      "id": 4355,
       "unit_id": 4378
     },
     {
@@ -52261,7 +52273,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kurayukaba/"
       },
-      "id": 4355,
+      "id": 4356,
       "unit_id": 3970
     },
     {
@@ -52273,7 +52285,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/kusuriya-no-hitorigoto-temporada-2/"
       },
-      "id": 4356,
+      "id": 4357,
       "unit_id": 2930
     },
     {
@@ -52285,7 +52297,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/lee-tantei-jimusho/"
       },
-      "id": 4357,
+      "id": 4358,
       "unit_id": 1159
     },
     {
@@ -52297,7 +52309,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/legend-of-mana-the-teardrop-crystal/"
       },
-      "id": 4358,
+      "id": 4359,
       "unit_id": 7113
     },
     {
@@ -52309,7 +52321,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/leviathan/"
       },
-      "id": 4359,
+      "id": 4360,
       "unit_id": 8657
     },
     {
@@ -52321,7 +52333,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/link-click-temporada-2/"
       },
-      "id": 4360,
+      "id": 4361,
       "unit_id": 1774
     },
     {
@@ -52333,7 +52345,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/link-click-temporada-2-audio-japones/"
       },
-      "id": 4361,
+      "id": 4362,
       "unit_id": 8263
     },
     {
@@ -52345,7 +52357,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/link-click-bridon-arc/"
       },
-      "id": 4362,
+      "id": 4363,
       "unit_id": 524
     },
     {
@@ -52357,7 +52369,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/look-back/"
       },
-      "id": 4363,
+      "id": 4364,
       "unit_id": 6279
     },
     {
@@ -52369,7 +52381,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/lookism/"
       },
-      "id": 4364,
+      "id": 4365,
       "unit_id": 8537
     },
     {
@@ -52381,7 +52393,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/lord-of-mysteries-guimi-zhi-zhu-xiaochou-pian/"
       },
-      "id": 4365,
+      "id": 4366,
       "unit_id": 7757
     },
     {
@@ -52393,7 +52405,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/lost-in-starlight/"
       },
-      "id": 4366,
+      "id": 4367,
       "unit_id": 6273
     },
     {
@@ -52405,7 +52417,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/love-live-superstar-temporada-2/"
       },
-      "id": 4367,
+      "id": 4368,
       "unit_id": 2799
     },
     {
@@ -52417,7 +52429,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/lycoris-recoil-friends-are-thieves-of-time/"
       },
-      "id": 4368,
+      "id": 4369,
       "unit_id": 2481
     },
     {
@@ -52429,7 +52441,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/maboroshi/"
       },
-      "id": 4369,
+      "id": 4370,
       "unit_id": 3674
     },
     {
@@ -52441,7 +52453,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/made-in-abyss-papa-to-issho/"
       },
-      "id": 4370,
+      "id": 4371,
       "unit_id": 7672
     },
     {
@@ -52453,7 +52465,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/magia-record-mahou-shoujo-madoka-magica-gaiden/"
       },
-      "id": 4371,
+      "id": 4372,
       "unit_id": 4002
     },
     {
@@ -52465,7 +52477,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mahouka-koukou-no-rettousei-temporada-3/"
       },
-      "id": 4372,
+      "id": 4373,
       "unit_id": 2016
     },
     {
@@ -52477,7 +52489,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mahoutsukai-no-yome-nishi-no-shounen-to-seiran-no-kishi/"
       },
-      "id": 4373,
+      "id": 4374,
       "unit_id": 16
     },
     {
@@ -52489,7 +52501,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mairimashita-iruma-kun-temporada-2/"
       },
-      "id": 4374,
+      "id": 4375,
       "unit_id": 1604
     },
     {
@@ -52501,7 +52513,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mairimashita-iruma-kun-temporada-3/"
       },
-      "id": 4375,
+      "id": 4376,
       "unit_id": 4221
     },
     {
@@ -52513,7 +52525,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/malevolent-spirits-mononogatari/"
       },
-      "id": 4376,
+      "id": 4377,
       "unit_id": 9840
     },
     {
@@ -52525,7 +52537,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/malevolent-spirits-mononogatari-temporada-2/"
       },
-      "id": 4377,
+      "id": 4378,
       "unit_id": 4321
     },
     {
@@ -52537,7 +52549,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/maou-evelogia-ni-mi-wo-sasage-yo/"
       },
-      "id": 4378,
+      "id": 4379,
       "unit_id": 7284
     },
     {
@@ -52549,7 +52561,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/maou-gakuin-no-futekigousha-temporada-2/"
       },
-      "id": 4379,
+      "id": 4380,
       "unit_id": 9327
     },
     {
@@ -52561,7 +52573,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mashle-temporada-2/"
       },
-      "id": 4380,
+      "id": 4381,
       "unit_id": 6367
     },
     {
@@ -52573,7 +52585,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mecha-ude/"
       },
-      "id": 4381,
+      "id": 4382,
       "unit_id": 6247
     },
     {
@@ -52585,7 +52597,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/megami-no-cafe-terrace-temporada-2/"
       },
-      "id": 4382,
+      "id": 4383,
       "unit_id": 3938
     },
     {
@@ -52597,7 +52609,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/megaton-kyuu-musashi/"
       },
-      "id": 4383,
+      "id": 4384,
       "unit_id": 7097
     },
     {
@@ -52609,7 +52621,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/meitou-isekai-no-yu-kaitakuki-around-40-onsen-mania-no-tensei-saki-wa-nonbiri-onsen-tengoku-deshita/"
       },
-      "id": 4384,
+      "id": 4385,
       "unit_id": 1975
     },
     {
@@ -52621,7 +52633,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mf-ghost-temporada-2/"
       },
-      "id": 4385,
+      "id": 4386,
       "unit_id": 342
     },
     {
@@ -52633,7 +52645,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mini-dragon/"
       },
-      "id": 4386,
+      "id": 4387,
       "unit_id": 3513
     },
     {
@@ -52645,7 +52657,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mobile-suit-gundam-the-witch-from-mercury-temporada-2/"
       },
-      "id": 4387,
+      "id": 4388,
       "unit_id": 9549
     },
     {
@@ -52657,7 +52669,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mononoke-movie-dai-2-shou-hinezumi/"
       },
-      "id": 4388,
+      "id": 4389,
       "unit_id": 6229
     },
     {
@@ -52669,7 +52681,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mononoke-movie-karakasa/"
       },
-      "id": 4389,
+      "id": 4390,
       "unit_id": 7762
     },
     {
@@ -52681,7 +52693,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/monster-strike-the-movie-lucifer-zetsubou-no-yoake-2020/"
       },
-      "id": 4390,
+      "id": 4391,
       "unit_id": 7798
     },
     {
@@ -52693,7 +52705,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/monsters-ippyaku-sanjou-hiryuu-jigoku/"
       },
-      "id": 4391,
+      "id": 4392,
       "unit_id": 8697
     },
     {
@@ -52705,7 +52717,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/moonrise/"
       },
-      "id": 4392,
+      "id": 4393,
       "unit_id": 6114
     },
     {
@@ -52717,7 +52729,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mori-no-kuma-san-toumin-chuu/"
       },
-      "id": 4393,
+      "id": 4394,
       "unit_id": 7032
     },
     {
@@ -52729,7 +52741,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/murai-no-koi/"
       },
-      "id": 4394,
+      "id": 4395,
       "unit_id": 512
     },
     {
@@ -52741,7 +52753,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/mushoku-tensei-isekai-ittara-honki-dasu-eris-the-goblin-slayer-especial/"
       },
-      "id": 4395,
+      "id": 4396,
       "unit_id": 5441
     },
     {
@@ -52753,7 +52765,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/muv-luv-alternative-temporada-2/"
       },
-      "id": 4396,
+      "id": 4397,
       "unit_id": 6118
     },
     {
@@ -52765,7 +52777,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/nanatsu-no-taizai-ensa-no-edinburgh/"
       },
-      "id": 4397,
+      "id": 4398,
       "unit_id": 1036
     },
     {
@@ -52777,7 +52789,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/nanatsu-no-taizai-mokushiroku-no-yonkishi/"
       },
-      "id": 4398,
+      "id": 4399,
       "unit_id": 9570
     },
     {
@@ -52789,7 +52801,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/nanatsu-no-taizai-mokushiroku-no-yonkishi-temporada-2/"
       },
-      "id": 4399,
+      "id": 4400,
       "unit_id": 4151
     },
     {
@@ -52801,7 +52813,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/new-panty-stocking-with-garterbelt/"
       },
-      "id": 4400,
+      "id": 4401,
       "unit_id": 9390
     },
     {
@@ -52813,7 +52825,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/nijiyon-animation-temporada-2/"
       },
-      "id": 4401,
+      "id": 4402,
       "unit_id": 3266
     },
     {
@@ -52825,7 +52837,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/ninja-kamui/"
       },
-      "id": 4402,
+      "id": 4403,
       "unit_id": 5907
     },
     {
@@ -52837,7 +52849,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/odd-taxi/"
       },
-      "id": 4403,
+      "id": 4404,
       "unit_id": 5298
     },
     {
@@ -52849,19 +52861,19 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/one-piece-fan-letter/"
       },
-      "id": 4404,
+      "id": 4405,
       "unit_id": 5526
     },
     {
-      "title": "One Piece: Arco de Egghead",
+      "title": "One Piece: Arco de Egghead·",
       "slug": "one-piece",
       "image": "https://i2.wp.com/animeytx.net/wp-content/uploads/2024/04/Z626ahXArrAhYzuntz7.jpg?resize=247,350",
       "sources": {
         "FLV": null,
         "TIO": null,
-        "ANIMEYTX": "https://animeytx.net/tv/one-piece/"
+        "ANIMEYTX": "https://animeytx.net/tv/one-piece-arco-de-egghead%c2%b7/"
       },
-      "id": 4405,
+      "id": 4406,
       "unit_id": 4551
     },
     {
@@ -52873,7 +52885,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/one-piece-egghead-especiales/"
       },
-      "id": 4406,
+      "id": 4407,
       "unit_id": 8419
     },
     {
@@ -52885,7 +52897,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/one-piece-wano-kuni-especial/"
       },
-      "id": 4407,
+      "id": 4408,
       "unit_id": 3039
     },
     {
@@ -52897,7 +52909,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/one-piece-gyojin-tou-hen-2024/"
       },
-      "id": 4408,
+      "id": 4409,
       "unit_id": 424
     },
     {
@@ -52909,7 +52921,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/one-piece-live-action-2023/"
       },
-      "id": 4409,
+      "id": 4410,
       "unit_id": 8020
     },
     {
@@ -52921,7 +52933,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/one-punch-man-temporada-3/"
       },
-      "id": 4410,
+      "id": 4411,
       "unit_id": 2227
     },
     {
@@ -52933,7 +52945,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/onimusha/"
       },
-      "id": 4411,
+      "id": 4412,
       "unit_id": 3027
     },
     {
@@ -52945,7 +52957,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/ooyukiumi-no-kaina-hoshi-no-kenja/"
       },
-      "id": 4412,
+      "id": 4413,
       "unit_id": 5138
     },
     {
@@ -52957,7 +52969,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/oshi-no-ko-temporada-2/"
       },
-      "id": 4413,
+      "id": 4414,
       "unit_id": 3411
     },
     {
@@ -52969,7 +52981,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/osomatsu-san-temporada-4/"
       },
-      "id": 4414,
+      "id": 4415,
       "unit_id": 8963
     },
     {
@@ -52981,7 +52993,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/otome-game-no-hametsu-flag-shika-nai-akuyaku-reijou-ni-tensei-shiteshimatta-ova/"
       },
-      "id": 4415,
+      "id": 4416,
       "unit_id": 6746
     },
     {
@@ -52993,7 +53005,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/ouji-no-honmei-wa-akuyaku-reijou/"
       },
-      "id": 4416,
+      "id": 4417,
       "unit_id": 3277
     },
     {
@@ -53005,7 +53017,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/overlord-sei-oukoku-hen-the-sacred-kingdom/"
       },
-      "id": 4417,
+      "id": 4418,
       "unit_id": 9379
     },
     {
@@ -53017,7 +53029,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/paraiso-infernal-jigokuraku/"
       },
-      "id": 4418,
+      "id": 4419,
       "unit_id": 298
     },
     {
@@ -53029,7 +53041,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/paripi-koumei/"
       },
-      "id": 4419,
+      "id": 4420,
       "unit_id": 4921
     },
     {
@@ -53041,7 +53053,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/peach-boy-riverside-orden-cronologico/"
       },
-      "id": 4420,
+      "id": 4421,
       "unit_id": 1340
     },
     {
@@ -53053,7 +53065,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/planetarian-snow-globe-ova/"
       },
-      "id": 4421,
+      "id": 4422,
       "unit_id": 5899
     },
     {
@@ -53065,7 +53077,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/pluto/"
       },
-      "id": 4422,
+      "id": 4423,
       "unit_id": 5497
     },
     {
@@ -53077,7 +53089,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/pokemon-koko-2020/"
       },
-      "id": 4423,
+      "id": 4424,
       "unit_id": 8764
     },
     {
@@ -53089,7 +53101,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/poketoon/"
       },
-      "id": 4424,
+      "id": 4425,
       "unit_id": 2801
     },
     {
@@ -53101,7 +53113,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/pon-no-michi/"
       },
-      "id": 4425,
+      "id": 4426,
       "unit_id": 1185
     },
     {
@@ -53113,7 +53125,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/poputepipikku-temporada-2/"
       },
-      "id": 4426,
+      "id": 4427,
       "unit_id": 6081
     },
     {
@@ -53125,7 +53137,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/project-sekai-movie-kowareta-sekai-to-utaenai-miku/"
       },
-      "id": 4427,
+      "id": 4428,
       "unit_id": 1812
     },
     {
@@ -53137,7 +53149,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/rezero-kara-hajimeru-break-time-temporada-3/"
       },
-      "id": 4428,
+      "id": 4429,
       "unit_id": 5165
     },
     {
@@ -53149,7 +53161,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/rezero-kara-hajimeru-isekai-seikatsu-temporada-2/"
       },
-      "id": 4429,
+      "id": 4430,
       "unit_id": 1160
     },
     {
@@ -53161,7 +53173,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/rezero-kara-hajimeru-isekai-seikatsu-temporada-3/"
       },
-      "id": 4430,
+      "id": 4431,
       "unit_id": 7474
     },
     {
@@ -53173,7 +53185,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/rick-and-morty-the-anime/"
       },
-      "id": 4431,
+      "id": 4432,
       "unit_id": 8793
     },
     {
@@ -53185,7 +53197,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/romantic-killer/"
       },
-      "id": 4432,
+      "id": 4433,
       "unit_id": 4412
     },
     {
@@ -53197,7 +53209,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/rurouni-kenshin-meiji-kenkaku-romantan-kyoto-douran/"
       },
-      "id": 4433,
+      "id": 4434,
       "unit_id": 6853
     },
     {
@@ -53209,7 +53221,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/saijaku-tamer-wa-gomi-hiroi-no-tabi/"
       },
-      "id": 4434,
+      "id": 4435,
       "unit_id": 7483
     },
     {
@@ -53221,7 +53233,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/saikyou-tank-no-meikyuu-kouryaku-tairyoku-9999-no-rare-skill-mochi-tank-yuusha-party-wo-tsuihou-sareru/"
       },
-      "id": 4435,
+      "id": 4436,
       "unit_id": 8128
     },
     {
@@ -53233,7 +53245,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/sand-land-the-series/"
       },
-      "id": 4436,
+      "id": 4437,
       "unit_id": 5782
     },
     {
@@ -53245,7 +53257,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/sasaki-to-miyano-koi-ni-kizuku-mae-no-chotto-shita-hanashi/"
       },
-      "id": 4437,
+      "id": 4438,
       "unit_id": 2299
     },
     {
@@ -53257,7 +53269,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/sazanami-soushi-ni-junketsu-wo-sasagu/"
       },
-      "id": 4438,
+      "id": 4439,
       "unit_id": 9792
     },
     {
@@ -53269,7 +53281,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/secret-mission-sennyuu-sousakan-wa-zettai-ni-makenai/"
       },
-      "id": 4439,
+      "id": 4440,
       "unit_id": 9613
     },
     {
@@ -53281,7 +53293,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/seijo-no-maryoku-wa-bannou-desu-temporada-2/"
       },
-      "id": 4440,
+      "id": 4441,
       "unit_id": 86
     },
     {
@@ -53293,7 +53305,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/seishun-buta-yarou-wa-odekake-sister-no-yume-wo-minai-2023/"
       },
-      "id": 4441,
+      "id": 4442,
       "unit_id": 6793
     },
     {
@@ -53305,7 +53317,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/seishun-buta-yarou-wa-randoseru-girl-no-yume-wo-minai/"
       },
-      "id": 4442,
+      "id": 4443,
       "unit_id": 8875
     },
     {
@@ -53317,7 +53329,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/sentai-daishikkaku-temporada-2/"
       },
-      "id": 4443,
+      "id": 4444,
       "unit_id": 915
     },
     {
@@ -53329,7 +53341,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shadows-house-temporada-2/"
       },
-      "id": 4444,
+      "id": 4445,
       "unit_id": 2922
     },
     {
@@ -53341,7 +53353,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shaman-king-flowers/"
       },
-      "id": 4445,
+      "id": 4446,
       "unit_id": 9494
     },
     {
@@ -53353,7 +53365,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shangri-la-frontier-kusoge-hunter-kamige-ni-idoman-to-su-temporada-2/"
       },
-      "id": 4446,
+      "id": 4447,
       "unit_id": 4479
     },
     {
@@ -53365,7 +53377,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shin-no-nakama-ja-nai-to-yuusha-no-party-wo-oidasareta-node-henkyou-de-slow-life-suru-koto-ni-shimashita-temporada-2/"
       },
-      "id": 4447,
+      "id": 4448,
       "unit_id": 2575
     },
     {
@@ -53377,7 +53389,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shin-tennis-no-ouji-sama-hyoutei-vs-rikkai-game-of-future-ona/"
       },
-      "id": 4448,
+      "id": 4449,
       "unit_id": 4742
     },
     {
@@ -53389,7 +53401,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shingeki-no-kyojin-temporada-4/"
       },
-      "id": 4449,
+      "id": 4450,
       "unit_id": 884
     },
     {
@@ -53401,7 +53413,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shingeki-no-kyojin-requiem/"
       },
-      "id": 4450,
+      "id": 4451,
       "unit_id": 840
     },
     {
@@ -53413,7 +53425,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shinigami-bocchan-to-kuro-maid-temporada-2/"
       },
-      "id": 4451,
+      "id": 4452,
       "unit_id": 4331
     },
     {
@@ -53425,7 +53437,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shinigami-bocchan-to-kuro-maid-temporada-3/"
       },
-      "id": 4452,
+      "id": 4453,
       "unit_id": 9688
     },
     {
@@ -53437,7 +53449,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shokugeki-no-souma-san-no-sara-kyokuseiryou-no-erina-ova/"
       },
-      "id": 4453,
+      "id": 4454,
       "unit_id": 6920
     },
     {
@@ -53449,7 +53461,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shoushimin-series-temporada-2/"
       },
-      "id": 4454,
+      "id": 4455,
       "unit_id": 5572
     },
     {
@@ -53461,7 +53473,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/showtime-uta-no-oneesan-datte-shitai/"
       },
-      "id": 4455,
+      "id": 4456,
       "unit_id": 5070
     },
     {
@@ -53473,7 +53485,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/showtime-uta-no-oneesan-datte-shitai-temporada-2/"
       },
-      "id": 4456,
+      "id": 4457,
       "unit_id": 446
     },
     {
@@ -53485,7 +53497,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shuumatsu-no-valkyrie-ona/"
       },
-      "id": 4457,
+      "id": 4458,
       "unit_id": 1592
     },
     {
@@ -53497,7 +53509,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shuumatsu-no-valkyrie-temporada-2/"
       },
-      "id": 4458,
+      "id": 4459,
       "unit_id": 3505
     },
     {
@@ -53509,7 +53521,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/shy-temporada-2/"
       },
-      "id": 4459,
+      "id": 4460,
       "unit_id": 3616
     },
     {
@@ -53521,7 +53533,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/ore-dake-level-up-na-ken-solo-leveling/"
       },
-      "id": 4460,
+      "id": 4461,
       "unit_id": 3858
     },
     {
@@ -53533,7 +53545,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/solo-leveling-temporada-2-arise-from-the-shadow/"
       },
-      "id": 4461,
+      "id": 4462,
       "unit_id": 8445
     },
     {
@@ -53545,7 +53557,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/solo-leveling-reawakening/"
       },
-      "id": 4462,
+      "id": 4463,
       "unit_id": 3895
     },
     {
@@ -53557,7 +53569,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/sono-bisque-doll-wa-koi-wo-suru-temporada-2/"
       },
-      "id": 4463,
+      "id": 4464,
       "unit_id": 9976
     },
     {
@@ -53569,7 +53581,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/sora-no-aosa-wo-shiru-hito-yo/"
       },
-      "id": 4464,
+      "id": 4465,
       "unit_id": 3465
     },
     {
@@ -53581,7 +53593,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/sorairo-utility/"
       },
-      "id": 4465,
+      "id": 4466,
       "unit_id": 6024
     },
     {
@@ -53593,7 +53605,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/spriggan/"
       },
-      "id": 4466,
+      "id": 4467,
       "unit_id": 548
     },
     {
@@ -53605,7 +53617,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/spy-x-family-code-white/"
       },
-      "id": 4467,
+      "id": 4468,
       "unit_id": 1971
     },
     {
@@ -53617,7 +53629,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/summertime-render/"
       },
-      "id": 4468,
+      "id": 4469,
       "unit_id": 3102
     },
     {
@@ -53629,7 +53641,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/super-dragon-ball-heroes-ultra-god-mission/"
       },
-      "id": 4469,
+      "id": 4470,
       "unit_id": 1326
     },
     {
@@ -53641,7 +53653,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/suzume-no-tojimari/"
       },
-      "id": 4470,
+      "id": 4471,
       "unit_id": 4145
     },
     {
@@ -53653,7 +53665,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/t-p-bon-temporada-2/"
       },
-      "id": 4471,
+      "id": 4472,
       "unit_id": 2671
     },
     {
@@ -53665,7 +53677,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/takopii-no-genzai/"
       },
-      "id": 4472,
+      "id": 4473,
       "unit_id": 6614
     },
     {
@@ -53677,7 +53689,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/tekken-bloodline/"
       },
-      "id": 4473,
+      "id": 4474,
       "unit_id": 5551
     },
     {
@@ -53689,7 +53701,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/temple-tenpuru/"
       },
-      "id": 4474,
+      "id": 4475,
       "unit_id": 1342
     },
     {
@@ -53701,7 +53713,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/tensei-kizoku-kantei-skill-de-nariagaru-temporada-2/"
       },
-      "id": 4475,
+      "id": 4476,
       "unit_id": 9423
     },
     {
@@ -53713,7 +53725,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/tensei-shitara-dainana-ouji-datta-node-kimama-ni-majutsu-wo-kiwamemasu-temporada-2/"
       },
-      "id": 4476,
+      "id": 4477,
       "unit_id": 102
     },
     {
@@ -53725,7 +53737,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/tensei-shitara-slime-datta-ken-temporada-2/"
       },
-      "id": 4477,
+      "id": 4478,
       "unit_id": 9569
     },
     {
@@ -53737,7 +53749,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/tensei-shitara-slime-datta-ken-temporada-3/"
       },
-      "id": 4478,
+      "id": 4479,
       "unit_id": 2183
     },
     {
@@ -53749,7 +53761,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/terminator-0/"
       },
-      "id": 4479,
+      "id": 4480,
       "unit_id": 1150
     },
     {
@@ -53761,7 +53773,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/the-all-devouring-whale-homecoming-audio-japones/"
       },
-      "id": 4480,
+      "id": 4481,
       "unit_id": 6485
     },
     {
@@ -53773,7 +53785,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/the-all-devouring-whale-homecoming-kun-tun-tianxia-zhi-zhang-men-guilai/"
       },
-      "id": 4481,
+      "id": 4482,
       "unit_id": 5244
     },
     {
@@ -53785,7 +53797,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/the-daily-life-of-the-immortal-king-temporada-3/"
       },
-      "id": 4482,
+      "id": 4483,
       "unit_id": 9528
     },
     {
@@ -53797,7 +53809,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/the-daily-life-of-the-immortal-king-temporada-4/"
       },
-      "id": 4483,
+      "id": 4484,
       "unit_id": 8332
     },
     {
@@ -53809,7 +53821,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/the-first-slam-dunk/"
       },
-      "id": 4484,
+      "id": 4485,
       "unit_id": 344
     },
     {
@@ -53821,7 +53833,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/the-idolmster-shiny-colors-temporada-2/"
       },
-      "id": 4485,
+      "id": 4486,
       "unit_id": 9705
     },
     {
@@ -53833,7 +53845,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/the-last-summoner/"
       },
-      "id": 4486,
+      "id": 4487,
       "unit_id": 1334
     },
     {
@@ -53845,7 +53857,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/the-last-summoner-zuihou-de-zhaohuan-shi/"
       },
-      "id": 4487,
+      "id": 4488,
       "unit_id": 8143
     },
     {
@@ -53857,7 +53869,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/the-super-cube-chao-neng-lifang-chaofan-pian/"
       },
-      "id": 4488,
+      "id": 4489,
       "unit_id": 141
     },
     {
@@ -53869,7 +53881,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/tiger-bunny-temporada-2-ona/"
       },
-      "id": 4489,
+      "id": 4490,
       "unit_id": 4292
     },
     {
@@ -53881,7 +53893,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/to-be-hero-x/"
       },
-      "id": 4490,
+      "id": 4491,
       "unit_id": 752
     },
     {
@@ -53893,7 +53905,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/tokyo-mew-mew-new-temporada-2/"
       },
-      "id": 4491,
+      "id": 4492,
       "unit_id": 8220
     },
     {
@@ -53905,7 +53917,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/tonikaku-kawaii-temporada-2/"
       },
-      "id": 4492,
+      "id": 4493,
       "unit_id": 5406
     },
     {
@@ -53917,7 +53929,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/tonikaku-kawaii-sns-ova/"
       },
-      "id": 4493,
+      "id": 4494,
       "unit_id": 5159
     },
     {
@@ -53929,7 +53941,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/toutotsu-ni-egypt-shin-temporada-2/"
       },
-      "id": 4494,
+      "id": 4495,
       "unit_id": 3876
     },
     {
@@ -53941,7 +53953,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/trapezium/"
       },
-      "id": 4495,
+      "id": 4496,
       "unit_id": 1763
     },
     {
@@ -53953,7 +53965,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/tsuki-ga-michibiku-isekai-douchuu-temporada-2/"
       },
-      "id": 4496,
+      "id": 4497,
       "unit_id": 4176
     },
     {
@@ -53965,7 +53977,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/twins-hinahima/"
       },
-      "id": 4497,
+      "id": 4498,
       "unit_id": 9303
     },
     {
@@ -53977,7 +53989,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/umibe-no-etranger-2020/"
       },
-      "id": 4498,
+      "id": 4499,
       "unit_id": 193
     },
     {
@@ -53989,7 +54001,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/unnamed-memory-act-2/"
       },
-      "id": 4499,
+      "id": 4500,
       "unit_id": 3724
     },
     {
@@ -54001,7 +54013,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/urusei-yatsura-2022-temporada-2/"
       },
-      "id": 4500,
+      "id": 4501,
       "unit_id": 9690
     },
     {
@@ -54013,7 +54025,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/uzaki-chan-wa-asobitai-temporada-2/"
       },
-      "id": 4501,
+      "id": 4502,
       "unit_id": 2432
     },
     {
@@ -54025,7 +54037,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/uzumaki-2024/"
       },
-      "id": 4502,
+      "id": 4503,
       "unit_id": 5772
     },
     {
@@ -54037,7 +54049,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/vampire-in-the-garden/"
       },
-      "id": 4503,
+      "id": 4504,
       "unit_id": 9975
     },
     {
@@ -54049,7 +54061,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/vanitas-no-carte-temporada-2/"
       },
-      "id": 4504,
+      "id": 4505,
       "unit_id": 3373
     },
     {
@@ -54061,7 +54073,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/versailles-no-bara-2025/"
       },
-      "id": 4505,
+      "id": 4506,
       "unit_id": 9026
     },
     {
@@ -54073,7 +54085,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/violet-evergarden-movie-2020/"
       },
-      "id": 4506,
+      "id": 4507,
       "unit_id": 4783
     },
     {
@@ -54085,7 +54097,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/viral-hit-kenka-dokugaku/"
       },
-      "id": 4507,
+      "id": 4508,
       "unit_id": 8783
     },
     {
@@ -54097,7 +54109,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/watashi-no-shiawase-na-kekkon-temporada-2/"
       },
-      "id": 4508,
+      "id": 4509,
       "unit_id": 1081
     },
     {
@@ -54109,7 +54121,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/wind-breaker-temporada-2/"
       },
-      "id": 4509,
+      "id": 4510,
       "unit_id": 5411
     },
     {
@@ -54121,7 +54133,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/world-trigger-temporada-3/"
       },
-      "id": 4510,
+      "id": 4511,
       "unit_id": 578
     },
     {
@@ -54133,7 +54145,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/yahari-ore-no-seishun-love-comedy-wa-machigatteiru-kan-dakara-shishunki-wa-owarazu-ni-seishun-wa-tsuzuiteiku/"
       },
-      "id": 4511,
+      "id": 4512,
       "unit_id": 7491
     },
     {
@@ -54145,7 +54157,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/isshun-de-chiryou-shiteita-noni-yakutatazu-to-tsuihou-sareta-tensai-chiyushi-yami-healer-toshite-tanoshiku-ikiru/"
       },
-      "id": 4512,
+      "id": 4513,
       "unit_id": 9309
     },
     {
@@ -54157,7 +54169,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/yano-kun-no-futsuu-no-hibi/"
       },
-      "id": 4513,
+      "id": 4514,
       "unit_id": 8256
     },
     {
@@ -54169,7 +54181,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/yasuke/"
       },
-      "id": 4514,
+      "id": 4515,
       "unit_id": 8268
     },
     {
@@ -54181,7 +54193,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/yeosin-gangnim-true-beauty/"
       },
-      "id": 4515,
+      "id": 4516,
       "unit_id": 3901
     },
     {
@@ -54193,7 +54205,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/youjo-senki-sabaku-no-pasta-dai-sakusen-ova/"
       },
-      "id": 4516,
+      "id": 4517,
       "unit_id": 5083
     },
     {
@@ -54205,7 +54217,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e-temporada-2/"
       },
-      "id": 4517,
+      "id": 4518,
       "unit_id": 2109
     },
     {
@@ -54217,7 +54229,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/youkoso-jitsuryoku-shijou-shugi-no-kyoushitsu-e-iii/"
       },
-      "id": 4518,
+      "id": 4519,
       "unit_id": 4080
     },
     {
@@ -54229,7 +54241,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/yowai-5000-nen-no-soushoku-dragon-iwarenaki-jaryuu-nintei/"
       },
-      "id": 4519,
+      "id": 4520,
       "unit_id": 697
     },
     {
@@ -54241,7 +54253,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/yowai-5000-nen-no-soushoku-dragon-iwarenaki-jaryuu-nintei-temporada-2/"
       },
-      "id": 4520,
+      "id": 4521,
       "unit_id": 6182
     },
     {
@@ -54253,7 +54265,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/yu-gi-oh-gx-remaster-2025/"
       },
-      "id": 4521,
+      "id": 4522,
       "unit_id": 2594
     },
     {
@@ -54265,7 +54277,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/yuukoku-no-moriarty-temporada-2/"
       },
-      "id": 4522,
+      "id": 4523,
       "unit_id": 4297
     },
     {
@@ -54277,7 +54289,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/yuusha-party-wo-tsuihou-sareta-shiromadoushi-s-rank-boukensha-ni-hirowareru-kono-shiromadoushi-ga-kikakugai-sugiru/"
       },
-      "id": 4523,
+      "id": 4524,
       "unit_id": 5705
     },
     {
@@ -54289,7 +54301,7 @@
         "TIO": null,
         "ANIMEYTX": "https://animeytx.net/tv/yuusha-yamemasu-kenshuu-ryokou-wa-mokuteki-wo-miushinau-na/"
       },
-      "id": 4524,
+      "id": 4525,
       "unit_id": 6965
     }
   ]

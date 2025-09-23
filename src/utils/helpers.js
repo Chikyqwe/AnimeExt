@@ -14,7 +14,7 @@ async function proxyImage(url, res) {
 
   try {
     // muestra la url en el log pls
-    console.log(`[PROXY IMAGE] Haciendo petición GET a imagen: ${url}`);
+    //console.log(`[PROXY IMAGE] Haciendo petición GET a imagen: ${url}`);
     const response = await axios.get(url, { responseType: 'stream', timeout: 10000 });
     res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
     res.setHeader('Cache-Control', 'no-store');
