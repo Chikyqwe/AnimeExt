@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeEXT Redir</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: radial-gradient(ellipse at bottom, #000000 0%, #000000 100%);
+            color: #eee;
+            overflow-x: hidden;
+            text-align: center;
+            padding-top: 100px;
+        }
+        canvas#stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+        .topbar {
+            position: fixed;
+            top:0; left:0; right:0;
+            height:70px;
+            background:#111;
+            border-bottom:1px solid #333;
+            display:flex;
+            align-items:center;
+            padding:0 20px;
+            z-index:1050;
+        }
+        .topbar img { height:65px; user-select:none; margin-right:auto; }
+        #anime-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 15px;
+            color: #fff;
+            z-index: 1;
+            position: relative;
+        }
+        #anime-info img {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        #anime-info h2 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: #fff;
+        }
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 80%;
+            max-width: 250px;
+            margin: 10px;
+        }
+        .button-container button {
+            padding: 12px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #009e87;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            transition: all 0.2s ease-in-out;
+        }
+        .button-container button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+        }
+        .logo-svg{height:80px;flex-shrink:0;flex-grow:0;width:auto}
+        .logo-svg text{transition:fill .3s ease}
+        .logo-svg .main-text,.logo-svg .subtext{fill:white}
+        .logo-svg .ext-text{fill:#00bfff}
+        body.light-theme .logo-svg .main-text,body.light-theme .logo-svg .subtext{fill:#111}
+        body.light-theme .logo-svg .ext-text{fill:#2e94dc}
+    </style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<header class="topbar">
+    <a href="/" class="logo">
+        <svg viewBox="0 0 300 120" class="logo-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+            <text x="10" y="60" font-family="Alice, serif" font-size="36" font-weight="bold">
+                <tspan class="main-text">Anime </tspan>
+                <tspan class="ext-text">EXT</tspan>
+            </text>
+            <path d="M220,30 L230,60 L220,90" stroke="#3C873A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            <text x="100" y="90" text-anchor="middle" font-family="sans-serif" font-size="14" class="subtext">アニメが好きな私たち</text>
+        </svg>
+    </a>
+</header>
+
+<div id="anime-info">
+    <!-- Contenido generado dinámicamente -->
+</div>
+
+<script>
+    // Fondo estrellado
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const stars = Array.from({length: 200}, () => ({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height,
+        r: Math.random()*1.2,
+        d: Math.random()*0.5
+    }));
+
+    function drawStars(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle='#fff';
+        stars.forEach(s=>{
+            ctx.beginPath();
+            ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+            ctx.fill();
+            s.y += s.d;
+            if(s.y>canvas.height){s.y=0; s.x=Math.random()*canvas.width;}
+        });
+        requestAnimationFrame(drawStars);
+    }
+    drawStars();
+    window.addEventListener('resize', ()=>{
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    // Redirección adaptada
+    let fullAnimeList = [];
+
+    async function fetchJsonList() {
+        try {
+            const resp = await fetch('/anime/list/ext/beta/cordova/beta/anime/app/chikyqwe');
+            if (!resp.ok) throw new Error('Error al cargar la lista de animes');
+            const json = await resp.json();
+            fullAnimeList = Array.isArray(json.animes) ? json.animes : [];
+            handleRedirect();
+        } catch (err) {
+            console.error("Error cargando lista:", err);
+            document.getElementById("anime-info").innerText = "Error cargando lista.";
+        }
+    }
+
+    function getParams() {
+        const params = new URLSearchParams(window.location.search);
+        return {
+            uid: params.get("uid"),
+            title: params.get("title")
+        };
+    }
+
+    function openAnimeExtApp(uid, title) {
+        const appUrl = `animeext:///anime?uid=${uid}&title=${encodeURIComponent(title)}`;
+        const timeout = setTimeout(() => {
+            alert("No se pudo abrir la app. Por favor, abre AnimeEXT manualmente.");
+        }, 2000);
+        window.location = appUrl;
+        window.addEventListener("blur", () => clearTimeout(timeout));
+    }
+
+    function handleRedirect() {
+        const { uid } = getParams();
+        const div = document.getElementById("anime-info");
+        if (!uid) {
+            div.innerText = "Falta parámetro uid";
+            return;
+        }
+
+        const anime = fullAnimeList.find(a => String(a.unit_id) === String(uid));
+        if (!anime) {
+            div.innerText = "Anime no encontrado.";
+            return;
+        }
+
+        const webUrl = "https://animeext-m5lt.onrender.com/?shared=" + anime.unit_id;
+        document.title = anime.title
+
+        div.innerHTML = `
+        <h2>${anime.title}</h2>
+        <img src="${anime.image}" alt="${anime.title}">
+        <div class="button-container">
+          <button onclick="openAnimeExtApp(${anime.unit_id}, '${anime.title}')">Ver en la App</button>
+          <button onclick="window.open('${webUrl}', '_blank')">Ver en la Web</button>
+        </div>
+    `;
+    }
+
+    fetchJsonList();
+</script>
+
+</body>
+</html>

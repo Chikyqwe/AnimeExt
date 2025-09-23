@@ -1,5 +1,14 @@
 [
   {
+    "titulo": "Kijin Gentoushou",
+    "episodio": "Episodio 23",
+    "episodioNum": 23,
+    "url": "https://www3.animeflv.net/ver/kijin-gentoushou-23",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4133.jpg",
+    "alt": "Kijin Gentoushou",
+    "id": 3088
+  },
+  {
     "titulo": "Watashi ga Koibito ni Nareru Wake Nai jan, Muri Muri! (※Muri ja Nakatta!?)",
     "episodio": "Episodio 12",
     "episodioNum": 12,
@@ -162,15 +171,6 @@
     "id": 778
   },
   {
-    "titulo": "Hikaru ga Shinda Natsu",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/hikaru-ga-shinda-natsu-11",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4200.jpg",
-    "alt": "Hikaru ga Shinda Natsu",
-    "id": 6163
-  },
-  {
     "titulo": "Grand Blue Season 2 12",
     "episodio": "Episodio 12",
     "episodioNum": 12,
@@ -189,12 +189,12 @@
     "id": 9169
   },
   {
-    "titulo": "Koujo Denka no Kateikyoushi 12",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://tioanime.com/ver/56907-12",
-    "imagen": "https://tioanime.com/uploads/thumbs/4214.jpg",
-    "alt": "Koujo Denka no Kateikyoushi 12",
-    "id": 9584
+    "titulo": "Hikaru ga Shinda Natsu 11",
+    "episodio": "Episodio 11",
+    "episodioNum": 11,
+    "url": "https://tioanime.com/ver/hikaru-ga-shinda-natsu-11",
+    "imagen": "https://tioanime.com/uploads/thumbs/4237.jpg",
+    "alt": "Hikaru ga Shinda Natsu 11",
+    "id": 6163
   }
 ]

@@ -124,11 +124,26 @@ async function mainWindowLoad() {
     const startTime = performance.now();
     try {
         await fetchJsonList();
+
         const urlParams = new URLSearchParams(window.location.search);
         const searchTerm = urlParams.get('s');
-        const searchInput = document.getElementById('searchInput');
-        if (searchTerm && searchInput) {
-            searchInput.value = searchTerm;
+        const sharedParam = urlParams.get('shared'); // obtenemos el parámetro 'shared'
+
+        // Acción a realizar si existe el parámetro 'shared'
+        if (sharedParam) {
+            const sharedId = Number(sharedParam); // <-- Convertimos a número
+            if (!isNaN(sharedId)) {                // <-- Comprobamos que sea un número válido
+                const anim = findAnimeByUId(sharedId);
+
+                openModal(anim, anim.title);
+            } else {
+                console.warn("El parámetro 'shared' no es un número válido:", sharedParam);
+            }
+        }
+
+        if (searchTerm) {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = searchTerm;
             searchAnime(null, searchTerm);
         } else {
             const page = getPageParam();
@@ -136,7 +151,9 @@ async function mainWindowLoad() {
             renderCards(paginated);
             createPagination(fullAnimeList.length, page);
         }
+
         await waitForVisibleImages('.anime-card img');
+
     } catch (e) {
         console.error("Error al cargar los datos:", e);
     } finally {
@@ -146,6 +163,7 @@ async function mainWindowLoad() {
         setTimeout(() => hideLoader(), remainingTime);
     }
 }
+
 
 function mainPopState() {
     const page = getPageParam();
@@ -656,7 +674,7 @@ async function openModal(data, animeTitle) {
 
     // Inicializar botones
     initFavoriteButton(animeTitle);
-    initShareButton(animeTitle);
+    initShareButton(data.unit_id);
 
     if (favBtn) {
         const isFavorite = await esFavoritoIndexed(animeTitle);
@@ -666,13 +684,6 @@ async function openModal(data, animeTitle) {
         favBtn.onclick = (e) => {
             e.stopPropagation();
             toggleFavoritoIndexed(animeTitle, favBtn);
-        };
-    }
-
-    if (shareBtn) {
-        shareBtn.onclick = (e) => {
-            e.stopPropagation();
-            shareAnime(animeTitle, data.id);
         };
     }
 
@@ -1078,20 +1089,20 @@ async function initFavoriteButton(animeTitle) {
 }
 
 // Inicializar el botón de compartir
-function initShareButton(animeTitle) {
+function initShareButton(UID) {
     const btn = document.getElementById('shareBtn');
     if (!btn) return;
 
     btn.onclick = async (e) => {
         e.stopPropagation();
 
-        const shareUrl = `${window.location.origin}/?anime=${encodeURIComponent(animeTitle)}`;
+        const shareUrl = `https:animeext-m5lt.onrender.com/app/share?anime=${encodeURIComponent(UID)}`;
 
         try {
             if (navigator.share) {
                 await navigator.share({
-                    title: animeTitle,
-                    text: `Mira este anime: ${animeTitle}`,
+                    title: UID,
+                    text: `Mira este anime: ${UID}`,
                     url: shareUrl
                 });
             } else {

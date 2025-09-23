@@ -36,6 +36,10 @@ router.get('/player', (req, res) => {
   res.sendFile(path.join(__dirname, '..', '..', 'public', 'player.html'));
 });
 
+router.get('/app/share', (req, res) => {
+    console.log(`[GET /share] Sirviendo share.html`);
+    res.sendFile(path.join(__dirname, '..', '..', 'public', 'app_redir.html'));
+});
 // Ruta para el reproductor
 router.get('/privacy-policy.html', (req, res) => {
   console.log(`[GET /privacy-policy] Sirviendo privacy-policy.html`);
