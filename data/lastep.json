@@ -1,5 +1,32 @@
 [
   {
+    "titulo": "Turkey!",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/turkey-12",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4218.jpg",
+    "alt": "Turkey!",
+    "id": 533
+  },
+  {
+    "titulo": "Osomatsu-san 4th Season",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/osomatsusan-4th-season-12",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4217.jpg",
+    "alt": "Osomatsu-san 4th Season",
+    "id": 299
+  },
+  {
+    "titulo": "Kakkou no Iinazuke Season 2",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/kakkou-no-iinazuke-season-2-12",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4216.jpg",
+    "alt": "Kakkou no Iinazuke Season 2",
+    "id": 9857
+  },
+  {
     "titulo": "Kijin Gentoushou",
     "episodio": "Episodio 23",
     "episodioNum": 23,
@@ -144,31 +171,13 @@
     "id": 6745
   },
   {
-    "titulo": "Bad Girl",
+    "titulo": "Kakkou no Iinazuke Season 2 12",
     "episodio": "Episodio 12",
     "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/bad-girl-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4202.jpg",
-    "alt": "Bad Girl",
-    "id": 979
-  },
-  {
-    "titulo": "Ame to Kimi to",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/ame-to-kimi-to-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4201.jpg",
-    "alt": "Ame to Kimi to",
-    "id": 59
-  },
-  {
-    "titulo": "Fermat no Ryouri",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/fermat-no-ryouri-11",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4203.jpg",
-    "alt": "Fermat no Ryouri",
-    "id": 778
+    "url": "https://tioanime.com/ver/kakkou-no-iinazuke-season-2-12",
+    "imagen": "https://tioanime.com/uploads/thumbs/4253.jpg",
+    "alt": "Kakkou no Iinazuke Season 2 12",
+    "id": 9857
   },
   {
     "titulo": "Grand Blue Season 2 12",
@@ -187,14 +196,5 @@
     "imagen": "https://tioanime.com/uploads/thumbs/4165.jpg",
     "alt": "Jibaku Shounen Hanako-kun 2 24",
     "id": 9169
-  },
-  {
-    "titulo": "Hikaru ga Shinda Natsu 11",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://tioanime.com/ver/hikaru-ga-shinda-natsu-11",
-    "imagen": "https://tioanime.com/uploads/thumbs/4237.jpg",
-    "alt": "Hikaru ga Shinda Natsu 11",
-    "id": 6163
   }
 ]

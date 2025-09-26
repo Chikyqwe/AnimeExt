@@ -1096,7 +1096,7 @@ function initShareButton(UID) {
     btn.onclick = async (e) => {
         e.stopPropagation();
 
-        const shareUrl = `https:animeext-m5lt.onrender.com/app/share?anime=${encodeURIComponent(UID)}`;
+        const shareUrl = `https:animeext-m5lt.onrender.com/app/share?uid=${encodeURIComponent(UID)}`;
 
         try {
             if (navigator.share) {
