@@ -649,7 +649,6 @@ function ajustarAlturaEpisodesList(eps) {
 }
 async function openModal(data, animeTitle) {
     currentAnime = data;
-    ajustarAlturaEpisodesList(currentAnime.episodes_count);
 
     const modalImage = document.getElementById('modalImage');
     const modalTitle = document.getElementById('modalTitle');
@@ -783,6 +782,7 @@ async function openModal(data, animeTitle) {
             episodesList.appendChild(div);
         }
         // Renderizar episodios cuando estén listos
+        ajustarAlturaEpisodesList(episodes.length);
         if (episodesList && episodes.length > 0) {
             episodes.forEach(ep => {
                 const btn = document.createElement('button');
