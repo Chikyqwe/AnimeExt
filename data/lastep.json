@@ -1,200 +1,173 @@
 [
   {
-    "titulo": "Mizu Zokusei no Mahoutsukai",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/mizu-zokusei-no-mahoutsukai-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4190.jpg",
-    "alt": "Mizu Zokusei no Mahoutsukai",
-    "id": 1744
-  },
-  {
-    "titulo": "Kamitsubaki-shi Kensetsuchuu.",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/kamitsubakishi-kensetsuchuu-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4189.jpg",
-    "alt": "Kamitsubaki-shi Kensetsuchuu.",
-    "id": 6253
-  },
-  {
-    "titulo": "Futari Solo Camp",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/futari-solo-camp-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4221.jpg",
-    "alt": "Futari Solo Camp",
-    "id": 2404
-  },
-  {
-    "titulo": "Dr. Stone: Science Future",
-    "episodio": "Episodio 24",
-    "episodioNum": 24,
-    "url": "https://www3.animeflv.net/ver/dr-stone-science-future-24",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4116.jpg",
-    "alt": "Dr. Stone: Science Future",
-    "id": 7900
-  },
-  {
-    "titulo": "Karaoke Iko!",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/karaoke-iko-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4225.jpg",
-    "alt": "Karaoke Iko!",
-    "id": 8769
-  },
-  {
-    "titulo": "Tensei shitara Dainana Ouji Datta node, Kimama ni Majutsu wo Kiwamemasu",
-    "episodio": "Episodio 24",
-    "episodioNum": 24,
-    "url": "https://www3.animeflv.net/ver/tensei-shitara-dainana-ouji-datta-node-kimama-ni-majutsu-wo-kiwamemasu-24",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/3956.jpg",
-    "alt": "Tensei shitara Dainana Ouji Datta node, Kimama ni Majutsu wo Kiwamemasu",
-    "id": 761
+    "titulo": "Let's Play: Quest-darake no My Life",
+    "episodio": "Episodio 1",
+    "episodioNum": 1,
+    "url": "https://www3.animeflv.net/ver/lets-play-questdarake-no-my-life-1",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4231.jpg",
+    "alt": "Let's Play: Quest-darake no My Life",
+    "id": 2811
   },
   {
     "titulo": "Mushoku no Eiyuu: Betsu ni Skill Nanka Iranakatta n da ga",
-    "episodio": "Episodio 1",
-    "episodioNum": 1,
-    "url": "https://www3.animeflv.net/ver/mushoku-no-eiyuu-betsu-ni-skill-nanka-iranakatta-n-da-ga-1",
+    "episodio": "Episodio 2",
+    "episodioNum": 2,
+    "url": "https://www3.animeflv.net/ver/mushoku-no-eiyuu-betsu-ni-skill-nanka-iranakatta-n-da-ga-2",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4227.jpg",
     "alt": "Mushoku no Eiyuu: Betsu ni Skill Nanka Iranakatta n da ga",
     "id": 8920
   },
   {
-    "titulo": "Tate no Yuusha no Nariagari Season 4",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/tate-no-yuusha-no-nariagari-season-4-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4219.jpg",
-    "alt": "Tate no Yuusha no Nariagari Season 4",
-    "id": 1921
-  },
-  {
-    "titulo": "Turkey!",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/turkey-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4218.jpg",
-    "alt": "Turkey!",
-    "id": 533
-  },
-  {
-    "titulo": "Osomatsu-san 4th Season",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/osomatsusan-4th-season-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4217.jpg",
-    "alt": "Osomatsu-san 4th Season",
-    "id": 299
-  },
-  {
-    "titulo": "Kakkou no Iinazuke Season 2",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/kakkou-no-iinazuke-season-2-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4216.jpg",
-    "alt": "Kakkou no Iinazuke Season 2",
-    "id": 9857
+    "titulo": "Yano-kun no Futsuu no Hibi",
+    "episodio": "Episodio 1",
+    "episodioNum": 1,
+    "url": "https://www3.animeflv.net/ver/yanokun-no-futsuu-no-hibi-1",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4230.jpg",
+    "alt": "Yano-kun no Futsuu no Hibi",
+    "id": 4702
   },
   {
     "titulo": "Kijin Gentoushou",
-    "episodio": "Episodio 23",
-    "episodioNum": 23,
-    "url": "https://www3.animeflv.net/ver/kijin-gentoushou-23",
+    "episodio": "Episodio 24",
+    "episodioNum": 24,
+    "url": "https://www3.animeflv.net/ver/kijin-gentoushou-24",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4133.jpg",
     "alt": "Kijin Gentoushou",
     "id": 3088
   },
   {
-    "titulo": "Watashi ga Koibito ni Nareru Wake Nai jan, Muri Muri! (※Muri ja Nakatta!?)",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/watashi-ga-koibito-ni-nareru-wake-nai-jan-muri-muri-muri-ja-nakatta-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4215.jpg",
-    "alt": "Watashi ga Koibito ni Nareru Wake Nai jan, Muri Muri! (※Muri ja Nakatta!?)",
-    "id": 3390
-  },
-  {
-    "titulo": "Grand Blue Season 2",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/grand-blue-season-2-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4214.jpg",
-    "alt": "Grand Blue Season 2",
-    "id": 3611
+    "titulo": "Sozai Saishuka no Isekai Ryokouki",
+    "episodio": "Episodio 1",
+    "episodioNum": 1,
+    "url": "https://www3.animeflv.net/ver/sozai-saishuka-no-isekai-ryokouki-1",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4229.jpg",
+    "alt": "Sozai Saishuka no Isekai Ryokouki",
+    "id": 4457
   },
   {
     "titulo": "Summer Pockets",
-    "episodio": "Episodio 25",
-    "episodioNum": 25,
-    "url": "https://www3.animeflv.net/ver/summer-pockets-25",
+    "episodio": "Episodio 26",
+    "episodioNum": 26,
+    "url": "https://www3.animeflv.net/ver/summer-pockets-26",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4162.jpg",
     "alt": "Summer Pockets",
     "id": 8477
   },
   {
     "titulo": "City The Animation",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/city-the-animation-12",
+    "episodio": "Episodio 13",
+    "episodioNum": 13,
+    "url": "https://www3.animeflv.net/ver/city-the-animation-13",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4212.jpg",
     "alt": "City The Animation",
     "id": 3551
   },
   {
     "titulo": "Hotel Inhumans",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/hotel-inhumans-12",
+    "episodio": "Episodio 13",
+    "episodioNum": 13,
+    "url": "https://www3.animeflv.net/ver/hotel-inhumans-13",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4211.jpg",
     "alt": "Hotel Inhumans",
     "id": 5787
   },
   {
-    "titulo": "Busamen Gachi Fighter",
+    "titulo": "Gachiakuta",
     "episodio": "Episodio 12",
     "episodioNum": 12,
-    "url": "https://www3.animeflv.net/ver/busamen-gachi-fighter-12",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4210.jpg",
-    "alt": "Busamen Gachi Fighter",
-    "id": 7019
-  },
-  {
-    "titulo": "Gachiakuta",
-    "episodio": "Episodio 11",
-    "episodioNum": 11,
-    "url": "https://www3.animeflv.net/ver/gachiakuta-11",
+    "url": "https://www3.animeflv.net/ver/gachiakuta-12",
     "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4209.jpg",
     "alt": "Gachiakuta",
     "id": 1888
   },
   {
-    "titulo": "Tate no Yuusha no Nariagari Season 4 12",
+    "titulo": "Game Center Shoujo to Ibunka Kouryuu",
     "episodio": "Episodio 12",
     "episodioNum": 12,
-    "url": "https://tioanime.com/ver/tate-no-yuusha-no-nariagari-season-4-12",
-    "imagen": "https://tioanime.com/uploads/thumbs/4256.jpg",
-    "alt": "Tate no Yuusha no Nariagari Season 4 12",
-    "id": 1921
+    "url": "https://www3.animeflv.net/ver/game-center-shoujo-to-ibunka-kouryuu-12",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4208.jpg",
+    "alt": "Game Center Shoujo to Ibunka Kouryuu",
+    "id": 1638
   },
   {
-    "titulo": "Kakkou no Iinazuke Season 2 12",
-    "episodio": "Episodio 12",
-    "episodioNum": 12,
-    "url": "https://tioanime.com/ver/kakkou-no-iinazuke-season-2-12",
-    "imagen": "https://tioanime.com/uploads/thumbs/4253.jpg",
-    "alt": "Kakkou no Iinazuke Season 2 12",
-    "id": 9857
+    "titulo": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
+    "episodio": "Episodio 13",
+    "episodioNum": 13,
+    "url": "https://www3.animeflv.net/ver/isekai-mokushiroku-mynoghra-hametsu-no-bunmei-de-hajimeru-sekai-seifuku-13",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4206.jpg",
+    "alt": "Isekai Mokushiroku Mynoghra: Hametsu no Bunmei de Hajimeru Sekai Seifuku",
+    "id": 5085
   },
   {
-    "titulo": "Grand Blue Season 2 12",
+    "titulo": "Ruri no Houseki",
+    "episodio": "Episodio 13",
+    "episodioNum": 13,
+    "url": "https://www3.animeflv.net/ver/ruri-no-houseki-13",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4204.jpg",
+    "alt": "Ruri no Houseki",
+    "id": 3129
+  },
+  {
+    "titulo": "Hikaru ga Shinda Natsu",
     "episodio": "Episodio 12",
     "episodioNum": 12,
-    "url": "https://tioanime.com/ver/grand-blue-season-2-12",
-    "imagen": "https://tioanime.com/uploads/thumbs/4251.jpg",
-    "alt": "Grand Blue Season 2 12",
-    "id": 3611
+    "url": "https://www3.animeflv.net/ver/hikaru-ga-shinda-natsu-12",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4200.jpg",
+    "alt": "Hikaru ga Shinda Natsu",
+    "id": 6163
+  },
+  {
+    "titulo": "Fermat no Ryouri",
+    "episodio": "Episodio 12",
+    "episodioNum": 12,
+    "url": "https://www3.animeflv.net/ver/fermat-no-ryouri-12",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4203.jpg",
+    "alt": "Fermat no Ryouri",
+    "id": 778
+  },
+  {
+    "titulo": "Yasei no Last Boss ga Arawareta!",
+    "episodio": "Episodio 1",
+    "episodioNum": 1,
+    "url": "https://www3.animeflv.net/ver/yasei-no-last-boss-ga-arawareta-1",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4228.jpg",
+    "alt": "Yasei no Last Boss ga Arawareta!",
+    "id": 7062
+  },
+  {
+    "titulo": "Seishun Buta Yarou wa Santa Claus no Yume wo Minai",
+    "episodio": "Episodio 13",
+    "episodioNum": 13,
+    "url": "https://www3.animeflv.net/ver/seishun-buta-yarou-wa-santa-claus-no-yume-wo-minai-13",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4199.jpg",
+    "alt": "Seishun Buta Yarou wa Santa Claus no Yume wo Minai",
+    "id": 2504
+  },
+  {
+    "titulo": "Kaijuu 8-gou 2nd Season",
+    "episodio": "Episodio 11",
+    "episodioNum": 11,
+    "url": "https://www3.animeflv.net/ver/kaijuu-8gou-2nd-season-11",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4224.jpg",
+    "alt": "Kaijuu 8-gou 2nd Season",
+    "id": 3019
+  },
+  {
+    "titulo": "Anne Shirley",
+    "episodio": "Episodio 24",
+    "episodioNum": 24,
+    "url": "https://www3.animeflv.net/ver/anne-shirley-24",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4147.jpg",
+    "alt": "Anne Shirley",
+    "id": 5182
+  },
+  {
+    "titulo": "Shin Samurai-den Yaiba",
+    "episodio": "Episodio 24",
+    "episodioNum": 24,
+    "url": "https://www3.animeflv.net/ver/shin-samuraiden-yaiba-24",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4145.jpg",
+    "alt": "Shin Samurai-den Yaiba",
+    "id": 9833
   }
 ]

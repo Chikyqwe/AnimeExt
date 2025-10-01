@@ -67,7 +67,13 @@ console.log('[INFO] Configurando middleware...');
 app.use(favicon(path.join('./public', 'img', 'favicon.png')));
 console.log('[MIDDLEWARE] Favicon configurado.');
 
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permite cualquier origen que haga la petición (o null si es app móvil)
+    callback(null, true);
+  },
+  credentials: true
+}));
 console.log('[MIDDLEWARE] CORS habilitado.');
 
 app.use(cookieParser());
