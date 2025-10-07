@@ -30,17 +30,23 @@ router.get('/api/player', async (req, res) => {
     }
     let maxEpisodes = 1;      // default mínimo 1
     let selectedSource = null;
+  for (const source of ['FLV', 'TIO', 'ANIMEYTX']) {
+      if (anime_data.sources && anime_data.sources[source]) {
+          console.log(`[API PLAYER] Obteniendo episodios desde fuente: ${source}`);
+          
+          try {
+              const epData = await getEpisodes(anime_data.sources[source]);
 
-    for (const source of ['FLV', 'TIO', 'ANIMEYTX']) {
-        if (anime_data.sources && anime_data.sources[source]) {
-            const epData = await getEpisodes(anime_data.sources[source]);
-
-            if (epData.episodes && epData.episodes.length > maxEpisodes) {
-                maxEpisodes = epData.episodes.length;
-                selectedSource = source;
-            }
-        }
-    }
+              if (epData.episodes && epData.episodes.length > maxEpisodes) {
+                  maxEpisodes = epData.episodes.length;
+                  selectedSource = source;
+              }
+          } catch (error) {
+              console.warn(`[API PLAYER] Error obteniendo episodios de ${source}:`, error.message || error);
+              // continúa con la siguiente fuente
+          }
+      }
+  }
 
     console.log(`[API PLAYER] Fuente seleccionada: ${selectedSource} con ${maxEpisodes} episodios`);
 

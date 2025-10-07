@@ -278,7 +278,25 @@ const instance = axios.create({
 });
 
 async function getEpisodes(url) {
-  const { data } = await instance.get(url);
+  try {
+    const response = await instance.get(url);
+    data = response.data;
+  } catch (error) {
+    // Aquí puedes capturar distintos tipos de errores
+    if (error.response) {
+      // La petición se realizó y el servidor respondió con un código distinto a 2xx
+      console.warn(`[Axios] Error HTTP ${error.response.status} al obtener ${url}`);
+    } else if (error.request) {
+      // La petición fue hecha pero no hubo respuesta
+      console.warn(`[Axios] No hubo respuesta al intentar ${url}`);
+    } else {
+      // Otro error al configurar la petición
+      console.warn(`[Axios] Error al hacer request a ${url}:`, error.message);
+    }
+
+    // Retornar un objeto vacío o con success: false para que no explote
+    return { success: false };
+  }
 
   // ==============================
   // CASO 1 y 2 (AnimeFLV con <script>)
