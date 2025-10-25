@@ -1,6 +1,6 @@
 {
   "name": "animeext",
-  "version": "14.7.2",
+  "version": "14.7.4",
   "description": "Server of Anime Ext",
   "main": "main.js",
   "scripts": {

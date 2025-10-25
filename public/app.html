@@ -177,9 +177,10 @@ body.light-theme .logo-svg .ext-text{fill:#2e94dc}
     <p>Ver anime de noche sin cansar la vista.</p>
   </div>
   <div class="feature-card">
-    <i class="bi bi-hourglass-split"></i>
-    <h3>Próximamente</h3>
-    <p>Funciones como notificaciones están en desarrollo.</p>
+    <!-- FUNCIONES EXCLUSIVAS -->
+    <i class="bi bi-star-fill"></i>
+    <h3>Funciones Exclusivas</h3>
+    <p>Funciones exclusivas en la app para mejorar su experiencia.</p>
   </div>
 </section>
 
@@ -218,23 +219,27 @@ function convertLink(link) {
 // Función para actualizar la info de la app y el carrusel
 async function updateAppInfo() {
   try {
-    const res = await fetch(versionURL);
+    const res = await fetch('/app/v');
     if (!res.ok) throw new Error('Error al obtener la versión');
     const data = await res.json();
-    
+
     const actual = data.actual;
 
     // Actualizar botón de descarga y texto de versión
     const downloadBtn = document.querySelector('.download-btn');
     const heroText = document.querySelector('header.hero p');
-    downloadBtn.href = convertLink(actual.link);
-    heroText.textContent = `Abre la app y empieza a ver tus animes favoritos al instante, rápida, ligera y siempre a la mano. Anime Ext App ${actual.version}`;
+
+    if(actual && actual.code) {
+      downloadBtn.href = `https://animeext.xo.je/app/beta/dw.php?version=${actual.code}`;
+      heroText.textContent = `Abre la app y empieza a ver tus animes favoritos al instante, rápida, ligera y siempre a la mano. Anime Ext App ${actual.version}`;
+    } else {
+      console.warn('No hay versión actual disponible.');
+      downloadBtn.href = '#';
+    }
 
     // Crear carrusel dinámico de capturas si existen
     const carouselInner = document.getElementById('carousel-inner');
     const carouselIndicators = document.getElementById('carousel-indicators');
-
-    // Limpiar carrusel existente
     carouselInner.innerHTML = '';
     carouselIndicators.innerHTML = '';
 

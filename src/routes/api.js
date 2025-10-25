@@ -512,7 +512,7 @@ router.get('/api/queue/status', (req, res) => {
   }
 });
 router.get('/app/v', async (req, res) => {
-  const apiUrl = 'https://animeext.xo.je/app/beta/dw.php?d';
+  const apiUrl = 'https://animeext.xo.je/app/beta/dw.php';
   try {
     const cookieVal = await getCookie(apiUrl);
     const { data } = await axios.get(apiUrl, {

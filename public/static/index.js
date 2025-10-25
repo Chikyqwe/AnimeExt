@@ -199,17 +199,29 @@ function toggleMobileMenu(show) {
     mobileDropdownMenu.setAttribute('aria-hidden', !show);
 }
 
-function setActiveMenu(idActivo) {
+function setActiveMenu(num) {
+    // Acepta solo números válidos (1 a 4)
+    if (![1, 2, 3, 4].includes(num)) return;
+
+    // IDs de los enlaces del menú principal
+    const ids = ['navInicio', 'navDirectorio', 'navHistorial', 'navFavoritos'];
+    const idActivo = ids[num - 1];
+    const mobileIdActivo = 'mobile' + idActivo.charAt(0).toUpperCase() + idActivo.slice(1);
+
+    // Obtener todos los enlaces de ambos menús
     const mainLinks = document.querySelectorAll('nav.main-nav a.nav-item');
     const mobileLinks = document.querySelectorAll('#mobileDropdownMenu a');
+
+    // Aplicar la clase active al que corresponde
     [...mainLinks, ...mobileLinks].forEach(link => {
-        if (link.id === idActivo || link.id === idActivo.replace('mobile', '')) {
+        if (link.id === idActivo || link.id === mobileIdActivo) {
             link.classList.add('active');
         } else {
             link.classList.remove('active');
         }
     });
 }
+
 
 function mostrarInicio(e) {
     if (e && e.preventDefault) e.preventDefault();
@@ -219,7 +231,7 @@ function mostrarInicio(e) {
     document.getElementById("directory-section").classList.add("d-none");
     document.getElementById("historial-section").classList.add("d-none");
     document.getElementById("favoritos-section").classList.add("d-none");
-    setActiveMenu('mobileNavInicio');
+    setActiveMenu(1);
     document.querySelector('.sidebar').classList.remove('d-none');
     document.getElementById("pagination-controls").classList.add("d-none");
     setTimeout(() => hideLoader(), 1000);
@@ -233,7 +245,7 @@ function mostrarDirectorio(e) {
     document.getElementById("directory-section").classList.remove("d-none");
     document.getElementById("historial-section").classList.add("d-none");
     document.getElementById("favoritos-section").classList.add("d-none");
-    setActiveMenu('mobileNavDirectorio');
+    setActiveMenu(2);
     document.querySelector('.sidebar').classList.add("d-none");
     document.getElementById("pagination-controls").classList.remove("d-none");
 
@@ -259,7 +271,7 @@ async function mostrarHistorial(e) {
     document.getElementById("historial-section").classList.remove("d-none");
     document.getElementById("favoritos-section").classList.add("d-none");
     document.getElementById("search-section").classList.add("d-none");
-    setActiveMenu('mobileNavHistorial');
+    setActiveMenu(3);
     document.querySelector('.sidebar').classList.add("d-none");
     document.getElementById("pagination-controls").classList.add("d-none");
 
@@ -277,24 +289,80 @@ async function mostrarHistorial(e) {
         history.forEach(item => {
             const anime = fullAnimeList.find(a => a.unit_id === item.uid || a.id === item.uid);
             if (!anime) return;
+
             const card = document.createElement('div');
             card.className = 'anime-card';
             card.tabIndex = 0;
             card.setAttribute('role', 'button');
-            const proxyUrl = `/image?url=${encodeURIComponent(anime.image)}`;
+            const proxyUrl = `https://animeext-m5lt.onrender.com/image?url=${encodeURIComponent(anime.image)}`;
             card.innerHTML = `
                 <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(anime.title)}" class="anime-image" />
                 <div class="anime-title">${cleanTitle(anime.title)}</div>
+                <div class="anime-overlay">
+                    <button class="btn-remove">
+                        <i class="bi bi-trash"></i> 
+                        Quitar del historial
+                    </button>
+                    <button class="btn-playlist">
+                        <i class="bi bi-plus-circle"></i> Añadir a playlist
+                    </button>   
+                </div>
             `;
-            card.addEventListener('click', () => openModal(anime, anime.title));
+
+            // Abrir anime normalmente
+            card.addEventListener('click', () => {
+                if (!card.classList.contains('show-options')) {
+                    openModal(anime, anime.title);
+                }
+            });
+
+            // Mantener presionado (móvil)
+            let pressTimer;
+            card.addEventListener('touchstart', () => {
+                pressTimer = setTimeout(() => {
+                    card.classList.add('show-options');
+                }, 500); // medio segundo
+            });
+            card.addEventListener('touchend', () => clearTimeout(pressTimer));
+
+            // Clic derecho (PC)
+            card.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                card.classList.toggle('show-options');
+            });
+
+            // Botones
+            card.querySelector('.btn-remove').addEventListener('click', async (ev) => {
+                ev.stopPropagation();
+                card.classList.add('removing'); // 👈 activamos la animación
+
+                // Esperamos que termine la animación antes de eliminar
+                card.addEventListener('animationend', async () => {
+                    await removeFromHistory(anime.unit_id || anime.id);
+                    card.remove();
+                }, { once: true });
+            });
+
+            card.querySelector('.btn-playlist').addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                alert(`(Próximamente) Añadir ${cleanTitle(anime.title)} a playlist`);
+            });
+
+            // Cerrar si se toca fuera
+            document.addEventListener('click', (e) => {
+                if (!card.contains(e.target)) {
+                    card.classList.remove('show-options');
+                }
+            });
+
             container.appendChild(card);
         });
+
     } catch (err) {
         container.innerHTML = '<p class="text-danger">Error al cargar historial.</p>';
     }
     setTimeout(() => hideLoader(), 1000);
 }
-
 /**
  * =======================================================
  * FAVORITOS
@@ -327,7 +395,7 @@ async function mostrarFavoritos(e) {
     document.getElementById("historial-section").classList.add("d-none");
     document.getElementById("favoritos-section").classList.remove("d-none");
     document.getElementById("search-section").classList.add("d-none");
-    setActiveMenu('mobileNavFavoritos');
+    setActiveMenu(4);
     document.querySelector('.sidebar').classList.add("d-none");
     document.getElementById("pagination-controls").classList.add("d-none");
 

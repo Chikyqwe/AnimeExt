@@ -60,7 +60,7 @@ async function extractAllVideoLinks(pageUrl) {
   if (pageUrl.includes('animeytx')) {
     try {
       // 1️⃣ Obtener HTML inicial para extraer script de cookie
-      const apiUrl = `https://animeext.unaux.com/get_vid_servers.php?url=${encodeURIComponent(pageUrl)}`;
+      const apiUrl = `https://animeext.xo.je/get_vid_servers.php?url=${encodeURIComponent(pageUrl)}`;
       const { data: html } = await axios.get(apiUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html' },
         timeout: 8000,
