@@ -130,9 +130,15 @@
 <div class="bottom-bar">
   <button class="bottom-btn" onclick="abrirMenuOpciones()"><i class="fa fa-bars"></i></button>
   <div id="pagination-controls" class="pagination-controls d-none"></div>
-  <div id="bottomThemeIcon" onclick="toggleTheme()" class="bottom-btn">
+  <div id="bottomThemeIcon" onclick="toggleTheme(true)" class="bottom-btn">
     <i id="themeIcon" class="fa fa-moon"></i>    
   </div>
+</div>
+<div id="warningOverlay" class="policy-overlay d-none">
+  <div class="policy-modal">
+    <div class="mb-3"><i class="fa-solid fa-triangle-exclamation fa-2x text-warning"></i></div>
+    <h3 class="mb-2"id="warningTitle"></h3>
+    <p class="px-2" id="warningMessage"></p>
 </div>
 
 <div id="policyOverlay" class="policy-overlay d-none">

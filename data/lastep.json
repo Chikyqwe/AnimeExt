@@ -1,5 +1,131 @@
 [
   {
+    "titulo": "Kingdom 6th Season",
+    "episodio": "Episodio 4",
+    "episodioNum": 4,
+    "url": "https://www3.animeflv.net/ver/kingdom-6th-season-4",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4253.jpg",
+    "alt": "Kingdom 6th Season",
+    "id": 2621
+  },
+  {
+    "titulo": "Ranma ½ (2024) 2nd Season",
+    "episodio": "Episodio 4",
+    "episodioNum": 4,
+    "url": "https://www3.animeflv.net/ver/ranma-12-2024-2nd-season-4",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4248.jpg",
+    "alt": "Ranma ½ (2024) 2nd Season",
+    "id": 3671
+  },
+  {
+    "titulo": "Tomodachi no Imouto ga Ore ni dake Uzai",
+    "episodio": "Episodio 4",
+    "episodioNum": 4,
+    "url": "https://www3.animeflv.net/ver/tomodachi-no-imouto-ga-ore-ni-dake-uzai-4",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4249.jpg",
+    "alt": "Tomodachi no Imouto ga Ore ni dake Uzai",
+    "id": 5837
+  },
+  {
+    "titulo": "Toujima Tanzaburou wa Kamen Rider ni Naritai",
+    "episodio": "Episodio 4",
+    "episodioNum": 4,
+    "url": "https://www3.animeflv.net/ver/toujima-tanzaburou-wa-kamen-rider-ni-naritai-4",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4252.jpg",
+    "alt": "Toujima Tanzaburou wa Kamen Rider ni Naritai",
+    "id": 6368
+  },
+  {
+    "titulo": "Gnosia",
+    "episodio": "Episodio 3",
+    "episodioNum": 3,
+    "url": "https://www3.animeflv.net/ver/gnosia-3",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4270.jpg",
+    "alt": "Gnosia",
+    "id": 716
+  },
+  {
+    "titulo": "Shuumatsu Touring",
+    "episodio": "Episodio 4",
+    "episodioNum": 4,
+    "url": "https://www3.animeflv.net/ver/shuumatsu-touring-4",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4245.jpg",
+    "alt": "Shuumatsu Touring",
+    "id": 6421
+  },
+  {
+    "titulo": "Fumetsu no Anata e Season 3",
+    "episodio": "Episodio 4",
+    "episodioNum": 4,
+    "url": "https://www3.animeflv.net/ver/fumetsu-no-anata-e-season-3-4",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4250.jpg",
+    "alt": "Fumetsu no Anata e Season 3",
+    "id": 2002
+  },
+  {
+    "titulo": "Spy x Family Season 3",
+    "episodio": "Episodio 4",
+    "episodioNum": 4,
+    "url": "https://www3.animeflv.net/ver/spy-x-family-season-3-4",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4246.jpg",
+    "alt": "Spy x Family Season 3",
+    "id": 583
+  },
+  {
+    "titulo": "Nageki no Bourei wa Intai shitai",
+    "episodio": "Episodio 17",
+    "episodioNum": 17,
+    "url": "https://www3.animeflv.net/ver/nageki-no-bourei-wa-intai-shitai-17",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4045.jpg",
+    "alt": "Nageki no Bourei wa Intai shitai",
+    "id": 8285
+  },
+  {
+    "titulo": "Yasei no Last Boss ga Arawareta!",
+    "episodio": "Episodio 5",
+    "episodioNum": 5,
+    "url": "https://www3.animeflv.net/ver/yasei-no-last-boss-ga-arawareta-5",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4228.jpg",
+    "alt": "Yasei no Last Boss ga Arawareta!",
+    "id": 7062
+  },
+  {
+    "titulo": "Mikata ga Yowasugite Hojo Mahou",
+    "episodio": "Episodio 4",
+    "episodioNum": 4,
+    "url": "https://www3.animeflv.net/ver/mikata-ga-yowasugite-hojo-mahou-4",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4244.jpg",
+    "alt": "Mikata ga Yowasugite Hojo Mahou",
+    "id": 119
+  },
+  {
+    "titulo": "Kekkon Yubiwa Monogatari II",
+    "episodio": "Episodio 4",
+    "episodioNum": 4,
+    "url": "https://www3.animeflv.net/ver/kekkon-yubiwa-monogatari-ii-4",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4251.jpg",
+    "alt": "Kekkon Yubiwa Monogatari II",
+    "id": 4220
+  },
+  {
+    "titulo": "Kao ni Denai Kashiwada-san to Kao ni Deru Oota-kun",
+    "episodio": "Episodio 4",
+    "episodioNum": 4,
+    "url": "https://www3.animeflv.net/ver/kao-ni-denai-kashiwadasan-to-kao-ni-deru-ootakun-4",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4243.jpg",
+    "alt": "Kao ni Denai Kashiwada-san to Kao ni Deru Oota-kun",
+    "id": 25
+  },
+  {
+    "titulo": "Boku no Hero Academia: Final Season",
+    "episodio": "Episodio 4",
+    "episodioNum": 4,
+    "url": "https://www3.animeflv.net/ver/boku-no-hero-academia-final-season-4",
+    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4247.jpg",
+    "alt": "Boku no Hero Academia: Final Season",
+    "id": 6668
+  },
+  {
     "titulo": "Sanda",
     "episodio": "Episodio 4",
     "episodioNum": 4,
@@ -54,138 +180,21 @@
     "id": 9695
   },
   {
-    "titulo": "Potion, Wagami wo Tasukeru",
+    "titulo": "Fumetsu no Anata e Season 3 4",
     "episodio": "Episodio 4",
     "episodioNum": 4,
-    "url": "https://www3.animeflv.net/ver/potion-wagami-wo-tasukeru-4",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4238.jpg",
-    "alt": "Potion, Wagami wo Tasukeru",
-    "id": 9304
+    "url": "https://tioanime.com/ver/fumetsu-no-anata-e-season-3-4",
+    "imagen": "https://tioanime.com/uploads/thumbs/4287.jpg",
+    "alt": "Fumetsu no Anata e Season 3 4",
+    "id": 2002
   },
   {
-    "titulo": "Towa no Yuugure",
+    "titulo": "Spy x Family Season 3 4",
     "episodio": "Episodio 4",
     "episodioNum": 4,
-    "url": "https://www3.animeflv.net/ver/towa-no-yuugure-4",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4237.jpg",
-    "alt": "Towa no Yuugure",
-    "id": 7190
-  },
-  {
-    "titulo": "Akujiki Reijou to Kyouketsu Koushaku",
-    "episodio": "Episodio 4",
-    "episodioNum": 4,
-    "url": "https://www3.animeflv.net/ver/akujiki-reijou-to-kyouketsu-koushaku-4",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4236.jpg",
-    "alt": "Akujiki Reijou to Kyouketsu Koushaku",
-    "id": 8990
-  },
-  {
-    "titulo": "Taiyou yori mo Mabushii Hoshi",
-    "episodio": "Episodio 4",
-    "episodioNum": 4,
-    "url": "https://www3.animeflv.net/ver/taiyou-yori-mo-mabushii-hoshi-4",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4233.jpg",
-    "alt": "Taiyou yori mo Mabushii Hoshi",
-    "id": 6082
-  },
-  {
-    "titulo": "Futari Solo Camp",
-    "episodio": "Episodio 16",
-    "episodioNum": 16,
-    "url": "https://www3.animeflv.net/ver/futari-solo-camp-16",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4221.jpg",
-    "alt": "Futari Solo Camp",
-    "id": 2404
-  },
-  {
-    "titulo": "Watashi wo Tabetai, Hitodenashi",
-    "episodio": "Episodio 4",
-    "episodioNum": 4,
-    "url": "https://www3.animeflv.net/ver/watashi-wo-tabetai-hitodenashi-4",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4235.jpg",
-    "alt": "Watashi wo Tabetai, Hitodenashi",
-    "id": 6889
-  },
-  {
-    "titulo": "Bukiyou na Senpai.",
-    "episodio": "Episodio 4",
-    "episodioNum": 4,
-    "url": "https://www3.animeflv.net/ver/bukiyou-na-senpai-4",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4234.jpg",
-    "alt": "Bukiyou na Senpai.",
-    "id": 1347
-  },
-  {
-    "titulo": "Wandance",
-    "episodio": "Episodio 3",
-    "episodioNum": 3,
-    "url": "https://www3.animeflv.net/ver/wandance-3",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4268.jpg",
-    "alt": "Wandance",
-    "id": 7172
-  },
-  {
-    "titulo": "Let's Play: Quest-darake no My Life",
-    "episodio": "Episodio 4",
-    "episodioNum": 4,
-    "url": "https://www3.animeflv.net/ver/lets-play-questdarake-no-my-life-4",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4231.jpg",
-    "alt": "Let's Play: Quest-darake no My Life",
-    "id": 2811
-  },
-  {
-    "titulo": "Tensei Akujo no Kuro Rekishi",
-    "episodio": "Episodio 3",
-    "episodioNum": 3,
-    "url": "https://www3.animeflv.net/ver/tensei-akujo-no-kuro-rekishi-3",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4269.jpg",
-    "alt": "Tensei Akujo no Kuro Rekishi",
-    "id": 3146
-  },
-  {
-    "titulo": "Kakuriyo no Yadomeshi Ni",
-    "episodio": "Episodio 4",
-    "episodioNum": 4,
-    "url": "https://www3.animeflv.net/ver/kakuriyo-no-yadomeshi-ni-4",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4232.jpg",
-    "alt": "Kakuriyo no Yadomeshi Ni",
-    "id": 8865
-  },
-  {
-    "titulo": "Mushoku no Eiyuu: Betsu ni Skill Nanka Iranakatta n da ga",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://www3.animeflv.net/ver/mushoku-no-eiyuu-betsu-ni-skill-nanka-iranakatta-n-da-ga-5",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4227.jpg",
-    "alt": "Mushoku no Eiyuu: Betsu ni Skill Nanka Iranakatta n da ga",
-    "id": 8920
-  },
-  {
-    "titulo": "Yano-kun no Futsuu no Hibi",
-    "episodio": "Episodio 4",
-    "episodioNum": 4,
-    "url": "https://www3.animeflv.net/ver/yanokun-no-futsuu-no-hibi-4",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4230.jpg",
-    "alt": "Yano-kun no Futsuu no Hibi",
-    "id": 4702
-  },
-  {
-    "titulo": "Ninja to Gokudou",
-    "episodio": "Episodio 3",
-    "episodioNum": 3,
-    "url": "https://www3.animeflv.net/ver/ninja-to-gokudou-3",
-    "imagen": "https://www3.animeflv.net/uploads/animes/thumbs/4267.jpg",
-    "alt": "Ninja to Gokudou",
-    "id": 6160
-  },
-  {
-    "titulo": "Cat's♥Eye 5",
-    "episodio": "Episodio 5",
-    "episodioNum": 5,
-    "url": "https://tioanime.com/ver/catseye-5",
-    "imagen": "https://tioanime.com/uploads/thumbs/4309.jpg",
-    "alt": "Cat's♥Eye 5",
-    "id": 1797
+    "url": "https://tioanime.com/ver/spy-x-family-season-3-4",
+    "imagen": "https://tioanime.com/uploads/thumbs/4284.jpg",
+    "alt": "Spy x Family Season 3 4",
+    "id": 583
   }
 ]

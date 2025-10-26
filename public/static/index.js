@@ -711,7 +711,7 @@ function ajustarAlturaEpisodesList(eps) {
         episodesList.style.height = 'auto';
       } else {
         console.log("Ajustando altura de episodes-list para 12 o más episodios");
-        episodesList.style.height = '645px';
+        episodesList.style.height = '380px';
       }
     }
 }
@@ -1164,18 +1164,23 @@ function initShareButton(UID) {
     btn.onclick = async (e) => {
         e.stopPropagation();
 
-        const shareUrl = `https:animeext-m5lt.onrender.com/app/share?uid=${encodeURIComponent(UID)}`;
+        const shareUrl = `/app/share?uid=${encodeURIComponent(UID)}`;
 
         try {
             if (navigator.share) {
                 await navigator.share({
-                    title: UID,
-                    text: `Mira este anime: ${UID}`,
+                    title: findAnimeByUId(UID)?.title || 'Anime',
+                    text: `Mira este anime: ${findAnimeByUId(UID)?.title || 'Anime'}`,
                     url: shareUrl
                 });
             } else {
                 await navigator.clipboard.writeText(shareUrl);
-                alert('Link copiado al portapapeles ✅');
+                const originalText = btn.textContent;
+                btn.textContent = 'Copiado al portapapeles';
+                setTimeout(() => {
+                    // añadir antes <i class="fa fa-share-alt"></i>
+                    btn.innerHTML = `<i class="fa fa-share-alt"></i> ${originalText}`;
+                }, 2000);
             }
         } catch (err) {
             console.error('Error compartiendo:', err);

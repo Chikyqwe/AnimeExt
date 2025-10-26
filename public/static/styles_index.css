@@ -11,6 +11,7 @@
     align-items: center;
     z-index: 9999;
     transition: opacity 1s ease;
+    backdrop-filter: blur(12px);
 }
 
 #loader.fade-out {
@@ -224,6 +225,10 @@ body {
   animation: removeCard 0.4s ease forwards;
 }
 /* Modal */
+#animeModal {
+  backdrop-filter: blur(8px);
+  padding-left: 0px;
+}
 .modal-content {
     background: #212121;
     border-radius: 1rem;
@@ -244,6 +249,7 @@ body {
     padding: 1rem 2rem;
     overflow-y: auto;
     background: #181818;
+    border-radius: 1rem;
 }
 
 .modal-left {
@@ -316,7 +322,7 @@ body {
     background: #1e1e1e;
     border-radius: 10px;
     padding: 16px;
-    max-height: 640px;
+    max-height: 380px;
     overflow-y: auto;
     display: grid;
     gap: 12px;
@@ -1173,9 +1179,10 @@ body.light-theme .menu-text {
 }
 
 .description-text {
-    font-size: 1rem;
-    font-weight: 400;
-    color: #dddddd;
-    text-align: justify;
-    /* para bloques largos de texto */
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
+
