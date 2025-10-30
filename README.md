@@ -58,9 +58,7 @@ Consideraciones
 - El uso de este software para propósitos comerciales o de redistribución puede violar los términos de uso de terceros.
 - AnimeExt no esta monetizado, ni contiene anuncios por si mismo, reproductores de terceros , pueden contener anuncios y/o rastreadores.
 
-Estructura del proyecto
-=======================
-# 📂 Estructura del proyecto: `AnimeExt`
+# 📂 Estructura del proyecto:
 
 - 📄 [.env](.env)
 - 📄 [.gitignore](.gitignore)
