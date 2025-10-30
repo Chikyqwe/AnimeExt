@@ -61,6 +61,7 @@ router.get('/app/share', (req, res) => {
       <meta property="og:description" content="${desc}">
       <meta property="og:image" content="${image}">
       <meta property="og:url" content="${url}">
+      <meta name="twitter:card" content="summary">  
       <meta property="og:image:width" content="260">
       <meta property="og:image:height" content="370">
     `;

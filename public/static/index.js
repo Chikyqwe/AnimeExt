@@ -1170,7 +1170,6 @@ function initShareButton(UID) {
             if (navigator.share) {
                 await navigator.share({
                     title: findAnimeByUId(UID)?.title || 'Anime',
-                    text: `Mira este anime: ${findAnimeByUId(UID)?.title || 'Anime'}`,
                     url: shareUrl
                 });
             } else {
