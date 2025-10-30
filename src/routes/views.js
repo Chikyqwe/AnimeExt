@@ -61,9 +61,8 @@ router.get('/app/share', (req, res) => {
       <meta property="og:description" content="${desc}">
       <meta property="og:image" content="${image}">
       <meta property="og:url" content="${url}">
-      <meta name="twitter:card" content="summary_large_image">
-      <meta property="og:image:width" content="1280">
-      <meta property="og:image:height" content="720">
+      <meta property="og:image:width" content="260">
+      <meta property="og:image:height" content="370">
     `;
 
     // Insertar antes de </head>
