@@ -30,7 +30,12 @@ const TIMEOUT_MS = 20000; // 20 segundos
 // Función para el stream de video
 function streamVideo(videoUrl, req, res) {
   if (!videoUrl) return res.status(400).send('Falta parámetro videoUrl');
-
+  // 🔹 Cabeceras CORS y de política cruzada
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length');
   const parsedUrl = urlLib.parse(videoUrl);
   const isHttps = parsedUrl.protocol === 'https:';
   const protocol = isHttps ? https : http;
