@@ -1,4 +1,4 @@
-// scraper.js
+// scraper-safe.js
 const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
@@ -11,7 +11,6 @@ const ANIME_LIST_PATH = path.join(__dirname, "..", "..", "data", "anime_list.jso
 const OUT_LASTEP_PATH = path.join(__dirname, "..", "..", "data", "lastep.json");
 
 // ------------------- UTILS -------------------
-
 function extractEpisodeNumber(text) {
   const match = text.match(/(\d+)(?!.*\d)/);
   return match ? parseInt(match[1], 10) : 0;
@@ -21,43 +20,21 @@ function cleanTitle(title) {
   return title.replace(/\s+\d+$/, '').trim();
 }
 
-function toSlug(text) {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+function getBaseUrl(url) {
+  if (!url) return null;
+  let base = url.replace(/\/$/, '');
+  if (base.includes("/ver/")) base = base.replace(/\/ver\/([^/]+)-\d+$/, "/anime/$1");
+  return base;
 }
 
-function mergeEpisodios(lista, nuevo) {
+function mergeEpisodio(lista, nuevo) {
   const key = cleanTitle(nuevo.titulo);
   if (!lista[key] || nuevo.episodioNum > lista[key].episodioNum) {
     lista[key] = nuevo;
   }
 }
 
-// Convierte URL de episodio a URL base de anime
-function getBaseUrl(url) {
-  if (!url) return null;
-
-  let base = url.replace(/\/$/, '');
-
-  // AnimeFLV: /ver/nombre-123  -> /anime/nombre
-  if (base.includes("/ver/")) {
-    base = base.replace(/\/ver\/([^/]+)-\d+$/, "/anime/$1");
-  }
-
-  // TioAnime: /ver/nombre-123  -> /anime/nombre
-  if (base.includes("/ver/")) {
-    base = base.replace(/\/ver\/([^/]+)-\d+$/, "/anime/$1");
-  }
-
-  return base;
-}
-
 // ------------------- SCRAPERS -------------------
-
 async function scrapeAnimeFLV() {
   const episodios = {};
   try {
@@ -71,14 +48,13 @@ async function scrapeAnimeFLV() {
       const episodioNum = extractEpisodeNumber(episodioText);
       const url = FUENTE1_URL.replace(/\/$/, '') + aTag.attr('href');
       const imagen = FUENTE1_URL.replace(/\/$/, '') + $(el).find('img').attr('src');
-      const alt = $(el).find('img').attr('alt');
-
-      mergeEpisodios(episodios, { titulo, episodio: episodioText, episodioNum, url, imagen, alt });
+      mergeEpisodio(episodios, { titulo, episodio: episodioText, episodioNum, url, imagen });
     });
+
+    $.root().remove(); // liberar memoria de cheerio
   } catch (err) {
     console.error('❌ Error en AnimeFLV:', err.message);
   }
-
   return episodios;
 }
 
@@ -95,91 +71,70 @@ async function scrapeTioAnime() {
       const url = FUENTE2_URL.replace(/\/$/, '') + aTag.attr('href');
       const imgTag = $(el).find('img');
       const imagen = FUENTE2_URL.replace(/\/$/, '') + imgTag.attr('src');
-      const alt = imgTag.attr('alt');
-
-      mergeEpisodios(episodios, { titulo, episodio: `Episodio ${episodioNum}`, episodioNum, url, imagen, alt });
+      mergeEpisodio(episodios, { titulo, episodio: `Episodio ${episodioNum}`, episodioNum, url, imagen });
     });
+
+    $.root().remove(); // liberar memoria de cheerio
   } catch (err) {
     console.error('❌ Error en TioAnime:', err.message);
   }
-
   return episodios;
 }
 
-// ------------------- MAIN -------------------
-
+// ------------------- MAIN SAFE -------------------
 async function last() {
-  let urlToUnitIdMap = {};
+  const urlToUnitIdMap = new Map();
 
-  // Leer anime_list.json y crear índice url -> unit_id
+  // Cargar unit_ids
   if (fs.existsSync(ANIME_LIST_PATH)) {
     try {
       const animeListRaw = JSON.parse(fs.readFileSync(ANIME_LIST_PATH, "utf8"));
-
-      // Si tiene propiedad "animes", úsala
-      const animeList = Array.isArray(animeListRaw.animes)
-        ? animeListRaw.animes
-        : Array.isArray(animeListRaw)
-          ? animeListRaw
-          : Object.values(animeListRaw);
-
-      console.log(`[INFO] Cargados ${animeList.length} animes desde anime_list.json`);
-
+      const animeList = Array.isArray(animeListRaw.animes) ? animeListRaw.animes : [];
       animeList.forEach(anime => {
         if (anime.sources) {
           Object.values(anime.sources).forEach(srcUrl => {
-            if (srcUrl) {
-              urlToUnitIdMap[srcUrl.replace(/\/$/, '')] = anime.unit_id;
-            }
+            if (srcUrl) urlToUnitIdMap.set(srcUrl.replace(/\/$/, ''), anime.unit_id);
           });
         }
       });
     } catch (e) {
-      console.error("[ERROR] Error leyendo anime_list.json:", e.message);
-    }
-  } else {
-    console.warn("[WARNING] No se encontró anime_list.json");
-  }
-
-  const [animeflvData, tioanimeData] = await Promise.all([
-    scrapeAnimeFLV(),
-    scrapeTioAnime()
-  ]);
-
-  const combinados = { ...animeflvData };
-  for (const key in tioanimeData) {
-    if (!combinados[key] || tioanimeData[key].episodioNum > combinados[key].episodioNum) {
-      combinados[key] = tioanimeData[key];
+      console.error("[ERROR] Leyendo anime_list.json:", e.message);
     }
   }
 
-  // Filtrar episodios que tengan unit_id válido
-  const finalList = Object.values(combinados)
-    .map(anime => {
-      const baseUrl = getBaseUrl(anime.url);
-      const unit_id = urlToUnitIdMap[baseUrl] || null;
+  const [animeflvData, tioanimeData] = await Promise.all([scrapeAnimeFLV(), scrapeTioAnime()]);
 
-      if (!unit_id) return null; // ❌ descartar si no coincide
+  // Stream para escribir el JSON sin cargar todo en memoria
+  const writeStream = fs.createWriteStream(OUT_LASTEP_PATH, { encoding: 'utf8' });
+  writeStream.write('[\n');
 
-      return {
-        ...anime,
-        id: unit_id
-      };
-    })
-    .filter(Boolean);
+  let first = true;
+  const keys = new Set([...Object.keys(animeflvData), ...Object.keys(tioanimeData)]);
 
-  fs.writeFileSync(OUT_LASTEP_PATH, JSON.stringify(finalList, null, 2));
-  console.log(`[SUCCESS] ${finalList.length} episodios guardados en lastep.json`);
+  for (const key of keys) {
+    let anime = animeflvData[key];
+    if (tioanimeData[key] && (!anime || tioanimeData[key].episodioNum > anime.episodioNum)) {
+      anime = tioanimeData[key];
+    }
+
+    const baseUrl = getBaseUrl(anime.url);
+    const unit_id = urlToUnitIdMap.get(baseUrl);
+    if (!unit_id) continue; // descartar si no tiene unit_id
+
+    const finalObj = { ...anime, id: unit_id };
+    if (!first) writeStream.write(',\n');
+    writeStream.write(JSON.stringify(finalObj));
+    first = false;
+  }
+
+  writeStream.write('\n]');
+  writeStream.close();
+
+  console.log(`[SUCCESS] Episodios guardados en ${OUT_LASTEP_PATH}`);
 }
 
 // Solo ejecutar si se corre directamente
-if (require.main === module) {
-  last();
-}
+if (require.main === module) last();
 
-// Exportar funciones
-module.exports = {
-  scrapeAnimeFLV,
-  scrapeTioAnime,
-  last
-};
+// Exportar
+module.exports = { scrapeAnimeFLV, scrapeTioAnime, last };

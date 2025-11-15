@@ -1,5 +1,5 @@
-# -----Diseñado como biblioteca e invocable como euba.recolect(url)-----
-
+# -----First version of AnimeExt , we will remember for ever-----
+"""
 import asyncio
 import re
 import json
@@ -312,3 +312,4 @@ def cli():
 
 if __name__ == "__main__":
     cli()
+"""

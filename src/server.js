@@ -6,6 +6,8 @@ const readline = require('readline');
 
 // =================== VARIABLES GLOBALES ===================
 let ultimoMantenimiento = null;
+let mantenimientoInterval = null;
+let recordatorioInterval = null;
 
 // =================== FUNCION DE MANTENIMIENTO ===================
 async function ejecutarMantenimiento() {
@@ -13,27 +15,31 @@ async function ejecutarMantenimiento() {
   try {
     await iniciarMantenimiento();
     ultimoMantenimiento = new Date();
+    console.log(`[AUTO MANTENIMIENTO] Mantenimiento completado: ${ultimoMantenimiento.toISOString()}`);
   } catch (err) {
     console.error('[AUTO MANTENIMIENTO] Error durante el mantenimiento:', err);
   }
 
-  // Recordatorio cada 10 min durante 2h
+  // Limpiar intervalos anteriores de recordatorio
+  if (recordatorioInterval) clearInterval(recordatorioInterval);
+
   let minutos = 0;
-  const recordatorio = setInterval(() => {
+  recordatorioInterval = setInterval(() => {
     minutos += 10;
     console.log(`[AUTO MANTENIMIENTO] Han pasado ${minutos} min desde el último mantenimiento`);
-    if (minutos >= 120) clearInterval(recordatorio);
+    if (minutos >= 120) clearInterval(recordatorioInterval);
   }, 10 * 60 * 1000);
 }
 
 // =================== PROGRAMAR MANTENIMIENTO CADA 45 MIN ===================
-const INTERVALO = 45 * 60 * 1000; // 45 minutos en ms
-setInterval(ejecutarMantenimiento, INTERVALO);
+const INTERVALO = 45 * 60 * 1000;
+mantenimientoInterval = setInterval(ejecutarMantenimiento, INTERVALO);
+
 // =================== ENDPOINT DE MANTENIMIENTO ===================
 app.get('/mantenimiento', (req, res) => {
   const ahora = new Date();
   const diffMs = ultimoMantenimiento ? ahora - ultimoMantenimiento : null;
-  const minutos = diffMs ? Math.floor(diffMs / (1000*60)) : null;
+  const minutos = diffMs ? Math.floor(diffMs / (1000 * 60)) : null;
 
   res.json({
     ahora: ahora.toISOString(),
@@ -41,6 +47,7 @@ app.get('/mantenimiento', (req, res) => {
     minutosDesdeUltimo: minutos
   });
 });
+
 // =================== SERVIDOR INICIADO ===================
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[SUCCESS] Servidor corriendo en http://localhost:${PORT}`);
@@ -54,6 +61,7 @@ const rl = readline.createInterface({
   prompt: '> '
 });
 
+// Sobrescribe console.log para mantener prompt limpio
 const originalLog = console.log;
 console.log = (...args) => {
   readline.clearLine(process.stdout, 0);
@@ -65,13 +73,13 @@ console.log = (...args) => {
 console.log('[CONSOLE] Comandos disponibles: up | clear | pass | exit');
 rl.prompt();
 
-rl.on('line', (line) => {
+rl.on('line', async (line) => {
   const command = line.trim().toLowerCase();
 
   switch (command) {
     case 'up':
       console.log('[CONSOLE] Ejecutando mantenimiento manual...');
-      ejecutarMantenimiento();
+      await ejecutarMantenimiento();
       break;
     case 'clear':
       console.clear();
@@ -81,6 +89,9 @@ rl.on('line', (line) => {
       break;
     case 'exit':
       console.log('[CONSOLE] Cerrando servidor...');
+      // Limpiar intervalos antes de salir
+      if (mantenimientoInterval) clearInterval(mantenimientoInterval);
+      if (recordatorioInterval) clearInterval(recordatorioInterval);
       rl.close();
       process.exit(0);
       break;

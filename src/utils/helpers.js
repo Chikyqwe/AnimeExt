@@ -4,47 +4,111 @@ const urlLib = require('url');
 const { slowAES } = require('./aes'); // aes.js adaptado a CommonJS
 const cheerio = require('cheerio');
 const { http, https } = require('follow-redirects');
+const httpNative = require('http');
+const httpsNative = require('https');
 
-// Funci�n para el proxy de im�genes
+// ----------------------
+// Configuración de axios
+// ----------------------
+// Por seguridad contra acumulación de sockets, por defecto usamos keepAlive: false.
+// Si en tu entorno quieres performance y controlas pool de conexiones, cambia a true.
+const defaultHttpAgent = new httpNative.Agent({ keepAlive: false });
+const defaultHttpsAgent = new httpsNative.Agent({ keepAlive: false });
+
+const axiosInstance = axios.create({
+  httpAgent: defaultHttpAgent,
+  httpsAgent: defaultHttpsAgent,
+  headers: { "Accept-Encoding": "gzip, deflate, br" },
+  timeout: 20000 // timeout por defecto para evitar requests colgados
+});
+
+// Helper para convertir bytes a MB (string)
+function toMB(bytes) {
+  return (bytes / 1024 / 1024).toFixed(2);
+}
+
+// ----------------------
+// proxyImage optimizado
+// ----------------------
 async function proxyImage(url, res) {
   if (!url) {
     console.warn('[PROXY IMAGE] Parámetro url faltante');
     return res.status(400).send('URL faltante');
   }
 
+  const controller = new AbortController();
+  const signal = controller.signal;
+  let sourceStream = null;
+
+  // Si el cliente cierra, abortamos la petición externa y limpiamos
+  const onClientClose = () => {
+    try { controller.abort(); } catch (e) {}
+    if (sourceStream && typeof sourceStream.destroy === 'function') {
+      try { sourceStream.destroy(); } catch (e) {}
+    }
+  };
+  res.on('close', onClientClose);
+
   try {
-    // muestra la url en el log pls
-    //console.log(`[PROXY IMAGE] Haciendo petición GET a imagen: ${url}`);
-    const response = await axios.get(url, { responseType: 'stream', timeout: 10000 });
+    const response = await axiosInstance.get(url, { responseType: 'stream', signal });
+    sourceStream = response.data;
+
+    // cabeceras
     res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
     res.setHeader('Cache-Control', 'no-store');
-    
-    response.data.pipe(res);
+
+    // manejar errores del stream remoto
+    const onSourceError = (err) => {
+      console.error(`[PROXY IMAGE] Error stream fuente: ${err?.message || err}`);
+      try { res.status(500).end('Error al obtener imagen'); } catch (e) {}
+    };
+    sourceStream.on('error', onSourceError);
+
+    // pipe y limpieza cuando termine
+    sourceStream.pipe(res);
+    sourceStream.on('end', () => {
+      res.end();
+      // limpiar listeners
+      sourceStream.removeListener('error', onSourceError);
+      res.removeListener('close', onClientClose);
+    });
+
   } catch (err) {
-    console.error(`[PROXY IMAGE] Error al obtener imagen: ${err.message}`);
-    res.status(500).send(`Error al obtener imagen: ${err.message}`);
+    // si fue abortado por close, no logueamos como error ruidoso
+    if (err && err.name === 'CanceledError') {
+      // petición abortada por el cliente
+      return;
+    }
+    console.error(`[PROXY IMAGE] Error al obtener imagen: ${err.message || err}`);
+    try { res.status(500).send(`Error al obtener imagen: ${err.message || 'unknown'}`); } catch (e) {}
+    res.removeListener('close', onClientClose);
   }
 }
-const TIMEOUT_MS = 20000; // 20 segundos
 
-// Función para el stream de video
+// ----------------------
+// streamVideo optimizado
+// ----------------------
 function streamVideo(videoUrl, req, res) {
   if (!videoUrl) return res.status(400).send('Falta parámetro videoUrl');
-  // 🔹 Cabeceras CORS y de política cruzada
+
+  // CORS / políticas
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
   res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length');
+
   const parsedUrl = urlLib.parse(videoUrl);
   const isHttps = parsedUrl.protocol === 'https:';
   const protocol = isHttps ? https : http;
 
-  const referer = parsedUrl.hostname.includes('burstcloud.co')
-    ? 'https://burstcloud.co/'
-    : parsedUrl.hostname.includes('vidcache.net')
-      ? 'https://www.yourupload.com/'
-      : 'https://www.mp4upload.com/';
+  const referer = parsedUrl.hostname && parsedUrl.hostname.includes
+    ? (parsedUrl.hostname.includes('burstcloud.co')
+        ? 'https://burstcloud.co/'
+        : parsedUrl.hostname.includes('vidcache.net')
+          ? 'https://www.yourupload.com/'
+          : 'https://www.mp4upload.com/')
+    : 'https://www.mp4upload.com/';
 
   let start = 0;
   const rangeHeader = req.headers.range;
@@ -53,7 +117,27 @@ function streamVideo(videoUrl, req, res) {
     if (match) start = parseInt(match[1], 10);
   }
 
+  // límites para reconexiones (evita loop infinito)
+  const MAX_RECONNECTS = 3;
+  let reconnectAttempts = 0;
+  let activeReq = null;
+  let destroyed = false;
+
+  function cleanupListeners() {
+    if (activeReq && typeof activeReq.destroy === 'function') {
+      try { activeReq.destroy(); } catch (e) {}
+    }
+  }
+
+  // si el cliente cierra la conexión, abortamos totalmente
+  req.on('close', () => {
+    destroyed = true;
+    cleanupListeners();
+  });
+
   function requestChunk(from) {
+    if (destroyed) return;
+
     const headers = {
       'Referer': referer,
       'Origin': referer,
@@ -67,65 +151,91 @@ function streamVideo(videoUrl, req, res) {
       path: parsedUrl.path + (parsedUrl.search || ''),
       method: 'GET',
       headers,
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      maxRedirects: 3
     };
 
-    const proxyReq = protocol.request(options, (proxyRes) => {
-      if (proxyRes.statusCode >= 400) return res.status(proxyRes.statusCode).send('Video no disponible: ' + proxyRes.statusMessage);
+    reconnectAttempts++;
+    activeReq = protocol.request(options, (proxyRes) => {
+      reconnectAttempts = 0; // éxito, reset
+      if (proxyRes.statusCode >= 400) {
+        try { res.status(proxyRes.statusCode).send('Video no disponible: ' + proxyRes.statusMessage); } catch (e) {}
+        return;
+      }
 
       if (!res.headersSent) {
         const headersToSend = {
-          'Content-Type': 'video/mp4',
+          'Content-Type': proxyRes.headers['content-type'] || 'video/mp4',
           'Accept-Ranges': 'bytes',
-          'Content-Length': proxyRes.headers['content-length'],
+          'Content-Length': proxyRes.headers['content-length'] || undefined,
           'Content-Disposition': 'inline'
         };
         if (proxyRes.headers['content-range']) headersToSend['Content-Range'] = proxyRes.headers['content-range'];
-
         res.writeHead(proxyRes.statusCode, headersToSend);
       }
 
-      proxyRes.on('data', (chunk) => {
+      // Escuchar datos y pasar al cliente
+      const onData = chunk => {
         start += chunk.length;
-        res.write(chunk);
-      });
+        try { res.write(chunk); } catch (e) {}
+      };
 
-      proxyRes.on('end', () => {
-        res.end();
-      });
+      const onEnd = () => {
+        try { res.end(); } catch (e) {}
+        proxyRes.removeListener('data', onData);
+        proxyRes.removeListener('end', onEnd);
+        proxyRes.removeListener('error', onError);
+      };
 
-      proxyRes.on('error', () => {
-        // Reconectar automáticamente desde el último byte
-        requestChunk(start);
-      });
+      const onError = (err) => {
+        proxyRes.removeListener('data', onData);
+        proxyRes.removeListener('end', onEnd);
+        proxyRes.removeListener('error', onError);
 
+        if (destroyed) return;
+
+        if (reconnectAttempts < MAX_RECONNECTS) {
+          // Intentar reconexión con backoff pequeño
+          setTimeout(() => requestChunk(start), 500 * reconnectAttempts);
+        } else {
+          try { res.status(502).end('Error streaming video'); } catch (e) {}
+        }
+      };
+
+      proxyRes.on('data', onData);
+      proxyRes.on('end', onEnd);
+      proxyRes.on('error', onError);
+
+      // cuando el cliente cierra, destruir la respuesta remota
       res.on('close', () => {
-        proxyRes.destroy();
+        try { proxyRes.destroy(); } catch (e) {}
       });
     });
 
-    proxyReq.on('timeout', () => {
-      proxyReq.abort();
-      requestChunk(start);
+    activeReq.on('timeout', () => {
+      try { activeReq.abort(); } catch (e) {}
+      if (!destroyed && reconnectAttempts < MAX_RECONNECTS) setTimeout(() => requestChunk(start), 500 * reconnectAttempts);
     });
 
-    proxyReq.on('error', () => {
-      requestChunk(start);
+    activeReq.on('error', (err) => {
+      if (destroyed) return;
+      if (reconnectAttempts < MAX_RECONNECTS) {
+        setTimeout(() => requestChunk(start), 500 * reconnectAttempts);
+      } else {
+        try { res.status(502).end('Error en conexión al origen'); } catch (e) {}
+      }
     });
 
-    proxyReq.setTimeout(20000); // 20 segundos
-    proxyReq.end();
+    activeReq.setTimeout(20000);
+    activeReq.end();
   }
 
   requestChunk(start);
 }
 
-
-// funcion para descargar el video con los headers correctos
-function downloadVideo(req, res) {
-  return false;
-}
-
+// --------------------------------
+// validateVideoUrl (con cleanup)
+// --------------------------------
 function validateVideoUrl(videoUrl, timeoutMs = 5000) {
   console.log(`[VALIDATE VIDEO URL] Validando URL: ${videoUrl}`);
   return new Promise((resolve) => {
@@ -134,11 +244,15 @@ function validateVideoUrl(videoUrl, timeoutMs = 5000) {
     const parsedUrl = urlLib.parse(videoUrl);
     const isHttps = parsedUrl.protocol === 'https:';
     const protocol = isHttps ? https : http;
-  const referer = parsedUrl.hostname.includes('burstcloud.co')
-    ? 'https://burstcloud.co/'
-    : parsedUrl.hostname.includes('vidcache.net')
-      ? 'https://www.yourupload.com/'
+
+    const referer = parsedUrl.hostname && parsedUrl.hostname.includes
+      ? (parsedUrl.hostname.includes('burstcloud.co')
+          ? 'https://burstcloud.co/'
+          : parsedUrl.hostname.includes('vidcache.net')
+            ? 'https://www.yourupload.com/'
+            : 'https://www.mp4upload.com/')
       : 'https://www.mp4upload.com/';
+
     const options = {
       method: 'HEAD',
       hostname: parsedUrl.hostname,
@@ -157,20 +271,30 @@ function validateVideoUrl(videoUrl, timeoutMs = 5000) {
       const isValidStatus = [200, 206].includes(res.statusCode);
       const contentLength = parseInt(res.headers['content-length'] || '0', 10);
       const byContent = contentLength > 1000000; // > 1MB
-      console.log('Content-Length:', contentLength);
+      // limpiar listeners y cerrar socket
+      res.on('end', () => {
+        try { req.destroy(); } catch (e) {}
+      });
       resolve(isValidStatus && byContent);
     });
 
     req.on('timeout', () => {
-      req.destroy();
+      try { req.destroy(); } catch (e) {}
       resolve(false);
     });
 
-    req.on('error', () => resolve(false));
+    req.on('error', () => {
+      try { req.destroy(); } catch (e) {}
+      resolve(false);
+    });
+
     req.end();
   });
 }
 
+// ----------------------
+// util crypto helpers
+// ----------------------
 function toNumbers(d) {
   const e = [];
   d.replace(/(..)/g, (m) => e.push(parseInt(m, 16)));
@@ -181,185 +305,233 @@ function toHex(arr) {
   return arr.map(v => (v < 16 ? '0' : '') + v.toString(16)).join('').toLowerCase();
 }
 
+// ----------------------
+// urlEpAX optimizado
+// ----------------------
 async function urlEpAX(urlPagina, capNum) {
   console.log(`[URL EPAX] Buscando episodio ${capNum} en ${urlPagina}`);
-
   const apiUrl = `https://animeext.xo.je/get_vid.php?url=${encodeURIComponent(urlPagina)}&ep=${encodeURIComponent(capNum)}`;
 
-  // 1️⃣ Obtener HTML inicial que contiene el script de la cookie
-  const { data: html } = await axios.get(apiUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0' }
-  });
-
-  // 2️⃣ Extraer a, b, c del script usando regex
-  const match = html.match(/toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\)/s);
-  if (!match) throw new Error("No se pudieron extraer datos de cifrado");
-
-  const a = toNumbers(match[1]);
-  const b = toNumbers(match[2]);
-  const c = toNumbers(match[3]);
-
-  // 3️⃣ Calcular valor de cookie
-  const cookieVal = toHex(slowAES.decrypt(c, 2, a, b));
-
-  // 4️⃣ Rehacer petición con cookie
-  const { data: jsonData } = await axios.get(apiUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Cookie': `__test=${cookieVal}`
-    }
-  });
-
-  if (!jsonData.success) {
-    console.log(jsonData)
-    console.warn(`[URL EPAX] Error desde API: ${jsonData.error || 'Respuesta inválida'}`);
+  // request inicial
+  let html = null;
+  try {
+    const response = await axiosInstance.get(apiUrl, { timeout: 15000 });
+    html = response.data;
+  } catch (err) {
+    console.warn('[URL EPAX] Error obteniendo HTML:', err?.message || err);
     return null;
   }
 
-  console.log(`[URL EPAX] Episodio encontrado: ${jsonData.capitulo} URL: ${jsonData.url_episodio}`);
-  return jsonData.url_episodio;
-}
-async function getCookie(apiUrl) {
-  const { data: html } = await axios.get(apiUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0' }
-  });
-
-  const match = html.match(/toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\)/s);
-  if (!match) throw new Error("No se pudieron extraer datos de cifrado");
-
-  const a = toNumbers(match[1]);
-  const b = toNumbers(match[2]);
-  const c = toNumbers(match[3]);
-
-  const cookieVal = toHex(slowAES.decrypt(c, 2, a, b));
-  return cookieVal;
-}
-
-async function getDescription(url) {
-  console.log(`[DESCRIPTION] Buscando descripción en ${url}`);
   try {
-    const { data: html } = await axios.get(url, {
+    const match = html.match(/toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\)/s);
+    if (!match) throw new Error("No se pudieron extraer datos de cifrado");
+
+    const a = toNumbers(match[1]);
+    const b = toNumbers(match[2]);
+    const c = toNumbers(match[3]);
+
+    const cookieVal = toHex(slowAES.decrypt(c, 2, a, b));
+
+    // limpiar html y arrays temporales antes de la segunda petición
+    html = null;
+    a.length = 0;
+    b.length = 0;
+    c.length = 0;
+
+    const { data: jsonData } = await axiosInstance.get(apiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Cookie': `__test=${cookieVal}`
+      },
+      timeout: 15000
+    });
+
+    if (!jsonData.success) {
+      console.warn(`[URL EPAX] Error desde API: ${jsonData.error || 'Respuesta inválida'}`);
+      return null;
+    }
+    console.log(`[URL EPAX] Episodio encontrado: ${jsonData.capitulo} URL: ${jsonData.url_episodio}`);
+    return jsonData.url_episodio;
+  } catch (err) {
+    console.error('[URL EPAX] Error parseando cookie:', err?.message || err);
+    return null;
+  }
+}
+
+// ----------------------
+// getCookie optimizado
+// ----------------------
+async function getCookie(apiUrl) {
+  let html = null;
+  try {
+    const resp = await axiosInstance.get(apiUrl, {
+      timeout: 15000,
       headers: { 'User-Agent': 'Mozilla/5.0' }
     });
-    const $ = cheerio.load(html);
+    html = resp.data;
+  } catch (err) {
+    throw new Error('No se pudo obtener HTML para cookie: ' + (err?.message || err));
+  }
+
+  try {
+    const match = html.match(/toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\)/s);
+    if (!match) throw new Error("No se pudieron extraer datos de cifrado");
+
+    const a = toNumbers(match[1]);
+    const b = toNumbers(match[2]);
+    const c = toNumbers(match[3]);
+    const cookieVal = toHex(slowAES.decrypt(c, 2, a, b));
+
+    // limpieza
+    html = null;
+    a.length = 0;
+    b.length = 0;
+    c.length = 0;
+    console.log('[GET COOKIE] Cookie obtenida:', cookieVal);
+    return cookieVal;
+  } catch (err) {
+    throw err;
+  }
+}
+
+// ----------------------
+// getDescription optimizado
+// ----------------------
+async function getDescription(url) {
+  console.log(`[DESCRIPTION] Buscando descripción en ${url}`);
+  let html = null;
+  let $ = null;
+  try {
+    const resp = await axiosInstance.get(url, { timeout: 15000 });
+    html = resp.data;
+    $ = cheerio.load(html);
 
     let description = '';
 
-    // 1️⃣ AnimeFLV
     if ($('section.WdgtCn .Description p').length) {
       description = $('section.WdgtCn .Description p').text().trim();
       console.log('[SOURCE] AnimeFLV detectado');
-    }
-    // 2️⃣ Tio de aquí
-    else if ($('aside p.sinopsis').length) {
+    } else if ($('aside p.sinopsis').length) {
       description = $('aside p.sinopsis').text().trim();
       console.log('[SOURCE] Tio de aquí detectado');
-    }
-    // 3️⃣ YTX
-    else if ($('div.entry-content[itemprop="description"] p').length) {
+    } else if ($('div.entry-content[itemprop="description"] p').length) {
       description = $('div.entry-content[itemprop="description"] p').map((i, el) => $(el).text()).get().join('\n').trim();
       console.log('[SOURCE] YTX detectado');
-    }
-    // 4️⃣ Fallback a meta description
-    else {
+    } else {
       description = $('meta[name="description"]').attr('content') || '';
       description = description.trim();
       console.log('[SOURCE] Meta description fallback');
     }
 
+    // limpiar cheerio / html para facilitar GC
+    try { $.root().empty(); } catch (e) {}
+    html = null;
+    $ = null;
+
     return description;
   } catch (err) {
-    console.error(`[DESCRIPTION] Error al obtener descripción: ${err.message}`);
+    console.error(`[DESCRIPTION] Error al obtener descripción: ${err.message || err}`);
+    // limpiar antes de salir
+    try { $.root().empty(); } catch (e) {}
+    html = null;
+    $ = null;
     return '';
   }
 }
-// GET EPS
 
-// Axios optimizado con KeepAlive
-const instance = axios.create({
-  httpAgent: new http.Agent({ keepAlive: true }),
-  httpsAgent: new https.Agent({ keepAlive: true }),
-  headers: { "Accept-Encoding": "gzip, deflate, br" }
-});
-
+// ----------------------
+// getEpisodes optimizado
+// ----------------------
 async function getEpisodes(url) {
+  let data = null;
   try {
-    const response = await instance.get(url);
+    const response = await axiosInstance.get(url, { timeout: 15000 });
     data = response.data;
   } catch (error) {
-    // Aquí puedes capturar distintos tipos de errores
     if (error.response) {
-      // La petición se realizó y el servidor respondió con un código distinto a 2xx
       console.warn(`[Axios] Error HTTP ${error.response.status} al obtener ${url}`);
     } else if (error.request) {
-      // La petición fue hecha pero no hubo respuesta
       console.warn(`[Axios] No hubo respuesta al intentar ${url}`);
     } else {
-      // Otro error al configurar la petición
       console.warn(`[Axios] Error al hacer request a ${url}:`, error.message);
     }
-
-    // Retornar un objeto vacío o con success: false para que no explote
     return { success: false };
   }
 
-  // ==============================
-  // CASO 1 y 2 (AnimeFLV con <script>)
-  // ==============================
-  const animeInfoMatch = data.match(/var\s+anime_info\s*=\s*(\[[^\]]+\])/);
-  const episodesMatch = data.match(/var\s+episodes\s*=\s*(\[[\s\S]*?\]);/);
+  // CASO 1/2: anime_info + episodes en <script>
+  const animeInfoMatch = (typeof data === 'string') ? data.match(/var\s+anime_info\s*=\s*(\[[^\]]+\])/) : null;
+  const episodesMatch = (typeof data === 'string') ? data.match(/var\s+episodes\s*=\s*(\[[\s\S]*?\]);/) : null;
 
   if (animeInfoMatch && episodesMatch) {
-    const anime_info = Function(`return ${animeInfoMatch[1]}`)();
-    const episodesRaw = Function(`return ${episodesMatch[1]}`)();
+    let anime_info;
+    let episodesRaw;
+    try {
+      anime_info = Function(`return ${animeInfoMatch[1]}`)();
+      episodesRaw = Function(`return ${episodesMatch[1]}`)();
+    } catch (err) {
+      console.error('[getEpisodes] Error ejecutando script:', err?.message || err);
+      return { success: false };
+    }
 
-    // Caso 1: episodes = [[num,id], ...]
-    // Caso 2: episodes = [4,3,2,1]
     const episodes =
       Array.isArray(episodesRaw[0])
         ? episodesRaw.map(e => ({ number: e[0], id: e[1] }))
         : episodesRaw.map(num => ({ number: num }));
+
+    // limpiar referencias grandes
+    data = null;
+    episodesRaw = null;
 
     return {
       raw: anime_info,
       source: "AnimeFLV",
       title: anime_info[2],
       slug: anime_info[1],
-      isNewEP: anime_info[3], // 4 = nuevo episodio
-      isEnd: anime_info.length === 3, // 3 = finalizado, 4 = en emisión
+      isNewEP: anime_info[3],
+      isEnd: anime_info.length === 3,
       episodes_count: episodes.length,
       episodes
     };
   }
 
-  // ==============================
-  // CASO 3 (AnimeYTX con <li>)
-  // ==============================
-  const $ = cheerio.load(data);
-  const eps = [];
+  // CASO 3: AnimeYTX con <li>
+  try {
+    const $ = cheerio.load(data);
+    const eps = [];
 
-  $("li[data-index]").each((i, el) => {
-    const num = parseInt($(el).find(".epl-num").text().trim(), 10);
-    eps.push({ number: num});
-  });
+    $("li[data-index]").each((i, el) => {
+      const num = parseInt($(el).find(".epl-num").text().trim(), 10);
+      if (!Number.isNaN(num)) eps.push({ number: num });
+    });
 
-  if (eps.length > 0) {
-    return {
-      source: "AnimeYTX",
-      title: $("title").text().replace(" - AnimeYT", "").trim(),
-      isEnd: false, // difícil saber desde aquí → siempre asumimos emisión
-      episodes_count: eps.length,
-      episodes: eps
-    };
+    // limpiar cheerio
+    try { $.root().empty(); } catch (e) {}
+
+    if (eps.length > 0) {
+      const title = $("title").text().replace(" - AnimeYT", "").trim();
+      data = null;
+      return {
+        source: "AnimeYTX",
+        title,
+        isEnd: false,
+        episodes_count: eps.length,
+        episodes: eps
+      };
+    }
+  } catch (err) {
+    console.error('[getEpisodes] Error parseando HTML:', err?.message || err);
   }
 
-  // ==============================
-  // SI NO ENCAJA EN NINGÚN CASO
-  // ==============================
-  return {
-    success: false
-  };
+  data = null;
+  return { success: false };
 }
+
+// función placeholder para downloadVideo 
+function downloadVideo(req, res) {
+  // implementación segura pendiente
+  return false;
+}
+
 module.exports = {
   getCookie,
   getEpisodes,

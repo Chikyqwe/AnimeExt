@@ -1,8 +1,9 @@
 // src/routes/maintenance.js
 const express = require('express');
+const path = require('path');
 const { iniciarMantenimiento } = require('../services/maintenanceService');
 const { MAINTENANCE_PASSWORD } = require('../config');
-const path = require('path')
+const { getUpdatingStatus, setUpdatingStatus } = require('../middlewares/maintenanceBlock');
 
 const router = express.Router();
 
@@ -15,9 +16,22 @@ router.get('/up', async (req, res) => {
     return res.status(401).sendFile(path.join(__dirname,'..','..', 'public/pass.html'));
   }
 
-  res.redirect('/');
+  // Evita lanzar mantenimiento si ya está en ejecución
+  if (getUpdatingStatus()) {
+    console.log(`[UP] Mantenimiento ya en ejecución, ignorando solicitud`);
+    return res.redirect('/');
+  }
+
+  // Marca como en mantenimiento antes de iniciar
+  setUpdatingStatus(true);
   console.log(`[UP] Mantenimiento iniciado, redirigiendo a /`);
-  iniciarMantenimiento();
+  res.redirect('/');
+
+  // Inicia worker en background
+  iniciarMantenimiento().finally(() => {
+    setUpdatingStatus(false);
+    console.log(`[UP] Mantenimiento finalizado`);
+  });
 });
 
 module.exports = router;

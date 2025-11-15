@@ -6,17 +6,7 @@
 ![Npm >=10](https://img.shields.io/badge/Npm-%3E%3D10-red)
 ![Licencia](https://img.shields.io/github/license/Chikyqwe/AnimeExt?color=yellow)
 
-AnimeExt es un servidor web diseñado para la visualización de anime mediante streaming directo desde fuentes públicas. El sistema automatiza la obtención de enlaces , integra una lógica personalizada de reproducción y ofrece vistas organizadas para facilitar su uso.
-
-Funcionalidades
-===============
-
-- Reproducción embebida de anime desde enlaces `.m3u8`, y `.mp4`
-- Automatización de scraping con browserless
-- Modo mantenimiento activable desde vistas internas
-- Gestión dinámica de archivos JSON por catálogo
-- Carga segura de imágenes externas mediante proxy
-- Estructura modular orientada a estabilidad y escalabilidad
+AnimeExt es un servidor web diseñado para la visualización de anime mediante streaming directo desde fuentes públicas.
 
 Instalación
 ===========
@@ -39,15 +29,6 @@ Instalación
    http://localhost:2015
    ```
 
-Uso básico
-==========
-
-- Accede al home `/` para explorar las vistas disponibles.
-- Consulta `/api/servers?id&ep=` para obtener la lista de servidores de un id.
-- Use `/api?id=&ep=` para obtener los enlaces a videos.
-- Usa `/image?url=` para mostrar imágenes sin exponer dominios externos.
-- Supervisa la cola de scraping desde `/api/queue/status`.
-- Use `/status` para obtener informacion del status.
 
 Consideraciones
 ===============
@@ -104,7 +85,7 @@ Consideraciones
     - 📄 [anim.js](src/maintenimance/anim.js)
     - 📄 [lastep.js](src/maintenimance/lastep.js)
     - 📄 [worker-mantenimiento.js](src/maintenimance/worker-mantenimiento.js)
-  - 📁 [middleware](src/middleware/)
+  - 📁 [middlewares](src/middlewares/)
     - 📄 [maintenanceBlock.js](src/middleware/maintenanceBlock.js)
   - 📁 [routes](src/routes/)
     - 📄 [api.js](src/routes/api.js)
@@ -112,10 +93,8 @@ Consideraciones
     - 📄 [player.js](src/routes/player.js)
     - 📄 [views.js](src/routes/views.js)
   - 📁 [services](src/services/)
-    - 📄 [browserlessExtractors.js](src/services/browserlessExtractors.js)
     - 📄 [jsonService.js](src/services/jsonService.js)
     - 📄 [maintenanceService.js](src/services/maintenanceService.js)
-    - 📄 [queueService.js](src/services/queueService.js)
   - 📁 [test](src/test/)
     - 📄 [CheckAnimeList.js](src/test/CheckAnimeList.js)
     - 📄 [link.js](src/test/link.js)
