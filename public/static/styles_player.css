@@ -126,3 +126,7 @@ body.light-theme .logo-svg .ext-text { fill: #2e94dc}
 .episodes-list { max-height: none; flex: 1 1 auto}
 #adsOverlay .policy-modal { height: 400px; width: 100%;}
 }
+
+.plyr--full-ui input[type=range] {color:#00bfa5;color:var(--plyr-range-fill-background,var(--plyr-color-main,var(--plyr-color-main,#00bfa5)));}
+.plyr__control--overlaid {background-color: #00bfa5 !important;}
+.plyr--video .plyr__control:focus-visible, .plyr--video .plyr__control:hover, .plyr--video .plyr__control[aria-expanded="true"] {/* background: var(--plyr-video-control-background-hover,var(--plyr-color-main,var(--plyr-color-main,#00b2ff))); */ background: var(--plyr-video-control-background-hover,var(--plyr-color-main,var(--plyr-color-main,#00bfa5))) !important;}

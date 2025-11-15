@@ -4,7 +4,7 @@
   "description": "Server of Anime Ext",
   "main": "main.js",
   "scripts": {
-    "start": "node main.js"
+    "start": "node --expose-gc main.js"
   },
   "author": "Chikiyinyang@dev",
   "license": "MIT",
