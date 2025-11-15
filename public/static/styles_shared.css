@@ -1,0 +1,245 @@
+    /* ===== Fondo del modal ===== */
+    .modal-share {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s;
+        z-index: 9999;
+        backdrop-filter: blur(3px);
+    }
+
+    .modal-share.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* ===== Contenedor modal ===== */
+    .modal-share__container {
+        background: #212121;
+        width: 90%;
+        max-width: 480px;
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.4);
+        padding: 20px;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+    }
+
+    .modal-share.active .modal-share__container {
+        transform: translateY(0);
+    }
+
+    .modal-share__header {
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 16px;
+    }
+
+    /* ===== Contenedor deslizable ===== */
+    .share-options-wrapper {
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+
+    .share-options {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        padding-bottom: 8px;
+        scrollbar-width: none;
+        /* Firefox */
+    }
+
+    .share-options::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* ===== Botón avanzar ===== */
+    .scroll-btn {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(30, 30, 30, 0.8);
+        border: none;
+        color: #fff;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.3s;
+    }
+
+    .scroll-btn.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .scroll-btn:hover {
+        background: #3ea6ff;
+    }
+
+    /* ===== Opciones de compartir ===== */
+    /* ===== Contenedor deslizable ===== */
+    .share-options-wrapper {
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 16px;
+        padding-bottom: 1px;
+        /* un poco más de aire abajo */
+    }
+
+    .share-options {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        padding: 10px 0 20px;
+        /* aumentamos padding inferior */
+        scrollbar-width: none;
+        /* Firefox */
+    }
+
+    .share-options::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* ===== Opciones de compartir ===== */
+    .share-option {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #fff;
+        text-decoration: none;
+        font-size: 0.85rem;
+        width: 70px;
+        padding-bottom: 2px;
+        /* más espacio táctil */
+    }
+
+    .share-option__icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2.1rem;
+        margin-bottom: 8px;
+        transition: transform 0.2s;
+    }
+
+
+    .share-option__icon:hover {
+        transform: scale(1.1);
+    }
+
+    .whatsapp {
+        background: #25D366;
+    }
+
+    .facebook {
+        background: #1877F2;
+    }
+
+    .correo {
+        background: #888;
+    }
+
+    .pinterest {
+        background: #E60023;
+    }
+
+    .incrustar {
+        background: #444;
+    }
+
+    .telegram {
+        background: #0088cc;
+    }
+
+    .reddit {
+        background: #ff4500;
+    }
+
+    .x {
+        background: #000;
+    }
+
+    /* ===== Input y botón copiar ===== */
+    .modal-share__link-box {
+        display: flex;
+        background: #121212;
+        border: 1px solid #333;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .modal-share__input {
+        flex: 1;
+        background: transparent;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        font-size: 0.9rem;
+        outline: none;
+    }
+
+    .modal-share__copy-btn {
+        background: #3ea6ff;
+        border: none;
+        color: #fff;
+        font-weight: 500;
+        padding: 0 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .modal-share__copy-btn:hover {
+        background: #2b8fe6;
+    }
+
+    /* ===== Cerrar ===== */
+    .modal-share__close {
+        position: absolute;
+        top: 16px;
+        right: 20px;
+        font-size: 1.5rem;
+        color: #bbb;
+        cursor: pointer;
+    }
+
+    .modal-share__close:hover {
+        color: #fff;
+    }
+
+    .share-option {
+        color: inherit;
+        /* Mantiene el color original del texto */
+        text-decoration: none;
+        /* Quita subrayado */
+        outline: none;
+        /* Quita el borde al enfocarlo */
+    }
+
+    .share-option:focus,
+    .share-option:active {
+        color: inherit;
+        /* Evita que cambie el color al hacer clic */
+        background: none;
+        /* Evita cambios de fondo */
+        outline: none;
+        /* Quita el borde de enfoque */
+    }

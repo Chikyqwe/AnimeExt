@@ -11,6 +11,7 @@ const DB_VERSION = 1;
 const STORE_NAME = 'favoritos';
 const DB_NAME_F = 'AnimeCacheDB';
 const STORE_NAME_F = 'precached';
+let mainInitEjecutado = false; // bandera global
 let dbPromise = null;
 let currentAnime = null;
 const loadedCards = new Map();
@@ -21,11 +22,207 @@ let fullAnimeList = [];
  * INICIALIZACIÓN DE LA APLICACIÓN
  * =======================================================
  */
-document.addEventListener('DOMContentLoaded', mainInit, false);
+(() => {
+  const modalHTML = `
+    <div id="chikiModal" style="
+      display:none; 
+      position:fixed; 
+      top:0; left:0; right:0; bottom:0; 
+      background-color: rgba(0,0,0,0.6); 
+      z-index:1000; 
+      justify-content:center; 
+      align-items:center;
+    ">
+      <div style="
+        background:#222; 
+        color:#fff; 
+        padding:30px 40px; 
+        border-radius:8px; 
+        text-align:center; 
+        font-family: Arial, sans-serif;
+        max-width: 300px;
+      ">
+        <p style="font-size:18px; margin-bottom:20px;">
+          From <strong>Chikyqwe</strong><br>for Anime community <i class="fa-solid fa-heart" style="color:#E94560;"></i>
+        </p>
+        <button id="closeModalBtn" style="
+          padding:8px 20px; 
+          background:#3C873A; 
+          border:none; 
+          border-radius:5px; 
+          color:#fff; 
+          font-weight:bold; 
+          cursor:pointer;
+        ">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  `;
 
-// Exponer funciones de navegación al scope global para uso en onclick HTML
-window.mostrarFavoritos = mostrarFavoritos;
-window.mostrarHistorial = mostrarHistorial;
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  const logo = document.querySelector('a.logo');
+  const modal = document.getElementById('chikiModal');
+  const closeBtn = document.getElementById('closeModalBtn');
+  let clickCount = 0;
+  const maxClicks = 21;
+  const resetTime = 8000; // 10 segundos
+  let resetTimeout;
+  logo.addEventListener('click', (e) => {
+    e.preventDefault();
+    clickCount++;
+    console.info(`0x${clickCount.toString(16).toUpperCase()}`);
+    if (clickCount === maxClicks) {
+      modal.style.display = 'flex';
+      clickCount = 0;
+      clearTimeout(resetTimeout);
+    } else {
+      clearTimeout(resetTimeout);
+      resetTimeout = setTimeout(() => {
+        clickCount = 0;
+      }, resetTime);
+    }
+  });
+  closeBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+})();
+function themebuttons() {
+  const botones = document.querySelectorAll('button i.fa-xmark');
+  const isLight = document.body.classList.contains('light-theme');
+  botones.forEach(icon => {
+    icon.style.color = isLight ? '#222' : '#f1f1f1';
+    icon.style.transition = 'color 0.3s ease';
+  });
+}
+
+function toggleTheme() {
+  document.body.classList.toggle('light-theme');
+  document.body.classList.toggle('dark-theme');
+
+  const icon = document.querySelector('#themeIcon');
+
+  if (document.body.classList.contains('light-theme')) {
+    icon.classList.replace('fa-moon', 'fa-sun');
+  } else {
+    icon.classList.replace('fa-sun', 'fa-moon');
+  }
+  localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+
+  themebuttons();
+}
+
+
+function restoreTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-theme');
+    const icon = document.querySelector('#themeIcon');
+
+    if (document.body.classList.contains('light-theme')) {
+      icon.classList.replace('fa-moon', 'fa-sun');
+    } else {
+      icon.classList.replace('fa-sun', 'fa-moon');
+    }
+  }
+}
+
+function initPolicyModal() {
+  const overlay = document.getElementById('policyOverlay');
+  const acceptBtn = document.getElementById('policyAcceptBtn');
+  const iframe = document.getElementById('policyIframe');
+
+  if (!overlay || !acceptBtn || !iframe) return;
+
+  iframe.src = `./app_policy`;
+  overlay.classList.remove('d-none');
+
+  acceptBtn.addEventListener('click', () => {
+    localStorage.setItem('policyAccepted', 'true');
+    overlay.classList.add('d-none');
+    initAdsModal();
+  });
+}
+
+function monitorPolicyIntegrity() {
+  setInterval(() => {
+    const overlay = document.getElementById('policyOverlay');
+    const iframe = document.getElementById('policyIframe');
+
+    if (!localStorage.getItem('policyAccepted') && (!overlay || !iframe)) {
+      console.warn('[POLICY] Restaurando...');
+
+      document.body.insertAdjacentHTML('beforeend', `
+          <div id="policyOverlay" class="policy-overlay">
+            <div class="policy-modal">
+              <div class="policy-header">
+                <h5 class="m-0">Política de Privacidad</h5>
+              </div>
+              <iframe id="policyIframe" class="policy-iframe" loading="lazy" title="Política de privacidad"></iframe>
+              <div class="policy-footer text-end">
+                <button id="policyAcceptBtn" class="btn btn-success fw-semibold px-4">Aceptar</button>
+              </div>
+            </div>
+          </div>
+        `);
+
+      initPolicyModal();
+    }
+  }, 1000);
+}
+
+function setAdsPreference(useAds) {
+  localStorage.setItem('ads', useAds ? 'true' : 'false');
+  const overlay = document.getElementById('adsOverlay');
+  if (overlay) overlay.classList.add('d-none');
+}
+
+function initAdsModal() {
+  const adsPref = localStorage.getItem('ads');
+  if (adsPref === null) {
+    const overlay = document.getElementById('adsOverlay');
+    if (overlay) overlay.classList.remove('d-none');
+  }
+}
+
+function setupScrollBar() {
+  const bottomBar = document.querySelector('.bottom-bar');
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const fullHeight = document.documentElement.scrollHeight;
+    if (bottomBar) {
+      if (scrollTop + windowHeight >= fullHeight - 20) {
+        bottomBar.classList.add('visible');
+      } else {
+        bottomBar.classList.remove('visible');
+      }
+    }
+  });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  restoreTheme();
+  setupScrollBar();
+  themebuttons();
+
+  if (!localStorage.getItem('policyAccepted')) {
+    initPolicyModal();
+    monitorPolicyIntegrity();
+  }
+  if (!localStorage.getItem('ads') && localStorage.getItem('policyAccepted')) {
+    initAdsModal();
+  }
+});
+
+function scrollToBottom() {
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
 
 function mainInit() {
     // Inicializar elementos DOM
@@ -37,15 +234,15 @@ function mainInit() {
     hamburgerBtn = document.getElementById('hamburgerBtn');
     mobileDropdownMenu = document.getElementById('mobileDropdownMenu');
 
-    // Eventos principales que se ejecutan al cargar la página.
-    window.addEventListener('load', mainWindowLoad);
+    // Eventos principales
+    mainWindowLoad();
     window.addEventListener('popstate', mainPopState);
     window.addEventListener('resize', mainResize);
     if (hamburgerBtn) hamburgerBtn.addEventListener('click', () => toggleMobileMenu());
     document.addEventListener('click', mainDocumentClick);
     window.addEventListener('scroll', () => toggleMobileMenu(false));
 
-    // Eventos de barra de búsqueda móvil
+    // Eventos de barra de busqueda móvil
     mobileSearchInit();
 
     // Eventos de búsqueda
@@ -54,7 +251,7 @@ function mainInit() {
         searchInputEl.addEventListener('submit', searchAnime);
         searchInputEl.addEventListener('input', searchSuggestionsInput);
     }
-    document.addEventListener('click', searchSuggestionsClick);
+    document.addEventListener('click', SSC);
 
     // Eventos para abrir modales
     const mobileNavInicio = document.getElementById('mobileNavInicio');
@@ -62,16 +259,10 @@ function mainInit() {
     const mobileNavDirectorio = document.getElementById('mobileNavDirectorio');
     if (mobileNavDirectorio) mobileNavDirectorio.addEventListener('click', mostrarDirectorio);
 
-    
-    // Carga de animes en emisión y última visualización
+
+    // Carga principal
     mainDOMContentLoadedLogic();
 }
-
-/**
- * =======================================================
- * FUNCIONES PRINCIPALES DE GESTIÓN DE PÁGINA
- * =======================================================
- */
 
 function mainDOMContentLoadedLogic() {
     fetch("/anime/last")
@@ -82,7 +273,6 @@ function mainDOMContentLoadedLogic() {
 
             if (!Array.isArray(data) || !container || !sidebarList) return;
 
-            // Llenar la lista principal
             data.forEach(anime => {
                 const card = document.createElement('div');
                 card.className = "anime-card-init";
@@ -96,7 +286,7 @@ function mainDOMContentLoadedLogic() {
                 container.appendChild(card);
             });
 
-            // Llenar la sidebar con la misma info y ejecutar función al hacer clic
+            // Pendejo arreglalo no funciona 0_0
             data.slice(0, 15).forEach(anime => {
                 const li = document.createElement("li");
                 li.classList.add("mb-2");
@@ -107,15 +297,12 @@ function mainDOMContentLoadedLogic() {
                         <span class="text-truncate">${anime.titulo}</span>
                     </div>
                 `;
-                li.addEventListener('click', () => openModal(findAnimeByUId(anime.id), anime.titulo)); // <-- Aquí ejecuta la función
+                li.addEventListener('click', () => animeInfo(anime.id)); // YA
                 sidebarList.appendChild(li);
             });
-
-            showContinueWatching(); // Si quieres mostrar algo extra
         })
         .catch(error => console.error("Error al obtener datos de los últimos animes:", error));
 }
-
 
 async function mainWindowLoad() {
     const loader = document.getElementById('loader');
@@ -124,26 +311,11 @@ async function mainWindowLoad() {
     const startTime = performance.now();
     try {
         await fetchJsonList();
-
         const urlParams = new URLSearchParams(window.location.search);
         const searchTerm = urlParams.get('s');
-        const sharedParam = urlParams.get('shared'); // obtenemos el parámetro 'shared'
-
-        // Acción a realizar si existe el parámetro 'shared'
-        if (sharedParam) {
-            const sharedId = Number(sharedParam); // <-- Convertimos a número
-            if (!isNaN(sharedId)) {                // <-- Comprobamos que sea un número válido
-                const anim = findAnimeByUId(sharedId);
-
-                openModal(anim, anim.title);
-            } else {
-                console.warn("El parámetro 'shared' no es un número válido:", sharedParam);
-            }
-        }
-
-        if (searchTerm) {
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) searchInput.value = searchTerm;
+        const searchInput = document.getElementById('searchInput');
+        if (searchTerm && searchInput) {
+            searchInput.value = searchTerm;
             searchAnime(null, searchTerm);
         } else {
             const page = getPageParam();
@@ -151,9 +323,7 @@ async function mainWindowLoad() {
             renderCards(paginated);
             createPagination(fullAnimeList.length, page);
         }
-
         await waitForVisibleImages('.anime-card img');
-
     } catch (e) {
         console.error("Error al cargar los datos:", e);
     } finally {
@@ -163,7 +333,6 @@ async function mainWindowLoad() {
         setTimeout(() => hideLoader(), remainingTime);
     }
 }
-
 
 function mainPopState() {
     const page = getPageParam();
@@ -184,12 +353,6 @@ function mainDocumentClick(e) {
     }
 }
 
-/**
- * =======================================================
- * NAVEGACIÓN Y MENÚ
- * =======================================================
- */
-
 function toggleMobileMenu(show) {
     if (!mobileDropdownMenu) return;
     if (show === undefined) {
@@ -198,21 +361,13 @@ function toggleMobileMenu(show) {
     mobileDropdownMenu.classList.toggle('show', show);
     mobileDropdownMenu.setAttribute('aria-hidden', !show);
 }
-
 function setActiveMenu(num) {
-    // Acepta solo números válidos (1 a 4)
     if (![1, 2, 3, 4].includes(num)) return;
-
-    // IDs de los enlaces del menú principal
     const ids = ['navInicio', 'navDirectorio', 'navHistorial', 'navFavoritos'];
     const idActivo = ids[num - 1];
     const mobileIdActivo = 'mobile' + idActivo.charAt(0).toUpperCase() + idActivo.slice(1);
-
-    // Obtener todos los enlaces de ambos menús
     const mainLinks = document.querySelectorAll('nav.main-nav a.nav-item');
     const mobileLinks = document.querySelectorAll('#mobileDropdownMenu a');
-
-    // Aplicar la clase active al que corresponde
     [...mainLinks, ...mobileLinks].forEach(link => {
         if (link.id === idActivo || link.id === mobileIdActivo) {
             link.classList.add('active');
@@ -248,8 +403,6 @@ function mostrarDirectorio(e) {
     setActiveMenu(2);
     document.querySelector('.sidebar').classList.add("d-none");
     document.getElementById("pagination-controls").classList.remove("d-none");
-
-    // 🔥 Renderizar lista de cards para directorio
     const page = getPageParam();
     const paginated = paginate(fullAnimeList, page);
     renderCards(paginated);
@@ -258,11 +411,6 @@ function mostrarDirectorio(e) {
     setTimeout(() => hideLoader(), 1000);
 }
 
-/**
- * =======================================================
- * HISTORIAL
- * =======================================================
- */
 async function mostrarHistorial(e) {
     if (e && e.preventDefault) e.preventDefault();
     showLoader();
@@ -294,7 +442,7 @@ async function mostrarHistorial(e) {
             card.className = 'anime-card';
             card.tabIndex = 0;
             card.setAttribute('role', 'button');
-            const proxyUrl = `https://animeext-m5lt.onrender.com/image?url=${encodeURIComponent(anime.image)}`;
+            const proxyUrl = `/image?url=${encodeURIComponent(anime.image)}`;
             card.innerHTML = `
                 <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(anime.title)}" class="anime-image" />
                 <div class="anime-title">${cleanTitle(anime.title)}</div>
@@ -309,34 +457,29 @@ async function mostrarHistorial(e) {
                 </div>
             `;
 
-            // Abrir anime normalmente
             card.addEventListener('click', () => {
                 if (!card.classList.contains('show-options')) {
-                    openModal(anime, anime.title);
+                    animeInfo(anime.unit_id);
                 }
             });
 
-            // Mantener presionado (móvil)
             let pressTimer;
             card.addEventListener('touchstart', () => {
                 pressTimer = setTimeout(() => {
                     card.classList.add('show-options');
-                }, 500); // medio segundo
+                }, 500);
             });
             card.addEventListener('touchend', () => clearTimeout(pressTimer));
 
-            // Clic derecho (PC)
             card.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 card.classList.toggle('show-options');
             });
 
-            // Botones
             card.querySelector('.btn-remove').addEventListener('click', async (ev) => {
                 ev.stopPropagation();
-                card.classList.add('removing'); // 👈 activamos la animación
+                card.classList.add('removing');
 
-                // Esperamos que termine la animación antes de eliminar
                 card.addEventListener('animationend', async () => {
                     await removeFromHistory(anime.unit_id || anime.id);
                     card.remove();
@@ -348,7 +491,6 @@ async function mostrarHistorial(e) {
                 alert(`(Próximamente) Añadir ${cleanTitle(anime.title)} a playlist`);
             });
 
-            // Cerrar si se toca fuera
             document.addEventListener('click', (e) => {
                 if (!card.contains(e.target)) {
                     card.classList.remove('show-options');
@@ -363,6 +505,26 @@ async function mostrarHistorial(e) {
     }
     setTimeout(() => hideLoader(), 1000);
 }
+function showContextMenu(e, anime) {
+    const menu = document.getElementById('historial-menu');
+    menu.classList.remove('d-none');
+    menu.style.top = `${e.pageY}px`;
+    menu.style.left = `${e.pageX}px`;
+
+    const removeBtn = document.getElementById('remove-from-history');
+    removeBtn.onclick = async () => {
+        await removeFromHistory(anime.unit_id || anime.id);
+        menu.classList.add('d-none');
+        mostrarHistorial(); // recargar historial
+    };
+}
+
+// Ocultar menú si se hace clic fuera
+document.addEventListener('click', () => {
+    const menu = document.getElementById('historial-menu');
+    if (menu) menu.classList.add('d-none');
+});
+
 /**
  * =======================================================
  * FAVORITOS
@@ -373,7 +535,6 @@ function createFavoriteCard(anime) {
     card.className = 'anime-card';
     card.style.cursor = 'pointer';
     card.style.width = '150px';
-    // guardamos identificadores para poder localizar la card después
     card.dataset.anime = anime.title || '';
     if (anime.unit_id) card.dataset.uid = anime.unit_id;
     if (anime.id) card.dataset.id = anime.id;
@@ -383,7 +544,7 @@ function createFavoriteCard(anime) {
         <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(anime.title)}" class="anime-image" style="width: 100%; border-radius: 4px;" />
         <div class="anime-title" style="text-align:center; font-size: 0.9rem; margin-top: 5px;">${cleanTitle(anime.title)}</div>
     `;
-    card.addEventListener('click', () => openModal(anime, anime.title));
+    card.addEventListener('click', () => animeInfo(anime.unit_id));
     return card;
 }
 
@@ -473,31 +634,60 @@ function mobileSearchInit() {
     });
 }
 
-function searchSuggestionsInput() {
+let lastSearchTerm = '';
+
+async function searchSuggestionsInput() {
     const searchInput = document.getElementById('searchInput');
     const value = normalizeText(searchInput.value);
     if (!suggestionBox) suggestionBox = document.getElementById('search-suggestions');
     suggestionBox.innerHTML = '';
+
     if (!value || !fullAnimeList.length) {
         suggestionBox.style.display = 'none';
         return;
     }
-    const results = fullAnimeList.filter(anime => normalizeText(anime.title).includes(value)).slice(0, 4);
-    results.forEach(anime => {
+
+    lastSearchTerm = value;
+    const terms = value.split(' ').filter(Boolean);
+
+    let localFiltered = fullAnimeList.filter(anime => {
+        const allTitles = [anime.title, anime.en_jp, anime.ja_jp].filter(Boolean).map(normalizeText);
+        return allTitles.some(t => terms.every(term => t.includes(term)));
+    });
+
+    localFiltered = [...new Set(localFiltered)].slice(0, 4);
+    if (localFiltered.length) renderSuggestions(localFiltered);
+    renderSuggestions(localFiltered);
+}
+
+function renderSuggestions(list) {
+    const searchInput = document.getElementById('searchInput');
+    const value = normalizeText(searchInput.value);
+
+    // Si no hay texto escrito, no renderizamos nada
+    if (!value) {
+        suggestionBox.innerHTML = '';
+        suggestionBox.style.display = 'none';
+        return;
+    }
+
+    suggestionBox.innerHTML = '';
+    list.forEach(anime => {
         const item = document.createElement('li');
         const proxyUrl = `/image?url=${encodeURIComponent(anime.image)}`;
         item.innerHTML = `<img src="${proxyUrl}" alt="${anime.title}" /><span>${anime.title}</span>`;
         item.addEventListener('click', () => {
-            openModal(anime, anime.title);
+            animeInfo(anime.unit_id);
             suggestionBox.innerHTML = '';
             suggestionBox.style.display = 'none';
         });
         suggestionBox.appendChild(item);
     });
-    suggestionBox.style.display = results.length ? 'block' : 'none';
+    suggestionBox.style.display = list.length ? 'block' : 'none';
 }
 
-function searchSuggestionsClick(e) {
+
+function SSC(e) {
     const searchInput = document.getElementById('searchInput');
     if (!suggestionBox) suggestionBox = document.getElementById('search-suggestions');
     if (!suggestionBox.contains(e.target) && e.target !== searchInput) {
@@ -506,27 +696,19 @@ function searchSuggestionsClick(e) {
     }
 }
 
-function searchAnime(event = null, term = null) {
-    if (event && event.preventDefault) {
-        event.preventDefault();
-        mostrarDirectorio(event);
-    } else if (term) {
-        mostrarDirectorio(); // Llama a la versión sin evento para actualizar la vista
-    }
+async function searchAnime(event = null, term = null) {
+    if (event && event.preventDefault) event.preventDefault();
 
     const input = term || document.getElementById('searchInput').value;
     const inputNormalized = normalizeText(input);
 
+    // Actualizar URL
     const url = new URL(window.location);
-    if (inputNormalized) {
-        url.searchParams.set('s', inputNormalized);
-    } else {
-        url.searchParams.delete('s');
-    }
+    if (inputNormalized) url.searchParams.set('s', inputNormalized);
+    else url.searchParams.delete('s');
+    if (!term) window.history.pushState({}, '', url);
 
-    if (!term) {
-        window.history.pushState({}, '', url);
-    }
+    // Si no hay término → lista completa
     if (!inputNormalized) {
         const page = getPageParam();
         const paginated = paginate(fullAnimeList, page);
@@ -534,16 +716,22 @@ function searchAnime(event = null, term = null) {
         createPagination(fullAnimeList.length, page);
         return;
     }
-    const terms = inputNormalized.split(' ').filter(Boolean);
-    const filtered = fullAnimeList.filter(anime => {
-        const titleNormalized = normalizeText(anime.title);
-        return terms.every(term => titleNormalized.includes(term));
-    });
 
-    search_selecion(filtered, inputNormalized)
+    const terms = inputNormalized.split(' ').filter(Boolean);
+
+    const localResults = fullAnimeList
+        .filter(anime => terms.every(term => normalizeText(anime.title).includes(term)))
+        .map(a => ({
+            title: a.title,
+            canonicalTitle: a.canonicalTitle || a.title,
+            from: "local",
+            ...a
+        }));
+    search_selecion(localResults, inputNormalized);
 }
 
-async function search_selecion(s,t) {
+
+async function search_selecion(s, t) {
     showLoader();
     document.getElementById("anime-section").classList.add("d-none");
     document.getElementById("directory-section").classList.add("d-none");
@@ -568,7 +756,6 @@ async function search_selecion(s,t) {
             return;
         }
         container.innerHTML = '';
-        console.log(search);
 
         search.forEach(item => {
             const card = document.createElement('div');
@@ -582,7 +769,7 @@ async function search_selecion(s,t) {
                 <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(item.title)}" class="anime-image" />
                 <div class="anime-title">${cleanTitle(item.title)}</div>
             `;
-            card.addEventListener('click', () => openModal(item, item.title));
+            card.addEventListener('click', () => animeInfo(item.unit_id));
             container.appendChild(card);
         });
     } catch (err) {
@@ -607,6 +794,7 @@ async function fetchJsonList() {
         }
         const json = await resp.json();
         fullAnimeList = Array.isArray(json.animes) ? json.animes : [];
+        showContinueWatching();
     } catch (err) {
         console.error("Error cargando lista:", err);
     }
@@ -682,7 +870,7 @@ function renderCards(animes) {
             <img src="${proxyUrl}" alt="Imagen de ${cleanTitle(anime.title)}" class="anime-image" />
             <div class="anime-title">${cleanTitle(anime.title)}</div>
         `;
-        card.addEventListener('click', () => openModal(anime, anime.title));
+        card.addEventListener('click', () => animeInfo(anime.unit_id));
         container.appendChild(card);
         loadedCards.set(anime.title, card);
     });
@@ -701,37 +889,110 @@ function clearCards() {
  * MODAL Y FAVORITOS
  * =======================================================
  */
-  
+
 function ajustarAlturaEpisodesList(eps) {
     var episodesList = document.getElementById('episodes-list');
     if (episodesList) {
-      console.log("Número de episodios encontrados:", eps);
-      if (eps > 0 && eps < 12) {
-        console.log("Ajustando altura de episodes-list para menos de 12 episodios");
-        episodesList.style.height = 'auto';
-      } else {
-        console.log("Ajustando altura de episodes-list para 12 o más episodios");
-        episodesList.style.height = '380px';
-      }
+        if (eps > 0 && eps < 12) {
+            episodesList.style.height = 'auto';
+        } else {
+            episodesList.style.height = '645px';
+        }
     }
 }
-async function openModal(data, animeTitle) {
-    currentAnime = data;
 
-    const modalImage = document.getElementById('modalImage');
+function renderStarsBox(rating) {
+    const scoreEl = document.getElementById('ratingScore');
+    const starsEl = document.getElementById('ratingStars');
+    if (!scoreEl || !starsEl) return;
+
+    const rating10 = (rating / 10).toFixed(1);
+    scoreEl.textContent = rating10;
+
+    starsEl.innerHTML = '';
+
+    let starsValue = (rating / 100) * 10;
+    starsValue = Math.round(starsValue * 2) / 2;
+
+    const fullStars = Math.floor(starsValue);
+    const hasHalf = starsValue % 1 !== 0;
+    const emptyStars = 10 - fullStars - (hasHalf ? 1 : 0);
+
+    for (let i = 0; i < fullStars; i++) {
+        starsEl.innerHTML += `<i class="fa fa-star"></i>`;
+    }
+    if (hasHalf) {
+        starsEl.innerHTML += `<i class="fa fa-star-half-alt"></i>`;
+    }
+    for (let i = 0; i < emptyStars; i++) {
+        starsEl.innerHTML += `<i class="fa fa-star inactive"></i>`;
+    }
+}
+function setImageInfo(url) {
+    const modalImage = document.getElementById("modalImage");
+    modalImage.src = url;
+}
+
+async function animeInfo(uid) {
+    let data = findAnimeByUId(uid)
+    console.log(data);
+    if (!data) {
+        console.error(`[WARNING] Anime con UID ${uid} no encontrado.`);
+        return;
+    } 
+    let animeTitle = data.title
+    currentAnime = data;
     const modalTitle = document.getElementById('modalTitle');
     const episodesList = document.getElementById('episodes-list');
     const modalDescription = document.getElementById('modalDescription');
     const favBtn = document.getElementById('favoriteBtn');
     const shareBtn = document.getElementById('shareBtn');
 
-    // Imagen y título
+    async function ein(url) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.src = url;
+
+            img.onload = () => {
+                const maxDim = 100;
+                const scale = Math.min(maxDim / img.width, maxDim / img.height);
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                let data;
+                try {
+                    data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                } catch {
+                    return resolve(false);
+                }
+
+                let negros = 0, total = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+                    if (a < 10) continue; 
+                    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                    if (lum < 45) negros++;
+                    total++;
+                }
+
+                resolve(negros / total > 0.9);
+            };
+
+            img.onerror = () => resolve(false);
+        });
+    }
+
+
     const proxyUrl = `/image?url=${encodeURIComponent(data.image)}`;
-    if (modalImage) modalImage.src = proxyUrl;
+    let finalImage = proxyUrl;
+
     if (modalTitle) modalTitle.textContent = cleanTitle(animeTitle);
     if (episodesList) episodesList.innerHTML = '';
 
-    // Mostrar modal **inmediatamente**
     const animeModalEl = document.getElementById('animeModal');
     let modal;
     if (animeModalEl) {
@@ -739,8 +1000,8 @@ async function openModal(data, animeTitle) {
         modal.show();
     }
 
-    // Inicializar botones
     initFavoriteButton(animeTitle);
+    console.log(data.unit_id);
     initShareButton(data.unit_id);
 
     if (favBtn) {
@@ -754,7 +1015,6 @@ async function openModal(data, animeTitle) {
         };
     }
 
-    // Mostrar "Cargando descripción..."
     let loadingCounter = 1;
     let loadingInterval;
     if (modalDescription) {
@@ -767,7 +1027,6 @@ async function openModal(data, animeTitle) {
         }, 500);
     }
 
-    // --- FETCH DE DESCRIPCIÓN ---
     (async () => {
         try {
             const response = await fetch('/anime/description', {
@@ -787,9 +1046,60 @@ async function openModal(data, animeTitle) {
         } finally {
             clearInterval(loadingInterval);
         }
-    })();
+    })().catch(err => console.error('[SYNOP] Error inesperado:', err));
 
-    // --- FETCH DE EPISODIOS ---
+    (async () => {
+        try {
+            const mal = await fetch('https://kitsu.app/api/edge/anime?filter%5Btext%5D=' + data.slug, {});
+            const malJson = await mal.json();
+            if (malJson.data && malJson.data.length > 0) {
+                const anime = malJson.data[0];
+                let averageRating = anime.attributes.averageRating;
+
+                if (averageRating === null || averageRating === undefined) {
+                    const freqs = anime.attributes.ratingFrequencies;
+                    let total = 0;
+                    let count = 0;
+
+                    for (const [rating, freq] of Object.entries(freqs)) {
+                        const r = parseInt(rating, 10);
+                        const f = parseInt(freq, 10);
+                        total += r * f;
+                        count += f;
+                    }
+
+                    if (count > 0) {
+                        averageRating = total / count;
+                        const maxRating = Math.max(...Object.keys(freqs).map(r => parseInt(r, 10)));
+                        averageRating = (averageRating / maxRating) * 10;
+                        averageRating = Math.round(averageRating * 10) / 10;
+                    } else {
+                        averageRating = null;
+                    }
+                }
+
+                console.log("Rating promedio:", averageRating);
+                renderStarsBox(averageRating);
+                try {
+                    const esNegra = await ein(proxyUrl);
+                    if (esNegra && malJson.data[0] && malJson.data[0].attributes.posterImage) {
+                        finalImage = malJson.data[0].attributes.posterImage.original || malJson.data[0].attributes.posterImage.large;
+                    } else {
+                        console.log(`[IMG] Imagen válida: ${finalImage}`);
+                    }
+                } catch (err) {
+                    console.warn('[IMG] No se pudo verificar si es negra:', err);
+                }
+                 setImageInfo(finalImage);
+            } else {
+                console.log("No se encontró el anime");
+            }
+
+        } catch (err) {
+            console.log("[MAL] Error inesperado: " + err);
+        }
+    })().catch(err => console.error('[MAL] Error inesperado:', err));
+
     (async () => {
         let episodes = [];
         let selectedSource = null;
@@ -800,22 +1110,18 @@ async function openModal(data, animeTitle) {
         for (const src of sources) {
             if (data.sources && data.sources[src]) {
                 try {
-                    const epResponse = await fetch(`/api/episodes`, { 
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify({ src, Uid: data.unit_id }) 
+                    const epResponse = await fetch(`/api/episodes`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ src, Uid: data.unit_id })
                     });
-
                     if (epResponse.ok) {
                         const result = await epResponse.json();
                         status = result.episodes.isEnd ? "Finalizado" : "En emisión";
                         PFP = result.episodes.isNewEP;
-                        console.log(`[API PLAYER] date de emisión próxima: ${PFP}`);
-                        console.log(`[API PLAYER] Estado del anime: ${status}`);
                         if (result.episodes && Array.isArray(result.episodes.episodes) && result.episodes.episodes.length > 0) {
                             episodes = result.episodes.episodes;
                             selectedSource = src;
-                            console.log(`[API PLAYER] Fuente seleccionada: ${src} con ${episodes.length} episodios`);
                             break;
                         }
                     } else {
@@ -826,12 +1132,11 @@ async function openModal(data, animeTitle) {
                 }
             }
         }
-        // Mostrar estado mientras se cargan episodios
+
         if (episodesList) {
             const div = document.createElement('div');
             div.className = 'status-indicator';
-            const estado = status.toLowerCase();
-            console.log(`[API PLAYER] Estado procesado: ${estado}`);
+            const estado = status ? status.toLowerCase() : "desconocido";
             let texto = "Desconocido";
             let color = "#343a40";
             if (estado.includes("emisión") || estado.includes("emision") || estado.includes("ongoing")) {
@@ -849,8 +1154,9 @@ async function openModal(data, animeTitle) {
             `;
             episodesList.appendChild(div);
         }
-        // Renderizar episodios cuando estén listos
+
         ajustarAlturaEpisodesList(episodes.length);
+
         if (episodesList && episodes.length > 0) {
             episodes.forEach(ep => {
                 const btn = document.createElement('button');
@@ -863,10 +1169,89 @@ async function openModal(data, animeTitle) {
                 episodesList.appendChild(btn);
             });
         }
-    })();
+    })().catch(err => console.error('[API PLAYER] Error inesperado:', err));
 
 }
 
+function cerrarModalAnime() {
+  const animeModalEl = document.getElementById('animeModal');
+  if (!animeModalEl) return;
+  const modal = bootstrap.Modal.getInstance(animeModalEl) || new bootstrap.Modal(animeModalEl);
+  modal.hide();
+}
+
+function abrirCompartir(texto = '', enlace = window.location.href) {
+    const modal = document.getElementById('modalShare');
+    const input = document.getElementById('shareLink');
+    const copyBtn = document.getElementById('copyBtn');
+    const close = document.getElementById('closeModal');
+    const shareOptions = document.getElementById('shareOptions');
+    const scrollBtn = document.getElementById('scrollRight');
+
+    input.value = enlace;
+    modal.classList.add('active');
+
+    close.onclick = () => modal.classList.remove('active');
+    modal.onclick = e => { if (e.target === modal) modal.classList.remove('active'); };
+
+    copyBtn.onclick = async () => {
+        try {
+            await navigator.clipboard.writeText(input.value);
+            copyBtn.textContent = '¡Copiado!';
+            setTimeout(() => copyBtn.textContent = 'Copiar', 2000);
+        } catch {
+            input.select();
+            document.execCommand('copy');
+        }
+    };
+
+    const updateScrollBtn = () => {
+        const maxScroll = shareOptions.scrollWidth - shareOptions.clientWidth;
+        scrollBtn.classList.toggle('hidden', shareOptions.scrollLeft >= maxScroll - 10);
+    };
+
+    scrollBtn.onclick = () => {
+        shareOptions.scrollBy({ left: 150, behavior: 'smooth' });
+        setTimeout(updateScrollBtn, 400);
+    };
+
+    shareOptions.addEventListener('scroll', updateScrollBtn);
+    updateScrollBtn();
+
+    document.querySelectorAll('.share-option').forEach(btn => {
+        btn.onclick = e => {
+            e.preventDefault();
+            const clase = btn.querySelector('div').classList[1];
+
+            let url = '';
+            switch (clase) {
+                case 'whatsapp':
+                    url = `https://wa.me/?text=${encodeURIComponent(texto + ' ' + enlace)}`;
+                    break;
+                case 'facebook':
+                    url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(enlace)}`;
+                    break;
+                case 'telegram':
+                    url = `https://t.me/share/url?url=${encodeURIComponent(enlace)}&text=${encodeURIComponent(texto)}`;
+                    break;
+                case 'correo':
+                    url = `mailto:?subject=${encodeURIComponent(texto)}&body=${encodeURIComponent(enlace)}`;
+                    break;
+                case 'pinterest':
+                    url = `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(enlace)}&description=${encodeURIComponent(texto)}`;
+                    break;
+                case 'x':
+                    url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(texto + ' ' + enlace)}`;
+                    break;
+                case 'reddit':
+                    url = `https://www.reddit.com/submit?url=${encodeURIComponent(enlace)}&title=${encodeURIComponent(texto)}`;
+                    break;
+            }
+
+            if (url) window.open(url, '_blank');
+        }
+    });
+}
 
 /**
  * =======================================================
@@ -913,36 +1298,42 @@ function showContinueWatching() {
     }
 }
 function openDB() {
-  if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME_F, 3); // ⚡ subimos versión a 3
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME_F)) {
-        db.createObjectStore(STORE_NAME_F, { keyPath: 'url' });
-      }
-      if (!db.objectStoreNames.contains("progress")) {
-        db.createObjectStore("progress", { keyPath: "slug" });
-      }
-      if (!db.objectStoreNames.contains("history")) {
-        db.createObjectStore("history", { keyPath: "uid" }); // ⚡ solo uid
-      }
-    };
-  });
-  return dbPromise;
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME_F, 3);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME_F)) {
+                db.createObjectStore(STORE_NAME_F, { keyPath: 'url' });
+            }
+            if (!db.objectStoreNames.contains("progress")) {
+                db.createObjectStore("progress", { keyPath: "slug" });
+            }
+            if (!db.objectStoreNames.contains("history")) {
+                db.createObjectStore("history", { keyPath: "uid" });
+            }
+        };
+    });
+    return dbPromise;
 }
 async function getHistory() {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction("history", "readonly");
-    const store = tx.objectStore("history");
-    const req = store.getAll();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = () => reject(req.error);
-  });
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("history", "readonly");
+        const store = tx.objectStore("history");
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+    });
 }
+async function removeFromHistory(uid) {
+    const history = await getHistory();
+    const updated = history.filter(h => h.uid !== uid);
+    localStorage.setItem('history', JSON.stringify(updated));
+}
+
 function findAnimeById(id) {
     if (typeof id !== 'number' || id <= 0) {
         console.error("El ID proporcionado no es un número válido.");
@@ -953,7 +1344,7 @@ function findAnimeById(id) {
 }
 function findAnimeByUId(id) {
     if (typeof id !== 'number' || id <= 0) {
-        console.error("El ID proporcionado no es un número válido.");
+        console.error("El UID proporcionado no es un número válido." + id);
         return null;
     }
     const animeEncontrado = fullAnimeList.find(anime => anime.unit_id === id);
@@ -976,6 +1367,7 @@ function paginate(items, page, perPage = 24) {
 }
 
 function normalizeText(text) {
+    if (!text) return '';
     return text
         .toLowerCase()
         .normalize('NFD')
@@ -1014,14 +1406,7 @@ async function waitForVisibleImages(selector = '.anime-card img') {
         return new Promise(resolve => img.onload = img.onerror = resolve);
     }));
 
-} 
-
-
-/**
- * =======================================================
- * INDEXEDDB FAVORITOS
- * =======================================================
- */
+}
 
 function abrirDB() {
     return new Promise((resolve, reject) => {
@@ -1164,25 +1549,22 @@ function initShareButton(UID) {
     btn.onclick = async (e) => {
         e.stopPropagation();
 
-        const shareUrl = `https://animeext-m5lt.onrender.com/app/share?uid=${encodeURIComponent(UID)}`;
+        const shareUrl = `/app/share?uid=${encodeURIComponent(UID)}`;
 
         try {
             if (navigator.share) {
                 await navigator.share({
-                    title: findAnimeByUId(UID)?.title || 'Anime',
+                    title: findAnimeByUId(UID).title,
                     url: shareUrl
                 });
             } else {
-                await navigator.clipboard.writeText(shareUrl);
-                const originalText = btn.textContent;
-                btn.textContent = 'Copiado al portapapeles';
-                setTimeout(() => {
-                    // añadir antes <i class="fa fa-share-alt"></i>
-                    btn.innerHTML = `<i class="fa fa-share-alt"></i> ${originalText}`;
-                }, 2000);
+                abrirCompartir('', shareUrl);
             }
         } catch (err) {
             console.error('Error compartiendo:', err);
         }
     };
 }
+document.addEventListener('DOMContentLoaded', () => {mainInit();});
+
+// =======================================================  

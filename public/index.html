@@ -15,7 +15,8 @@
   <link href="./static/bootstrap/css/bootstrap-icons.css" rel="stylesheet" />
   <!-- Tus estilos CSS -->
   <link rel="stylesheet" href="./static/styles.css" />
-  <link rel="stylesheet" href="./static/styles_index.css" />
+  <link rel="stylesheet" href="./static/styles_index.css" /> 
+  <link rel="stylesheet" href="./static/styles_shared.css" />
 </head>
 
 <body>
@@ -221,7 +222,44 @@
   </div> <!-- cierre modal-dialog -->
 </div> <!-- cierre #animeModal -->
 
+    <div class="modal-share" id="modalShare">
+      <div class="modal-share__container">
+        <div class="modal-share__header">Compartir</div>
+        <div class="modal-share__close" id="closeModal">&times;</div>
 
+        <div class="share-options-wrapper">
+          <div class="share-options" id="shareOptions">
+            <a href="#" class="share-option">
+              <div class="share-option__icon pinterest"><i class="bi bi-pinterest"></i></div><span>Pinterest</span>
+            </a>
+            <a href="#" class="share-option">
+              <div class="share-option__icon whatsapp"><i class="fab fa-whatsapp"></i></div><span>WhatsApp</span>
+            </a>
+            <a href="#" class="share-option">
+              <div class="share-option__icon facebook"><i class="fab fa-facebook-f"></i></div><span>Facebook</span>
+            </a>
+            <a href="#" class="share-option">
+              <div class="share-option__icon correo"><i class="fas fa-envelope"></i></div><span>Correo</span>
+            </a>
+            <a href="#" class="share-option">
+              <div class="share-option__icon telegram"><i class="bi bi-telegram"></i></div><span>Telegram</span>
+            </a>
+            <a href="#" class="share-option">
+              <div class="share-option__icon reddit"><i class="bi bi-reddit"></i></div><span>Reddit</span>
+            </a>
+            <a href="#" class="share-option">
+              <div class="share-option__icon x"><i class="bi bi-twitter-x"></i></div><span>X</span>
+            </a>
+          </div>
+          <button class="scroll-btn" id="scrollRight"><i class="fas fa-angle-right"></i></button>
+        </div>
+
+        <div class="modal-share__link-box">
+          <input type="text" id="shareLink" class="modal-share__input" readonly>
+          <button class="modal-share__copy-btn" id="copyBtn">Copiar</button>
+        </div>
+      </div>
+    </div>
 <div id="warningOverlay" class="policy-overlay d-none">
   <div class="policy-modal">
     <div class="mb-3"><i class="fa-solid fa-triangle-exclamation fa-2x text-warning"></i></div>

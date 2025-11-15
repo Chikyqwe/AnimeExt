@@ -470,8 +470,6 @@ const extractors = {
   sw: extractM3u8,
   swiftplayers: extractM3u8,
   obeywish: extractM3u8,
-  'mega.nz': pass,
-  mega: pass,
   'burstcloud.co': burstcloudExtractor,
   bc: burstcloudExtractor
 };
