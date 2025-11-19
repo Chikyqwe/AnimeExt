@@ -675,3 +675,16 @@ body.no-scroll {
   /* background: var(--plyr-video-control-background-hover,var(--plyr-color-main,var(--plyr-color-main,#00b2ff))); */
   background: var(--plyr-video-control-background-hover,var(--plyr-color-main,var(--plyr-color-main,#00bfa5))) !important;
 }
+/* Ejemplo mínimo para CSS (¡Asegúrate de ajustarlo!) */
+@media screen and (max-width: 900px) and (orientation: portrait) {
+  .mobile-fullscreen-rotate {
+    transform: rotate(90deg);
+    transform-origin: top left;
+    width: 100vh;
+    height: 100vw;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 2147483647; 
+  }
+}

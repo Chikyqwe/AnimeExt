@@ -307,6 +307,37 @@
       "color: #888; font-size: 1rem;"
     );
   </script>
-</body>
+  <script>
+  (function loadErudaIfRequested() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('debug') === '180' && params.get('er') === 'true') {
+        // Evitar múltiples cargas
+        if (window.eruda) return;
 
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/eruda'; // CDN oficial
+        s.async = true;
+        s.onload = function () {
+          // Inicializa eruda cuando el script está listo
+          if (window.eruda && typeof eruda.init === 'function') {
+            eruda.init();
+            // Opcional: abrir la herramienta por defecto
+            // eruda.show();
+            // Opcional: escoger herramientas al iniciar
+            // eruda.init({ tool: ['console', 'elements', 'network'] });
+          }
+        };
+        s.onerror = function () {
+          console.warn('No se pudo cargar eruda desde el CDN.');
+        };
+        document.head.appendChild(s);
+      }
+    } catch (err) {
+      // No romper la app si algo falla
+      console.error('Error al comprobar parámetros para eruda:', err);
+    }
+  })();
+  </script>
+</body>
 </html>

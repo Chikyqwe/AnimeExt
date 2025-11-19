@@ -6,6 +6,7 @@ const router = express.Router();
 router.get('/api/player', async (req, res) => {
   const uid = parseInt(req.query.uid, 10);
   const animeId = parseInt(req.query.id, 10);
+  console.log("[API PLAYER] Request received for", !isNaN(animeId) ? `id=${animeId}` : `uid=${uid}`);
   const ep = parseInt(req.query.ep, 10);
 
   if ((isNaN(animeId) && isNaN(uid)) || isNaN(ep)) {
