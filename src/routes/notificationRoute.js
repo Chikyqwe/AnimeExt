@@ -1,4 +1,4 @@
-const { getUUID, registeranime, getanimes, getUsers } = require('../controllers/notificationController');
+const { getUUID, registeranime, getanimes, anulNot } = require('../controllers/notificationController');
 
 const express = require('express');
 const router = express.Router();
