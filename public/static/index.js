@@ -788,7 +788,7 @@ async function search_selecion(s, t) {
 
 async function fetchJsonList() {
     try {
-        const resp = await fetch('/anime/list/ext/beta/cordova/beta/anime/app/chikyqwe');
+        const resp = await fetch('/anime/list');
         if (!resp.ok) {
             throw new Error('Error al cargar la lista de animes');
         }
@@ -930,7 +930,12 @@ function renderStarsBox(rating) {
 }
 function setImageInfo(url) {
     const modalImage = document.getElementById("modalImage");
+    const modalImgWrapper = document.getElementById("modalImgWrapper"); 
     modalImage.src = url;
+
+    modalImage.onload = () => {
+        modalImgWrapper.style.setProperty("--blur-bg", `url(${url})`);
+    };
 }
 
 async function animeInfo(uid) {
@@ -1029,7 +1034,7 @@ async function animeInfo(uid) {
 
     (async () => {
         try {
-            const response = await fetch('/anime/description', {
+            const response = await fetch('/api/description', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: data.id })

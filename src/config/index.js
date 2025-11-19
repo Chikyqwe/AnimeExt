@@ -1,6 +1,5 @@
 require('dotenv').config();
 const path = require('path');
-console.log('JSON_FOLDER =', process.env.JSON_FOLDER);
 
 const PORT = process.env.PORT;
 const JSON_FOLDER = path.isAbsolute(process.env.JSON_FOLDER) ? process.env.JSON_FOLDER : path.join(__dirname, '..', '..', process.env.JSON_FOLDER);

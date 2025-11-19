@@ -1,4 +1,3 @@
-// src/routes/views.js
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -7,8 +6,7 @@ const { randomKey } = require('../utils/token');
 const { getAnimeByUnitId } = require('../services/jsonService');
 const imgs = require('../controllers/imageController');
 
-// -------------------- CACHE --------------------
-// Plantillas HTML
+// -------------------- CACHE HTML --------------------
 const HTML_FILES = ['index.html', 'player.html', 'app.html', 'app_redir.html', 'privacy-policy.html'];
 const htmlCache = {};
 
@@ -16,46 +14,47 @@ HTML_FILES.forEach(file => {
   const fullPath = path.join(__dirname, '..', '..', 'public', file);
   try {
     htmlCache[file] = fs.readFileSync(fullPath, 'utf8');
+    // Solo log inicial, no en cada request
     console.log(`[CACHE] HTML cargado: ${file}`);
-  } catch (e) {
-    console.warn(`[CACHE] No se pudo cargar ${file}: ${e.message}`);
+  } catch (err) {
+    console.warn(`[CACHE] No se pudo cargar ${file}: ${err.message}`);
     htmlCache[file] = '';
   }
 });
+
+// -------------------- HELPERS --------------------
+function sendHtml(res, filename) {
+  const html = htmlCache[filename] || '';
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+}
+
+function setRandomCookies(res) {
+  const key1 = randomKey(8);
+  const key2 = randomKey(8);
+  res.cookie('_K0x1FLVTA0xAA1', key1, { httpOnly: false, path: '/', sameSite: "None", secure: true });
+  res.cookie('_K0x2FLVTA0xFF2', key2, { httpOnly: false, path: '/', sameSite: "None", secure: true });
+  res.setHeader('Cache-Control', 'no-store');
+}
 
 // -------------------- RUTAS --------------------
 
 // Raíz
 router.get('/', (req, res) => {
-  const key1 = randomKey(8);
-  const key2 = randomKey(8);
-
-  res.cookie('_K0x1FLVTA0xAA1', key1, { httpOnly: false, path: '/', sameSite: "None", secure: true });
-  res.cookie('_K0x2FLVTA0xFF2', key2, { httpOnly: false, path: '/', sameSite: "None", secure: true });
-
-  res.setHeader('Cache-Control', 'no-store');
-  console.log('Claves enviadas:', { key1, key2 });
-
-  res.send(htmlCache['index.html']);
+  setRandomCookies(res);
+  sendHtml(res, 'index.html');
 });
-// imgs
+
+// Screenshots / Images
 router.get('/app/screenshots', imgs.listImages);
 router.get('/app/images/:imageName', imgs.serveImage);
 
-// Player
-router.get('/player', (req, res) => {
-  res.send(htmlCache['player.html']);
-});
-
-// App principal
-router.get('/app', (req, res) => {
-  res.send(htmlCache['app.html']);
-});
+// Player y App
+router.get('/player', (req, res) => sendHtml(res, 'player.html'));
+router.get('/app', (req, res) => sendHtml(res, 'app.html'));
 
 // Privacy policy
-router.get('/privacy-policy.html', (req, res) => {
-  res.send(htmlCache['privacy-policy.html']);
-});
+router.get('/privacy-policy.html', (req, res) => sendHtml(res, 'privacy-policy.html'));
 
 // App share con meta tags dinámicos
 router.get('/app/share', async (req, res) => {

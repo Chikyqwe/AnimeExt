@@ -1,0 +1,313 @@
+/* Modal */
+.modal-content {
+    background: #212121;
+    border-radius: 1rem;
+    border: 1px solid #444;
+    color: #ddd;
+}
+.modal-content {
+  overflow: visible !important;
+}
+.modal-header,
+.modal-footer {
+    padding: 1rem 2rem;
+    border: none;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+    padding: 1rem 2rem;
+    overflow-y: auto;
+    background: #181818;
+}
+
+.modal-left {
+    max-width: 320px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.modal-img-wrapper {
+    position: relative;
+    overflow: visible; /* permite que el blur salga */
+    border-radius: 16px;
+    isolation: isolate; /* el blur no contamina elementos externos */
+}
+
+/* Capa difuminada detrás */
+.modal-img-wrapper::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+
+    background: var(--blur-bg, transparent) center/cover no-repeat;
+
+    filter: blur(55px) brightness(0.85);
+    border-radius: inherit;
+    z-index: 0;
+
+    opacity: 1;
+    transition:
+        opacity 0.6s ease-out,
+        background-image 0.6s linear;
+}
+
+/* Imagen real encima */
+.modal-img {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: auto;
+    border-radius: inherit;
+    display: block;
+}
+
+.modal-info {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.download-btn {
+    margin-top: 15px;
+    width: 100%;
+    background: #00bfa5;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 191, 165, 0.5);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
+}
+
+.download-btn:hover {
+    background: #009e87;
+    box-shadow: 0 6px 20px rgba(0, 158, 135, 0.7);
+}
+
+.modal-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #ffffff;
+    text-align: center;
+}
+
+/* Lista de Episodios - Estilo Formal */
+/* Estado del Episodio */
+.episode-status {
+    cursor: default;
+    width: 100%;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #aaa;
+    text-align: center;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.episodes-list {
+    background: #1e1e1e;
+    border-radius: 10px;
+    padding: 16px;
+    max-height: 640px;
+    overflow-y: auto;
+    display: grid;
+    gap: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: #6c6c6c #1e1e1e;
+    font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+/* Scrollbar */
+.episodes-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.episodes-list::-webkit-scrollbar-track {
+    background: #1e1e1e;
+    border-radius: 10px;
+}
+
+.episodes-list::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 10px;
+}
+
+.episodes-list::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+/* Estado del episodio */
+.episode-status {
+    background: #2a2a2a;
+    color: #c5c5c5;
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+    font-size: 0.9rem;
+    letter-spacing: 0.4px;
+}
+
+/* Botón del episodio */
+.episode-button {
+    width: 100%;
+    padding: 12px 16px;
+    background: #2b2b2b;
+    color: #e4e4e4;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.episode-button:hover {
+    background: #333;
+    color: #ffffff;
+    border-color: #505050;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
+}
+
+.episode-button:active {
+    background: #292929;
+    transform: translateY(0);
+}
+
+/* Separación entre episodios */
+.episode-item:not(:last-child) {
+    margin-bottom: 4px;
+}
+.modal-description {
+    background-color: rgba(255, 255, 255, 0.08);
+    /* más sutil que violeta sólido */
+    border-radius: 12px;
+    margin-bottom: 15px;
+    padding: 15px 20px;
+    /* espacio interno para que respire */
+    color: #eaeaea;
+    /* texto en tono claro */
+    line-height: 1.6;
+    /* más legible */
+}
+
+.description-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    color: #ffffff;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    /* separador */
+    padding-bottom: 5px;
+}
+
+.description-text {
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.rating-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #222;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+.rating-score {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #dddddd;
+    /* azul brillante */
+    margin-right: 10px;
+    min-width: 40px;
+    text-align: center;
+}
+
+.rating-stars {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.rating-stars i {
+    font-size: 1.2rem;
+    color: #ffc107;
+    /* amarillo dorado */
+    margin-right: 2px;
+}
+
+.rating-stars i.inactive {
+    color: #444;
+    /* gris oscuro para vacías */
+}
+/* Responsive */
+@media (max-width: 576px) {
+    .modal-content {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-header {
+        padding: 0.5rem 1rem;
+    }
+
+    .modal-body {
+        flex: 1 1 auto;
+        flex-direction: column;
+        padding: 1rem;
+        gap: 20px;
+    }
+
+    .modal-left {
+        width: 100%;
+        max-width: 100%;
+        align-items: center;
+    }
+
+    .modal-img {
+        width: 100%;
+        max-height: 500px;
+    }
+
+    .modal-info {
+        width: 100%;
+    }
+
+    .episodes-list {
+        max-height: none;
+        flex: 1 1 auto;
+    }
+
+    #adsOverlay .policy-modal {
+        height: 400px;
+        width: 100%;
+    }
+}

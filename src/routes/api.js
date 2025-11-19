@@ -9,16 +9,8 @@ const animeController = require('../controllers/animeController');
 const videoController = require('../controllers/videoController');
 
 // Anime
-router.post('/anime/list', validateToken, animeController.list);
-router.post('/anime/description', animeController.description);
+router.post('/api/description', animeController.description);
 router.post('/api/episodes', animeController.episodes);
-
-// Legacy / small routes
-router.get('/anime/list/ext/beta/cordova/beta/anime/app/chikyqwe', videoController.legacyList);
-router.get('/anime/last', videoController.last);
-
-// Image proxy
-router.get('/image', videoController.imageProxy);
 
 // Servers & API
 router.get('/api/servers', videoController.servers);

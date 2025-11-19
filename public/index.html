@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Anime EXT - Tu Mundo Anime</title>
+  <title>Anime EXT - Tu mundo anime</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,212 +16,246 @@
   <link href="./static/bootstrap/css/bootstrap-icons.css" rel="stylesheet" />
   <!-- Tus estilos CSS -->
   <link rel="stylesheet" href="./static/styles.css" />
-  <link rel="stylesheet" href="./static/styles_index.css" /> 
+  <link rel="stylesheet" href="./static/styles_index.css" />
+  <link rel="stylesheet" href="./static/styles_light.css" />
   <link rel="stylesheet" href="./static/styles_shared.css" />
+  <link rel="stylesheet" href="./static/styles_modal.css">
 </head>
 
 <body>
-
-<div class="modal fade" id="continueWatchingModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-md">
-    <div class="modal-content" style="background:#222; color:#fff; border-radius:12px; overflow:hidden;">
-      
-      <!-- Header -->
-      <div class="modal-header border-0">
-        <h5 class="modal-title-S fw-bold" id="continue-watching-title">Continuar viendo</h5>
-        <button type="button" data-bs-dismiss="modal" aria-label="Cerrar" style="background:none;border:none;font-size:1.2rem;"><i class="fa fa-xmark" style="color: rgb(241, 241, 241); transition: color 0.3s;"></i></button>
-      </div>
-      
-      <!-- Body -->
-      <div class="modal-body text-center">
-        <img id="continue-watching-img" src="" alt="Anime" 
-             class="img-fluid rounded mb-3" style="object-fit:cover;">
-        
-        <button id="continue-watching-btn" class="btn btn-success fw-semibold px-4">
-          <i class="fa fa-play me-1"></i> Continuar viendo
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<div id="loader">
-  <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
-</div>
-
-<header class="topbar d-flex align-items-center">
-  <a href="#" class="logo">
-    <svg viewBox="0 0 300 120" class="logo-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-      <text x="10" y="60" font-family="Alice, serif" font-size="36" font-weight="bold">
-        <tspan class="main-text">Anime </tspan>
-        <tspan class="ext-text">EXT</tspan>
-      </text>
-      <path d="M220,30 L230,60 L220,90" stroke="#3C873A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-      <text x="100" y="90" text-anchor="middle" font-family="sans-serif" font-size="14" class="subtext">アニメが好きな私たち</text>
+  <div id="offlineOverlay" class="hidden">
+    <svg fill="#00bfff" viewBox="-3.6 -3.6 43.20 43.20" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
+      <path d="M18,24.42a4,4,0,1,0,4,4A4,4,0,0,0,18,24.42Zm0,6a2,2,0,1,1,2-2A2,2,0,0,1,18,30.42Z"></path>
+      <path d="M26.21,21.85a1,1,0,0,0-.23-1.4,13.56,13.56,0,0,0-5-2.23l3.87,3.87A1,1,0,0,0,26.21,21.85Z"></path>
+      <path
+        d="M18.05,10.72a20.88,20.88,0,0,0-4.16.43l1.74,1.74a19,19,0,0,1,2.42-.17A18.76,18.76,0,0,1,28.64,16a1,1,0,0,0,1.12-1.65A20.75,20.75,0,0,0,18.05,10.72Z">
+      </path>
+      <path d="M33.55,8.2A28.11,28.11,0,0,0,8.11,5.36L9.69,6.93A26,26,0,0,1,32.45,9.87a1,1,0,0,0,1.1-1.67Z"></path>
+      <path
+        d="M1.84,4.75,4.27,7.18c-.62.34-1.23.7-1.83,1.1A1,1,0,1,0,3.56,9.94C4.26,9.47,5,9,5.74,8.65l3.87,3.87A20.59,20.59,0,0,0,6.23,14.4,1,1,0,0,0,7.36,16a18.82,18.82,0,0,1,3.77-2l4.16,4.16A13.51,13.51,0,0,0,10,20.55a1,1,0,0,0,1.18,1.61A11.52,11.52,0,0,1,17,20l10.8,10.8,1.41-1.41-26-26Z">
+      </path>
     </svg>
-  </a>
-
-  <!-- Botón hamburguesa para móvil -->
-  <button id="hamburgerBtn" class="btn btn-outline-light me-2" type="button" aria-label="Abrir menú">
-    <i class="fa fa-bars fa-lg"></i>
-  </button>
-
-  <nav class="main-nav d-none d-md-flex">
-    <a href="#" id="navInicio" class="nav-item active" onclick="mostrarInicio(event)">Inicio</a>
-    <a href="#" id="navDirectorio" class="nav-item" onclick="mostrarDirectorio(event)">Directory</a>
-  <a href="#" id="navHistorial" class="nav-item d-none" onclick="mostrarHistorial(event)">Historial</a>
-  <a href="#" id="navFavoritos" class="nav-item" onclick="mostrarFavoritos(event)">Favoritos</a>
-  </nav>
-
-  <form class="search-form d-flex ms-auto align-items-center" role="search" onsubmit="searchAnime(event)">
-    <button type="button" id="search-toggle-btn" class="btn btn-outline-light d-md-none">
-      <i class="fa fa-search"></i>
-    </button>
-    <input id="searchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="form-control me-2 d-none d-md-block" type="search" placeholder="Buscar anime..." aria-label="Buscar" />
-    <button class="btn btn-outline-light d-none d-md-block" type="submit">
-      <i class="fa fa-search"></i>
-    </button>
-    <ul id="search-suggestions" class="suggestions-list"></ul>
-  </form>
-  <div id="mobileDropdownMenu" role="menu" aria-hidden="true">
-    <a href="#" id="mobileNavInicio" class="active" role="menuitem" onclick="mostrarInicio(event); toggleMobileMenu(false)">Inicio</a>
-    <a href="#" id="mobileNavDirectorio" role="menuitem" onclick="mostrarDirectorio(event); toggleMobileMenu(false)">Directory</a>
-  <a href="#" id="mobileNavHistorial" role="menuitem" class="d-none" onclick="mostrarHistorial(event); toggleMobileMenu(false)">Historial</a>
-  <a href="#" id="mobileNavFavoritos" role="menuitem" onclick="mostrarFavoritos(event); toggleMobileMenu(false)">Favoritos <i class="fa fa-heart"></i></a>
-  </div> 
-</header>
-<div style="margin-bottom: 30px;">
-  <a href="/app" id="downloadBadge" class="btn btn-success d-flex align-items-center">
-    <i class="fa fa-download me-2"></i> Descarga nuestra app!
-  </a>
-</div>
-<div class="layout-container">
-  <aside class="sidebar">
-    <h3 class="sidebar-title">Animes en emisión</h3>
-    <ul class="sidebar-menu"></ul>
-  </aside>
-
-  <main class="main-content">
-    <div id="anime-section">
-      <h2 class="section-title">Últimos Episodios</h2>
-      <div id="anime-list" class="anime-grid"></div>
-    </div>
-
-    <div id="directory-section" class="d-none">
-      <h2 class="section-title">Nuestros Animes</h2>
-      <div class="card-container" id="card-container"></div>
-    </div>
-
-      <div id="historial-section" class="d-none">
-        <h2 class="section-title">Historial</h2>
-        <div class="card-container" id="historial-container"></div>
-      </div>
-
-      <div id="favoritos-section" class="d-none">
-        <h2 class="section-title">Tus Favoritos</h2>
-        <div class="card-container" id="favoritos-container"></div>
-      </div>
-      <div id="search-section" class="d-none">
-        <h2 class="section-title" id="search-title">Resultados de tu busqueda</h2>
-        <div class="card-container" id="search-container"></div>
-      </div>
-  </main>
-</div>
-
-<div class="bottom-bar">
-  <button class="bottom-btn" onclick="abrirMenuOpciones()"><i class="fa fa-bars"></i></button>
-  <div id="pagination-controls" class="pagination-controls d-none"></div>
-  <div id="bottomThemeIcon" onclick="toggleTheme(true)" class="bottom-btn">
-    <i id="themeIcon" class="fa fa-moon"></i>    
+    <h2>Conéctese a internet</h2>
+    <p>Para utilizar AnimeExt es necesaria una conexion a internet...</p>
   </div>
-</div>
+  <div id="mainContent">
+    <div class="modal fade" id="continueWatchingModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content" style="background:#222; color:#fff; border-radius:12px; overflow:hidden;">
 
+          <!-- Header -->
+          <div class="modal-header border-0">
+            <h5 class="modal-title-S fw-bold" id="continue-watching-title">Continuar viendo</h5>
+            <button type="button" data-bs-dismiss="modal" aria-label="Cerrar"
+              style="background:none;border:none;font-size:1.2rem;"><i class="fa fa-xmark"
+                style="color: rgb(241, 241, 241); transition: color 0.3s;"></i></button>
+          </div>
 
-<div id="policyOverlay" class="policy-overlay d-none">
-  <div class="policy-modal">
-    <div class="policy-header d-flex justify-content-between align-items-center">
-      <h5 class="m-0">Política de Privacidad</h5>
-      <button onclick="cerrarOverlay('policyOverlay')" style="background:none;border:none;font-size:1.2rem;"><i class="fa fa-xmark"></i></button>
-    </div>
-    <iframe id="policyIframe" class="policy-iframe" loading="lazy"></iframe>
-    <div class="policy-footer text-end">
-      <button id="policyAcceptBtn" class="btn btn-success fw-semibold px-4">Aceptar</button>
-    </div>
-  </div>
-</div>
+          <!-- Body -->
+          <div class="modal-body text-center">
+            <img id="continue-watching-img" src="" alt="Anime" class="img-fluid rounded mb-3" style="object-fit:cover;">
 
-<div id="adsOverlay" class="policy-overlay d-none">
-  <div class="policy-modal">
-    <div class="mb-3"><i class="fa-solid fa-tv fa-2x text-info"></i></div>
-    <h3 class="mb-2">¿Cómo prefieres ver tus animes?</h3>
-    <p class="px-2">Puedes elegir ver los episodios con <span class="text-success fw-semibold">anuncios</span> o sin anuncios.</p>
-    <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center mt-3">
-      <button class="btn btn-success fw-semibold" onclick="setAdsPreference(true)">
-        <i class="fa-solid fa-bolt me-1"></i> Con anuncios
-      </button>
-      <button class="btn btn-outline-light fw-semibold" onclick="setAdsPreference(false)">
-        <i class="fa-solid fa-clock me-1"></i> Sin anuncios
-      </button>
-    </div>
-  </div>
-</div>
-
-<div id="menuOverlay" class="policy-overlay d-none">
-  <div class="policy-modal">
-    <div class="policy-header d-flex justify-content-between align-items-center">
-      <i class="fa fa-gear"></i>
-      <div style="text-align:center;">
-        <span>Anime ext 14.7.3</span>
-      </div>
-      <button onclick="cerrarOverlay('menuOverlay')" style="background:none;border:none;font-size:1.2rem;"><i class="fa fa-xmark"></i></button>
-    </div>
-    
-    <div class="menu-grid">
-      <div class="menu-circle" onclick="verAds()">
-        <i class="fa fa-tv"></i>
-        <div class="menu-text">Anuncios</div>
-      </div>
-      <div class="menu-circle" onclick="verPolitica()">
-        <i class="fa fa-scale-balanced"></i>
-        <div class="menu-text">Privacidad</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="animeModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" id="modalCloseBtn" data-bs-dismiss="modal" aria-label="Cerrar" style="background-color: transparent; border: none; font-size: 1.5rem;">
-          <i class="fa fa-xmark" style="color: white;"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="modal-left">
-          <img id="modalImage" class="modal-img" src="" alt="Anime Image" />
+            <button id="continue-watching-btn" class="btn btn-success fw-semibold px-4">
+              <i class="fa fa-play me-1"></i> Continuar viendo
+            </button>
+          </div>
         </div>
-        <div class="modal-info">
-          <h2 id="modalTitle" class="modal-title"></h2>
-          <div class="modal-description">
-            <h3 class="description-title">Descripción</h3>
-            <p id="modalDescription" class="description-text"></p>
+      </div>
+    </div>
+
+
+    <div id="loader">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <header class="topbar d-flex align-items-center">
+      <a href="#" class="logo">
+        <svg viewBox="0 0 300 120" class="logo-svg" xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="xMidYMid meet">
+          <text x="10" y="60" font-family="Alice, serif" font-size="36" font-weight="bold">
+            <tspan class="main-text">Anime </tspan>
+            <tspan class="ext-text">EXT</tspan>
+          </text>
+          <path d="M220,30 L230,60 L220,90" stroke="#3C873A" stroke-width="3" fill="none" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <text x="100" y="90" text-anchor="middle" font-family="sans-serif" font-size="14"
+            class="subtext">アニメが好きな私たち</text>
+        </svg>
+      </a>
+
+      <!-- Botón hamburguesa para móvil -->
+      <button id="hamburgerBtn" class="btn btn-outline-light me-2" type="button" aria-label="Abrir menú">
+        <i class="fa fa-bars fa-lg"></i>
+      </button>
+
+      <nav class="main-nav">
+        <a href="#" id="navInicio" class="nav-item active" onclick="mostrarInicio(event)">Inicio</a>
+        <a href="#" id="navDirectorio" class="nav-item" onclick="mostrarDirectorio(event)">Directory</a>
+        <a href="#" id="navHistorial" class="nav-item" onclick="mostrarHistorial(event)">Historial</a>
+        <a href="#" id="navFavoritos" class="nav-item" onclick="mostrarFavoritos(event)">Favoritos</a>
+      </nav>
+
+      <form class="search-form d-flex ms-auto align-items-center" role="search" onsubmit="searchAnime(event)">
+        <button type="button" id="search-toggle-btn" class="btn btn-outline-light d-md-none">
+          <i class="fa fa-search"></i>
+        </button>
+        <input id="searchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          class="form-control me-2 d-none d-md-block" type="search" placeholder="Buscar anime..." aria-label="Buscar" />
+        <button class="btn btn-outline-light d-none d-md-block" type="submit">
+          <i class="fa fa-search"></i>
+        </button>
+        <ul id="search-suggestions" class="suggestions-list"></ul>
+      </form>
+      <div id="mobileDropdownMenu" class="mobileDropdownMenu" role="menu" aria-hidden="true">
+        <a href="#" id="mobileNavInicio" class="active" role="menuitem"
+          onclick="mostrarInicio(event); toggleMobileMenu(false)">Inicio</a>
+        <a href="#" id="mobileNavDirectorio" role="menuitem"
+          onclick="mostrarDirectorio(event); toggleMobileMenu(false)">Directory</a>
+        <a href="#" id="mobileNavHistorial" role="menuitem"
+          onclick="mostrarHistorial(event); toggleMobileMenu(false)">Historial</a>
+        <a href="#" id="mobileNavFavoritos" role="menuitem"
+          onclick="mostrarFavoritos(event); toggleMobileMenu(false)">Favoritos <i class="fa fa-heart"></i></a>
+      </div>
+    </header>
+    <div class="layout-container">
+      <aside class="sidebar">
+        <h3 class="sidebar-title">Animes en emisión</h3>
+        <ul class="sidebar-menu"></ul>
+      </aside>
+
+      <main class="main-content">
+        <div id="anime-section">
+          <h2 class="section-title">Últimos Episodios</h2>
+          <div id="anime-list" class="anime-grid"></div>
+        </div>
+
+        <div id="directory-section" class="d-none">
+          <h2 class="section-title">Nuestros Animes</h2>
+          <div class="card-container" id="card-container"></div>
+        </div>
+
+        <div id="historial-section" class="d-none">
+          <h2 class="section-title">Historial</h2>
+          <div class="card-container" id="historial-container"></div>
+        </div>
+        <div id="historial-menu" class="context-menu d-none">
+          <button id="remove-from-history" class="menu-option">Quitar del historial</button>
+        </div>
+
+
+        <div id="favoritos-section" class="d-none">
+          <h2 class="section-title">Tus Favoritos</h2>
+          <div class="card-container" id="favoritos-container"></div>
+        </div>
+        <div id="search-section" class="d-none">
+          <h2 class="section-title" id="search-title">Resultados de tu busqueda</h2>
+          <div class="card-container" id="search-container"></div>
+        </div>
+      </main>
+    </div>
+
+    <div class="bottom-bar">
+      <button class="bottom-btn" onclick="abrirMenuOpciones()"><i class="fa fa-bars"></i></button>
+      <div id="pagination-controls" class="pagination-controls d-none"></div>
+      <div id="bottomThemeIcon" onclick="toggleTheme()" class="bottom-btn">
+        <i id="themeIcon" class="fa fa-moon"></i>
+      </div>
+    </div>
+
+    <div id="policyOverlay" class="policy-overlay d-none">
+      <div class="policy-modal">
+        <div class="policy-header d-flex justify-content-between align-items-center">
+          <h5 class="m-0">Política de Privacidad</h5>
+          <button onclick="navigator.app.exitApp();" style="background:none;border:none;font-size:1.2rem;"><i
+              class="fa fa-xmark"></i></button>
+        </div>
+        <iframe id="policyIframe" class="policy-iframe" loading="lazy"></iframe>
+        <div class="policy-footer text-end">
+          <button id="policyAcceptBtn" class="btn btn-success fw-semibold px-4">Aceptar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="adsOverlay" class="policy-overlay d-none">
+      <div class="policy-modal">
+        <div class="mb-3"><i class="fa-solid fa-tv fa-2x text-info"></i></div>
+        <h3 class="mb-2">¿Cómo prefieres ver tus animes?</h3>
+        <p class="px-2">Puedes elegir ver los episodios con <span class="text-success fw-semibold">anuncios</span> o sin
+          anuncios.</p>
+        <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center mt-3">
+          <button class="btn btn-success fw-semibold" onclick="setAdsPreference(true)">
+            <i class="fa-solid fa-bolt me-1"></i> Con anuncios
+          </button>
+          <button class="btn btn-outline-light fw-semibold" onclick="setAdsPreference(false)">
+            <i class="fa-solid fa-clock me-1"></i> Sin anuncios
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="menuOverlay" class="policy-overlay d-none">
+      <div class="policy-modal">
+        <div class="policy-header d-flex justify-content-between align-items-center">
+          <i class="fa fa-gear"></i>
+          <div style="text-align:center;">
+            <span>Anime EXT 15.0.0</span>
           </div>
-          <div id="episodes-list" class="episodes-list"></div>
-          <div class="d-flex justify-content-between align-items-center mt-3">
-            <button id="favoriteBtn" class="btn btn-outline-light">
-              <i class="fa fa-heart"></i> Agregar a Favoritos
-            </button>
-            <button id="shareBtn" class="btn btn-outline-light">
-              <i class="fa fa-share-alt"></i> Compartir
+          <button onclick="cerrarOverlay('menuOverlay')" style="background:none;border:none;font-size:1.2rem;"><i
+              class="fa fa-xmark"></i></button>
+        </div>
+7
+        <div class="menu-grid">
+          <div class="menu-circle" onclick="verAds()">
+            <i class="fa fa-tv"></i>
+            <div class="menu-text">Anuncios</div>
+          </div>
+          <div class="menu-circle" onclick="verPolitica()">
+            <i class="fa fa-scale-balanced"></i>
+            <div class="menu-text">Privacidad</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="animeModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" id="modalCloseBtn" data-bs-dismiss="modal" aria-label="Cerrar"
+              style="background-color: transparent; border: none; font-size: 1.5rem;">
+              <i class="fa fa-xmark" style="color: white;"></i>
             </button>
           </div>
-        </div> <!-- cierre modal-info -->
-      </div> <!-- cierre modal-body -->
-    </div> <!-- cierre modal-content -->
-  </div> <!-- cierre modal-dialog -->
-</div> <!-- cierre #animeModal -->
+          <div class="modal-body">
+            <div class="modal-left">
+              <div id="modalImgWrapper" class="modal-img-wrapper">
+                  <img id="modalImage" class="modal-img" src="" alt="Anime Image" />
+              </div>
+            </div>
+
+            <div class="modal-info">
+              <h2 id="modalTitle" class="modal-title"></h2>
+              <div class="modal-description">
+                <h3 class="description-title">Descripción</h3>
+                <p id="modalDescription" class="description-text"></p>
+              </div>
+              <div id="episodes-list" class="episodes-list"></div>
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <button id="favoriteBtn" class="btn btn-outline-light">
+                  <i class="fa fa-heart"></i> Agregar a Favoritos
+                </button>
+                <button id="shareBtn" class="btn btn-outline-light">
+                  <i class="fa fa-share-alt"></i> Compartir
+                </button>
+              </div>
+            </div> <!-- cierre modal-info -->
+          </div> <!-- cierre modal-body -->
+        </div> <!-- cierre modal-content -->
+      </div> <!-- cierre modal-dialog -->
+    </div> <!-- cierre #animeModal -->
 
     <div class="modal-share" id="modalShare">
       <div class="modal-share__container">
@@ -260,15 +295,9 @@
         </div>
       </div>
     </div>
-<div id="warningOverlay" class="policy-overlay d-none">
-  <div class="policy-modal">
-    <div class="mb-3"><i class="fa-solid fa-triangle-exclamation fa-2x text-warning"></i></div>
-    <h3 class="mb-2"id="warningTitle"></h3>
-    <p class="px-2" id="warningMessage"></p>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="./static/index.js"></script>
-<script src="./static/functions_index.js"></script>
+  </div>
+  <script src="./static/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="./static/index.js"></script>
   <script type="module">
     console.info(
       "%cAnime %cEXT%c\n%cDesarrollado por Chiki & Chikiqwe",
@@ -279,4 +308,5 @@
     );
   </script>
 </body>
+
 </html>

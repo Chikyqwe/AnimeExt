@@ -35,19 +35,6 @@ async function ejecutarMantenimiento() {
 const INTERVALO = 45 * 60 * 1000;
 mantenimientoInterval = setInterval(ejecutarMantenimiento, INTERVALO);
 
-// =================== ENDPOINT DE MANTENIMIENTO ===================
-app.get('/mantenimiento', (req, res) => {
-  const ahora = new Date();
-  const diffMs = ultimoMantenimiento ? ahora - ultimoMantenimiento : null;
-  const minutos = diffMs ? Math.floor(diffMs / (1000 * 60)) : null;
-
-  res.json({
-    ahora: ahora.toISOString(),
-    ultimoMantenimiento: ultimoMantenimiento ? ultimoMantenimiento.toISOString() : null,
-    minutosDesdeUltimo: minutos
-  });
-});
-
 // =================== SERVIDOR INICIADO ===================
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[SUCCESS] Servidor corriendo en http://localhost:${PORT}`);

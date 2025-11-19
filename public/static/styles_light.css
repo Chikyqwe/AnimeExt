@@ -1,0 +1,49 @@
+body.light-theme { background-color: #f5f5f5; color: #121212;}
+body.light-theme .main-header { background-color: #ffffff; border-bottom: 1px solid #e0e0e0;}
+body.light-theme .search-container { background-color: #e0e0e0;}
+body.light-theme .search-input { color: #121212;}
+body.light-theme .search-input::placeholder { color: #555;}
+body.light-theme .search-button { color: #121212;}
+body.light-theme .layout-container { background-color: #f5f5f5;}
+body.light-theme .main-content { background-color: #f5f5f5;}
+body.light-theme .sidebar { background-color: #ffffff; color: #000000;}
+body.light-theme .sidebar-link i { color: #000000;}
+body.light-theme a { color: #000 !important; text-decoration: none;}
+body.light-theme a:hover { color: var(--accent-color);}
+body.light-theme .sidebar-link:hover, body.light-theme .sidebar-link.active { background-color: var(--accent-color); color: #fff;}
+body.light-theme .sidebar-link:hover i, body.light-theme .sidebar-link.active i { color: #fff;}
+body.light-theme .sidebar-menu .anime-link:hover { background-color: rgba(0, 0, 0, 0.1) !important; text-decoration: none;}
+body.light-theme .topbar { background: #fff !important; color: #1a1a1a !important; border-bottom: 1px solid #ddd !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);}
+body.light-theme .bottom-bar { background: linear-gradient(90deg, #f9f9f9, #eaeaea); border-top: 1px solid #ccc;}
+body.light-theme .bottom-btn { color: #222;}
+body.light-theme .bottom-btn:hover { color: #000;}
+body.light-theme .page-btn { background: #222; color: #fff;}
+body.light-theme .page-btn:hover { background: #000;}
+body.light-theme #pageIndicator { color: #222;}
+body.light-theme .search-form.mobile-search-active { background: #fff; border: 1px solid #ddd;}
+body.light-theme .search-form.mobile-search-active input { color: #111; border-bottom: 2px solid #00bfa5;}
+body.light-theme #searchInput { color: #111; border-bottom: 1px solid #aaa;}
+body.light-theme #searchInput::placeholder { color: #888;}
+body.light-theme .suggestions-list { background: #fff; border: 1px solid #fff;}
+body.light-theme .suggestions-list li { border-bottom: 1px solid #fff; color: #141313;}
+body.light-theme .suggestions-list li:hover { background: #f2f2f2;}
+body.light-theme .logo-svg .main-text, body.light-theme .logo-svg .subtext { fill: #111;}
+body.light-theme .logo-svg .ext-text { fill: #2e94dc;}
+body.light-theme .btn-outline-light { color: #333 !important; border-color: #333 !important;}
+body.light-theme .btn-outline-light:hover { background: #333 !important; color: #fff !important;}
+body.light-theme .mobileDropdownMenu { background: #fff !important;}
+body.light-theme .modal-content { background: #fff !important; color: #1a1a1a !important; border: 1px solid #e0e0e0 !important;}
+body.light-theme .modal-body { background: #f8f8f8 !important;}
+body.light-theme .modal-img { box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);}
+body.light-theme .episodes-list { background: #fefefe !important; border: 1px solid #e0e0e0 !important; scrollbar-color: #333 #f1f1f1;}
+body.light-theme .episode-button { background: #fff; color: #333;}
+body.light-theme .description-title { color: #333; border-bottom: 1px solid rgba(0, 0, 0, 0.2);}
+body.light-theme .modal-description { border: 1px solid #e0e0e0 !important; background-color: #fff; color: #333;}
+body.light-theme .description-text { color: #333;}
+body.light-theme .modal-title { color: #333;}
+body.light-theme .rating-score { color: #333;}
+body.light-theme .rating-stars i.inactive { color: #eee;}
+body.light-theme .rating-box { border: 1px solid #e0e0e0 !important; background-color: #fff;}
+body.light-theme .modal-description { border-color: #000;}
+body.light-theme .fa-times { color: #333;}
+body.light-theme .fa-times:hover { color: #000;}

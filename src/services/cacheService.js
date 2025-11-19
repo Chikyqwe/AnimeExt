@@ -1,8 +1,7 @@
-// src/services/cacheService.js
-// Caché simple por TTL. Uso: cache.get(key) / cache.set(key, value, ttlMs)
 class SimpleCache {
-  constructor() {
+  constructor(cleanInterval = 60_000) {
     this.store = new Map();
+    this.cleanInterval = setInterval(() => this.cleanUp(), cleanInterval);
   }
 
   set(key, value, ttl = 60_000) {
@@ -30,6 +29,18 @@ class SimpleCache {
 
   clear() {
     this.store.clear();
+  }
+
+  cleanUp() {
+    const now = Date.now();
+    for (const [key, { expiresAt }] of this.store.entries()) {
+      if (expiresAt <= now) this.store.delete(key);
+    }
+  }
+
+  // Llamar cuando quieras detener el servidor para evitar interval leak
+  stop() {
+    clearInterval(this.cleanInterval);
   }
 }
 

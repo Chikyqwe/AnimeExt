@@ -22,6 +22,8 @@ exports.list = asyncHandler(async (req, res) => {
   // Envía archivo JSON directamente (rápido y sin parsear)
   res.sendFile(getJSONPath('anime_list.json'));
 });
+// GET /anime/last (simple)
+exports.last = (req, res) => res.sendFile(getJSONPath('lastep.json'));
 
 // /anime/description
 exports.description = asyncHandler(async (req, res) => {

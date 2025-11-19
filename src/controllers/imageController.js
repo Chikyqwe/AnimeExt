@@ -1,6 +1,14 @@
 const fs = require('fs').promises;
 const asyncHandler = require('../middlewares/asyncHandler');
+const { proxyImage } = require('../utils/helpers');
 const path = require('path');
+
+// GET /image
+exports.imageProxy = asyncHandler(async (req, res) => {
+  const { url } = req.query;
+  await proxyImage(url, res);
+});
+
 
 exports.listImages = asyncHandler(async (req, res) => {
     const imagesDir = path.join(__dirname, '..', '..', 'public', 'img', 'app');

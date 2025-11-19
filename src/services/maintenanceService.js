@@ -13,7 +13,7 @@ async function iniciarMantenimiento({ timeoutMs = 8 * 60 * 1000 } = {}) { // tim
 
   console.log(`[MANTENIMIENTO] Iniciando mantenimiento en hilo separado...`);
 
-  const workerPath = path.join(__dirname, '..', 'maintenimance', 'worker-mantenimiento.js');
+  const workerPath = path.join(__dirname, '..', 'jobs', 'maintenimanceWorker.js');
   const worker = new Worker(workerPath);
 
   let timeoutHandle = null;

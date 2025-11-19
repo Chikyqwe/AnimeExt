@@ -15,6 +15,7 @@ class RequestQueue {
    * @param {Object} [options] Opciones extra { name, meta }
    */
   add(task, options = {}) {
+    console.log('[QUEUE] Agregando tarea a la cola...');
     const normalizedTask =
       typeof task === 'function'
         ? { fn: task }

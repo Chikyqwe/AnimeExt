@@ -73,18 +73,6 @@ async function filterValidVideos(videos) {
 
 /* ---------- Rutas / handlers ---------- */
 
-// GET /anime/last (simple)
-exports.last = (req, res) => res.sendFile(getJSONPath('lastep.json'));
-
-// GET /anime/list/ext/beta/cordova/...
-exports.legacyList = (req, res) => res.sendFile(getJSONPath('anime_list.json'));
-
-// GET /image
-exports.imageProxy = asyncHandler(async (req, res) => {
-  const { url } = req.query;
-  await proxyImage(url, res);
-});
-
 // GET /api/servers
 exports.servers = asyncHandler(async (req, res) => {
   const { url: pageUrlParam, id: animeId, ep, mirror = 1 } = req.query;

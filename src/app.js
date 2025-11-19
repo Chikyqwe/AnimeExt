@@ -6,8 +6,9 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const favicon = require('serve-favicon');
-const { isMetadataStale } = require('./test/CheckAnimeList');
+const { isMetadataStale } = require('./utils/CheckAnimeList');
 const { iniciarMantenimiento } = require('./services/maintenanceService');
+const { startEpisodeWorker } = require('./jobs/fcmWorker');
 
 console.log('[INFO] Librerías cargadas.');
 
@@ -30,6 +31,8 @@ const maintenanceRoutes = safeRequire('./routes/maintenance', 'maintenanceRoutes
 const playerRoutes      = safeRequire('./routes/player', 'playerRoutes');
 const apiRoutes         = safeRequire('./routes/api', 'apiRoutes');
 const WakeUP            = safeRequire('./utils/wakeUp', 'WakeUP');
+const notification      = safeRequire('./routes/notificationRoute', 'notificationRoutes');
+const animeRoutes        = safeRequire('./routes/index', 'animeRoutes');
 
 const app = express();
 
@@ -48,10 +51,15 @@ app.use(express.json());
 
 console.log('[INFO] Middleware configurado correctamente.');
 
+// ================== Notifications Worker ==================
+console.log('[INFO] Iniciando worker de notificaciones...');
+startEpisodeWorker();
+// ===========================================================
+
 // =================== RUTAS ===================
 console.log('[INFO] Montando rutas...');
 
-[viewsRoutes, maintenanceRoutes, playerRoutes, apiRoutes, WakeUP]
+[viewsRoutes, maintenanceRoutes, playerRoutes, apiRoutes, WakeUP, notification, animeRoutes]
   .filter(Boolean)
   .forEach((routeModule, idx) => {
     app.use('/', routeModule);

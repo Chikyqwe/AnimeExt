@@ -1,89 +1,153 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Autenticación</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom right, #1a1a1a, #121212);
-      color: #f0f0f0;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .container {
-      background: #1f1f1f;
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
-      text-align: center;
-      width: 90%;
-      max-width: 400px;
-    }
-
-    h1 {
-      color: #00ced1;
-      margin-bottom: 1rem;
-    }
-
-    input[type="password"] {
-      padding: 0.7rem;
-      width: 80%;
-      border: 2px solid #00ced1;
-      border-radius: 0.5rem;
-      margin-bottom: 1rem;
-      font-size: 1rem;
-      background: #121212;
-      color: #f0f0f0;
-    }
-
-    input[type="password"]::placeholder {
-      color: #888;
-    }
-
-    button {
-      padding: 0.7rem 1.5rem;
-      background-color: #008b8b;
-      color: white;
-      border: none;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #00ced1;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Prueba API Fire</title>
+<style>
+    body { font-family: Arial; margin: 20px; }
+    form { border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; }
+    label { display: block; margin: 10px 0; }
+    input, textarea { width: 100%; padding: 5px; }
+    pre { background: #eee; padding: 10px; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Introduce la clave</h1>
-    <form id="passForm">
-      <input type="password" id="password" placeholder="Contraseña" required />
-      <br>
-      <button type="submit">Enviar</button>
-    </form>
-  </div>
-  <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("passForm").addEventListener("submit", function(e) {
-        e.preventDefault();
-        const password = document.getElementById("password").value;
-        if (password) {
-          const url = new URL(window.location.href);
-          url.searchParams.set("pass", password);
-          window.location.href = url.toString(); // recarga con el parámetro
-        }
-      });
+
+<h2>Obtener UUID</h2>
+
+<form id="uuidForm">
+    <label>Token:
+        <input type="text" id="token" required>
+    </label>
+    <label>Timestamp:
+        <input type="text" id="timestamp" required>
+    </label>
+    <button type="submit">Enviar</button>
+</form>
+
+<pre id="uuidResult"></pre>
+
+<hr>
+
+<h2>Registrar Anime</h2>
+
+<form id="registerForm">
+    <label>UUID:
+        <input type="text" id="uuidRegister" required>
+    </label>
+
+    <h3>Animes</h3>
+    <div id="animeItems"></div>
+
+    <button type="button" onclick="addAnimeItem()">Agregar Anime</button>
+    <button type="submit">Enviar</button>
+</form>
+
+<pre id="registerResult"></pre>
+
+<hr>
+
+<h2>Obtener Animes</h2>
+
+<form id="getAnimesForm">
+    <label>UUID:
+        <input type="text" id="uuidGet" required>
+    </label>
+    <button type="submit">Enviar</button>
+</form>
+
+<pre id="getAnimesResult"></pre>
+
+<script>
+const API_BASE = "http://localhost:2022/fire";
+
+// ============ GET UUID ============
+document.getElementById("uuidForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const token = document.getElementById("token").value;
+    const timestamp = document.getElementById("timestamp").value;
+
+    const res = await fetch(`${API_BASE}/getUUID`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parameters: { token, timestamp } })
     });
-  </script>
+
+    const data = await res.json();
+    document.getElementById("uuidResult").textContent =
+        JSON.stringify(data, null, 2);
+});
+
+
+// ============ REGISTRAR ANIME ============
+
+// Crear item de anime (UID + EP)
+function addAnimeItem(uid = "", ep = "") {
+    const box = document.getElementById("animeItems");
+
+    const div = document.createElement("div");
+    div.style.border = "1px solid #aaa";
+    div.style.padding = "10px";
+    div.style.margin = "10px 0";
+
+    div.innerHTML = `
+        <label>UID:
+            <input type="text" class="uid" value="${uid}" required>
+        </label>
+        <label>Episodio:
+            <input type="number" class="ep" value="${ep}" required>
+        </label>
+        <button type="button" onclick="this.parentElement.remove()">Eliminar</button>
+    `;
+
+    box.appendChild(div);
+}
+
+// Agregar un item por defecto
+addAnimeItem();
+
+// Registrar anime -> POST /registeranime
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const uuid = document.getElementById("uuidRegister").value;
+
+    const items = [...document.querySelectorAll("#animeItems > div")];
+    const uids = items.map(div => ({
+        uid: div.querySelector(".uid").value,
+        ep: Number(div.querySelector(".ep").value)
+    }));
+
+    const res = await fetch(`${API_BASE}/registeranime`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parameters: { uuid, uids } })
+    });
+
+    const data = await res.json();
+    document.getElementById("registerResult").textContent =
+        JSON.stringify(data, null, 2);
+});
+
+
+// ============ OBTENER ANIMES ============
+document.getElementById("getAnimesForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const uuid = document.getElementById("uuidGet").value;
+
+    const res = await fetch(`${API_BASE}/getanimes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parameters: { uuid } })
+    });
+
+    const data = await res.json();
+    document.getElementById("getAnimesResult").textContent =
+        JSON.stringify(data, null, 2);
+});
+</script>
+
 </body>
 </html>
