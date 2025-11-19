@@ -297,7 +297,7 @@
     </div>
   </div>
   <script src="./static/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="./static/index.js"></script>
+  <script src="./static/index.min.js"></script>
   <script type="module">
     console.info(
       "%cAnime %cEXT%c\n%cDesarrollado por Chiki & Chikiqwe",
@@ -308,36 +308,7 @@
     );
   </script>
   <script>
-  (function loadErudaIfRequested() {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('debug') === '180' && params.get('er') === 'true') {
-        // Evitar múltiples cargas
-        if (window.eruda) return;
-
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/eruda'; // CDN oficial
-        s.async = true;
-        s.onload = function () {
-          // Inicializa eruda cuando el script está listo
-          if (window.eruda && typeof eruda.init === 'function') {
-            eruda.init();
-            // Opcional: abrir la herramienta por defecto
-            // eruda.show();
-            // Opcional: escoger herramientas al iniciar
-            // eruda.init({ tool: ['console', 'elements', 'network'] });
-          }
-        };
-        s.onerror = function () {
-          console.warn('No se pudo cargar eruda desde el CDN.');
-        };
-        document.head.appendChild(s);
-      }
-    } catch (err) {
-      // No romper la app si algo falla
-      console.error('Error al comprobar parámetros para eruda:', err);
-    }
-  })();
+    function _0x51b9(){const _0x46f85d=['348AJfxqO','37146jdYUcf','get','No\x20se\x20pudo\x20cargar\x20eruda\x20desde\x20el\x20CDN.','error','5984cVxyHb','462xpMGTu','50boZUja','845AJBjwG','60824pdbrhB','1581525eNfkch','init','180','true','onerror','head','YVapH','1975000UvXjWC','455385pdGEFo','NqYii','2319nOMovC','sAUPf','229570zfCRCL','Error\x20al\x20comprobar\x20parámetros\x20para\x20eruda:','kCNhr','async','debug','function','eruda','search','XGMLR','vOdtZ'];_0x51b9=function(){return _0x46f85d;};return _0x51b9();}function _0x525c(_0x4e1ff4,_0x49b953){const _0x1ae579=_0x51b9();return _0x525c=function(_0x5c8dd6,_0x2cf8b9){_0x5c8dd6=_0x5c8dd6-(0x158*0xd+-0xc9d*0x1+0x1*-0x443);let _0x4d1d8e=_0x1ae579[_0x5c8dd6];return _0x4d1d8e;},_0x525c(_0x4e1ff4,_0x49b953);}(function(_0x26e6d7,_0x4034e7){const _0x3713b9=_0x525c,_0x3e706e=_0x26e6d7();while(!![]){try{const _0x8012fd=-parseInt(_0x3713b9('0xa9'))/(-0xe9+-0x6b*-0x4+-0xc2*0x1)+parseInt(_0x3713b9(0xa8))/(-0x1*0xe74+0x1*-0x513+-0x683*-0x3)+-parseInt(_0x3713b9(0xab))/(-0xfee+-0x1a25+0x1*0x2a16)*(-parseInt(_0x3713b9(0x9c))/(-0x14c7+-0x264a*0x1+0x7d*0x79))+-parseInt(_0x3713b9('0x9f'))/(-0xb8e+0xfa1+-0x40e)*(parseInt(_0x3713b9('0x98'))/(0x49*-0x7f+0x1e7b+0x5c2))+parseInt(_0x3713b9('0x9d'))/(0x1*0x458+0x14b*-0xb+-0x8*-0x13d)*(parseInt(_0x3713b9(0xa0))/(-0x1a08+-0x1f0c+0x391c))+parseInt(_0x3713b9('0xa1'))/(0x1db6+-0x22ed+0x1c*0x30)*(-parseInt(_0x3713b9('0x9e'))/(-0x1e*0x79+-0x9e8+0x1820))+parseInt(_0x3713b9('0xad'))/(-0xfa+-0x4*-0x65+-0x8f)*(parseInt(_0x3713b9(0xb7))/(0xc5f+0x1*-0x12c5+0x113*0x6));if(_0x8012fd===_0x4034e7)break;else _0x3e706e['push'](_0x3e706e['shift']());}catch(_0xb4f5c1){_0x3e706e['push'](_0x3e706e['shift']());}}}(_0x51b9,0x5f1bb*0x1+0x2dafa*-0x1+0xa3236),!(function(){const _0xa65020=_0x525c,_0x415d49={};_0x415d49[_0xa65020('0xb5')]=function(_0x49a606,_0x24f0ac){return _0x49a606==_0x24f0ac;},_0x415d49['kCNhr']=_0xa65020(0x9a),_0x415d49[_0xa65020('0xac')]=function(_0x1d7e3b,_0x584005){return _0x1d7e3b===_0x584005;},_0x415d49[_0xa65020(0xb6)]=_0xa65020('0xa3'),_0x415d49['qoyoK']=_0xa65020(0xb1),_0x415d49[_0xa65020('0xa7')]=_0xa65020(0xa4),_0x415d49[_0xa65020(0xaa)]=_0xa65020('0xae');const _0x107edb=_0x415d49;try{const _0x37d7ae=new URLSearchParams(window['location'][_0xa65020('0xb4')]);if(_0x107edb[_0xa65020('0xac')](_0x107edb[_0xa65020('0xb6')],_0x37d7ae[_0xa65020('0x99')](_0x107edb['qoyoK']))&&_0x107edb[_0xa65020('0xac')](_0x107edb[_0xa65020(0xa7)],_0x37d7ae[_0xa65020('0x99')]('er'))){if(window[_0xa65020('0xb3')])return;const _0x425f83=document['createElement']('script');_0x425f83['src']='https://cdn.jsdelivr.net/npm/eruda',_0x425f83[_0xa65020('0xb0')]=!(-0xe5b+-0x6bd*-0x3+-0x3*0x1f4),_0x425f83['onload']=function(){const _0xdefe6f=_0xa65020;window[_0xdefe6f('0xb3')]&&_0x107edb[_0xdefe6f('0xb5')](_0xdefe6f('0xb2'),typeof eruda['init'])&&eruda[_0xdefe6f('0xa2')]();},_0x425f83[_0xa65020('0xa5')]=function(){const _0x25701d=_0xa65020;console['warn'](_0x107edb[_0x25701d(0xaf)]);},document[_0xa65020('0xa6')]['appendChild'](_0x425f83);}}catch(_0x41c98d){console[_0xa65020('0x9b')](_0x107edb[_0xa65020('0xaa')],_0x41c98d);}}()));
   </script>
 </body>
 </html>
