@@ -28,6 +28,7 @@ const {
   parseMegaUrl,
   verificarArchivoMega
 } = require('../utils/CheckMega');
+const { stat } = require('fs-extra');
 
 /* ---------- Helpers locales ---------- */
 
@@ -292,6 +293,8 @@ exports.queueStatus = (req, res) => {
 
 // GET /app/v
 exports.appV = asyncHandler(async (req, res) => {
+/**
+
   const apiUrl = 'https://animeext.xo.je/app/beta/dw.php';
   try {
     const cookieVal = await getCookie(apiUrl);
@@ -310,4 +313,5 @@ exports.appV = asyncHandler(async (req, res) => {
     console.error('[app/v] error:', err.message);
     res.status(500).json({ error: 'Error interno al obtener datos de la API' });
   }
+ */  res.status(200).json({ status: 'No implementado' });
 });
