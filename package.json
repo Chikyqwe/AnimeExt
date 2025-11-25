@@ -12,6 +12,7 @@
     "node": "22"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.84.0",
     "axios": "^1.10.0",
     "cheerio": "^1.1.0",
     "cli-progress": "^3.12.0",
