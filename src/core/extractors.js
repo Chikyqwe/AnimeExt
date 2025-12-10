@@ -92,152 +92,143 @@ async function axiosPost(url, data, opts = {}) {
 // ---------- Extractor principal ----------
 async function extractAllVideoLinks(pageUrl) {
   console.log(`[EXTRACTOR] Extrayendo videos desde: ${pageUrl}`);
-  let videos = [];
 
-  // Variables temporales grandes que luego liberaremos
-  let html = null;
-  let $ = null;
+  let html;
+  try {
+    const res = await axiosGet(pageUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept-Encoding': 'gzip, deflate, br'
+      },
+      timeout: 8000
+    });
+    html = res.data;
+  } catch (e) {
+    console.error('[EXTRACTOR] Error descargando página:', e.message);
+    return [];
+  }
 
-  if (pageUrl.includes('animeytx')) {
+  const $ = cheerio.load(html);
+  const videos = [];
+
+  // --- 🔥 DECODIFICADOR BASE64 COMO EN PHP ---
+  function safeBase64Decode(str) {
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (str.length % 4 !== 0) str += '=';
     try {
-      const apiUrl = `https://animeext.xo.je/get_vid_servers.php?url=${encodeURIComponent(pageUrl)}`;
-
-      // 1) obtener HTML
-      let res1 = await axiosGet(apiUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html' },
-        timeout: 8000
-      });
-
-      html = res1.data;
-
-      // 2) regex
-      const match = html.match(/toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\)/s);
-      if (!match) throw new Error("No se pudieron extraer datos de cifrado");
-
-      const a = toNumbers(match[1]);
-      const b = toNumbers(match[2]);
-      const c = toNumbers(match[3]);
-
-      // liberar html temporal
-      html = null;
-
-      // 3) calcular cookie
-      const cookieVal = toHex(slowAES.decrypt(c, 2, a, b));
-
-      // limpiar arrays
-      a.length = 0;
-      b.length = 0;
-      c.length = 0;
-
-      // 4) segunda petición
-      let res2 = await axiosGet(apiUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-          'Cookie': `__test=${cookieVal}`,
-          'Accept': 'application/json'
-        },
-        timeout: 8000
-      });
-
-      const data = res2.data;
-
-      if (data && data.success && Array.isArray(data.videos)) {
-        videos = data.videos;
-      }
-
-      // liberar res2 y cookie
-      res1 = null;
-      res2 = null;
-
-    } catch (err) {
-      console.error('[EXTRACTOR] Error consultando API AnimeYTX:', err?.message || err);
+      return Buffer.from(str, 'base64').toString('utf8');
+    } catch {
+      return null;
     }
   }
 
-  else {
-    try {
-      let res = await axiosGet(pageUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Encoding': 'gzip, deflate, br' },
-        timeout: 8000
-      });
+  // ========================================================================
+  // 🟦 1. EXTRACTOR PARA animeid (TU LÓGICA ORIGINAL)
+  // ========================================================================
+  if (/animeid/i.test(pageUrl)) {
+    $('#partes .parte').each((_, el) => {
+      let raw = $(el).attr('data');
+      if (!raw) return;
 
-      html = res.data;
-      res = null;
+      try {
+        raw = raw.replace(/'/g, '"');
+        const parsed = JSON.parse(raw);
+        if (!parsed.v) return;
 
-      $ = cheerio.load(html);
+        const iframeHtml = parsed.v
+          .replace(/\\u003C/g, '<')
+          .replace(/\\u003E/g, '>')
+          .replace(/\\u002F/g, '/');
 
-      if (/animeid/i.test(pageUrl)) {
-        $('#partes .parte').each((_, el) => {
-          let rawData = $(el).attr('data');
-          if (!rawData) return;
+        const m = iframeHtml.match(/src="([^"]+)"/i);
+        if (!m) return;
 
-          try {
-            rawData = rawData.replace(/'/g, '"');
-            const parsed = JSON.parse(rawData);
-
-            if (parsed.v) {
-              const iframeHtml = parsed.v
-                .replace(/\\u003C/g, '<')
-                .replace(/\\u003E/g, '>')
-                .replace(/\\u002F/g, '/');
-
-              const match = iframeHtml.match(/src="([^"]+)"/i);
-              if (match) {
-                const finalUrl = transformObeywish(match[1]);
-                try {
-                  const host = new URL(finalUrl).hostname;
-                  videos.push({ servidor: host, url: finalUrl });
-                } catch {}
-              }
-            }
-          } catch (err) {
-            console.error('Error parseando parte:', err?.message || err);
-          }
+        const finalUrl = transformObeywish(m[1]);
+        videos.push({
+          servidor: new URL(finalUrl).hostname,
+          url: finalUrl
         });
+
+      } catch (e) {
+        console.error('[EXTRACTOR] Error parseando parte animeid:', e.message);
       }
+    });
 
-      else {
-        $('script').each((_, el) => {
-          const scriptContent = $(el).html();
-          if (!scriptContent) return;
+  // ========================================================================
+  // 🟩 2. NUEVO EXTRACTOR animeytx (BASE64 → HTML → IFRAME)
+  // ========================================================================
+  } else if (/animeytx/i.test(pageUrl)) {
 
-          const match = scriptContent.match(/var\s+videos\s*=\s*(\[.*?\]|\{[\s\S]*?\});/s);
-          if (!match) return;
+    $("select.mirror option").each((_, el) => {
+      const encoded = $(el).attr("value");
+      if (!encoded) return;
 
-          try {
-            const rawJson = match[1].replace(/\\\//g, '/');
-            const parsed = JSON.parse(rawJson);
+      const decodedHTML = safeBase64Decode(encoded);
+      if (!decodedHTML) return;
 
-            if (parsed?.SUB) {
-              videos = parsed.SUB.map((v) => {
-                const url = v.url || v.code || v[1];
-                const servidor = v.server || v[0];
-                return { servidor, url: transformObeywish(url) };
-              });
-            } else if (Array.isArray(parsed) && parsed[0]?.length >= 2) {
-              videos = parsed.map((v) => ({ servidor: v[0], url: transformObeywish(v[1]) }));
-            }
-          } catch (err) {
-            console.error('[EXTRACTOR] Error parseando videos:', err?.message || err);
-          }
+      try {
+        const $dec = cheerio.load(decodedHTML);
+
+        // buscar iframe
+        const src = $dec("iframe").attr("src");
+        if (!src) return;
+
+        const finalUrl = transformObeywish(src);
+
+        videos.push({
+          servidor: new URL(finalUrl).hostname,
+          url: finalUrl
         });
-      }
 
-    } catch (err) {
-      console.error('[EXTRACTOR] Error scraping sitio genérico:', err?.message || err);
-    }
+      } catch (e) {
+        console.error("[EXTRACTOR] Error procesando iframe animeytx:", e.message);
+      }
+    });
+
+  // ========================================================================
+  // 🟧 3. EXTRACTOR GENÉRICO (TU LÓGICA ORIGINAL)
+  // ========================================================================
+  } else {
+
+    $('script').each((_, el) => {
+      const scr = $(el).html();
+      if (!scr) return;
+
+      const match = scr.match(/var\s+videos\s*=\s*(\[.*?\]|\{[\s\S]*?\});/s);
+      if (!match) return;
+
+      try {
+        const rawJson = match[1].replace(/\\\//g, '/');
+        const parsed = JSON.parse(rawJson);
+
+        if (parsed?.SUB) {
+          parsed.SUB.forEach((v) =>
+            videos.push({
+              servidor: v.server || v[0],
+              url: transformObeywish(v.url || v.code || v[1])
+            })
+          );
+        } else if (Array.isArray(parsed)) {
+          parsed.forEach((v) =>
+            videos.push({
+              servidor: v[0],
+              url: transformObeywish(v[1])
+            })
+          );
+        }
+      } catch (e) {
+        console.error('[EXTRACTOR] Error parseando videos genéricos:', e.message);
+      }
+    });
   }
 
-  // --- LIMPIEZA DE MEMORIA ----
+  // limpiar memoria
   html = null;
-  $ = null;
-
   try { global.gc(); } catch {}
 
   console.log(`[EXTRACTOR] Videos extraídos: ${videos.length}`);
   return videos;
 }
-
 
 // ---------- burstcloud extractor ----------
 async function burstcloudExtractor(pageUrl) {

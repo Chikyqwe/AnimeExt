@@ -221,7 +221,9 @@ async function updateAppInfo() {
     const downloadBtn = document.querySelector('.download-btn');
     const heroText = document.querySelector('header.hero p');
     if (actual && actual.code) {
-      downloadBtn.href = `https://animeext.xo.je/app/beta/dw.php?version=${actual.code}`;
+      const urlFetch = await fetch('/app/v?version=' + actual.code);
+      const urlData = await urlFetch.json();
+      downloadBtn.href = urlData.url;
       heroText.textContent = `Abre la app y empieza a ver tus animes favoritos al instante, rápida, ligera y siempre a la mano. Anime Ext App ${actual.version}`;
     } else {
       downloadBtn.href = '#';

@@ -2,7 +2,6 @@
 const fs = require('fs');
 const path = require('path');
 const cache = require('./cacheService');
-const { urlEpAX } = require('../utils/helpers');
 const { JSON_FOLDER, ANIME_FILE } = require('../config');
 
 if (!fs.existsSync(JSON_FOLDER)) fs.mkdirSync(JSON_FOLDER, { recursive: true });
@@ -88,7 +87,12 @@ async function buildEpisodeUrl(anime, ep, mirror = 1) {
     case 2:
       return anime.sources.TIO?.replace('/anime/', '/ver/') + `-${ep}` || null;
     case 3:
-      if (anime.sources.ANIMEYTX) return await urlEpAX(anime.sources.ANIMEYTX, ep);
+      if (anime.sources.ANIMEYTX) {
+        return anime.sources.ANIMEYTX
+          .replace('/tv/', '/anime/')
+          .replace(/\/$/, '') // elimina / final
+          + '-capitulo-' + ep;
+      }
       break;
   }
   return null;

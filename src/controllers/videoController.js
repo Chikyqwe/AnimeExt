@@ -2,6 +2,7 @@
 const asyncHandler = require('../middlewares/asyncHandler');
 const cache = require('../services/cacheService');
 const apiQueue = require('../core/queueService');
+const supabase = require("../services/supabaseService"); // ajusta tu ruta
 const { default: axios } = require('axios');
 
 const {
@@ -76,38 +77,82 @@ async function filterValidVideos(videos) {
 
 // GET /api/servers
 exports.servers = asyncHandler(async (req, res) => {
-  const { url: pageUrlParam, id: animeId, ep, mirror = 1 } = req.query;
+  const { url: pageUrlParam, uid: animeId, ep, mirror = 1, debug: debugParam } = req.query;
+  const debugMode = debugParam === "true";
+
   let pageUrl = pageUrlParam;
   let source = 'UNKNOWN';
+  let anime = null;
 
-  if (!pageUrl && animeId) {
-    const anime = getAnimeById(animeId);
-    if (!anime || !anime.unit_id) return res.status(404).json({ error: `No se encontró anime con id=${animeId}` });
-    if (!ep) return res.status(400).json({ error: 'Parámetro "ep" obligatorio' });
+  const sendResponse = (error, data = []) => {
+    // si no se pidió debug → respuesta original
+    if (!debugMode) {
+      if (error) return res.json({ error });
+      return res.json(data);
+    }
 
-    pageUrl = await buildEpisodeUrl(anime, ep, parseInt(mirror));
-    if (!pageUrl) return res.status(400).json({ error: 'No se pudo construir la URL del episodio' });
-    if (anime.source) source = anime.source;
-  }
-
-  // heurística simple para detectar fuente
-  if (source === 'UNKNOWN' && pageUrl) {
-    if (pageUrl.includes('tioanime')) source = 'TIO';
-    else if (pageUrl.includes('animeflv')) source = 'FLV';
-    else if (pageUrl.includes('animeid')) source = 'AID';
-    else if (pageUrl.includes('animeytx')) source = 'AYTX';
-  }
+    // modo debug con info completa
+    return res.json({
+      error,
+      data,
+      debug: {
+        pageUrl,
+        animeId,
+        ep,
+        mirror,
+        source,
+        anime
+      }
+    });
+  };
 
   try {
+    // si no viene pageUrl, intenta construirla
+    if (!pageUrl && animeId) {
+      anime = getAnimeByUnitId(animeId);
+
+      if (!anime || !anime.unit_id) {
+        return sendResponse(`No se encontró anime con id=${animeId}`);
+      }
+
+      if (!ep) {
+        return sendResponse('Parámetro "ep" obligatorio');
+      }
+
+      pageUrl = await buildEpisodeUrl(anime, ep, parseInt(mirror));
+      if (!pageUrl) {
+        return sendResponse('No se pudo construir la URL del episodio');
+      }
+
+      if (anime.source) source = anime.source;
+    }
+
+    // detectar fuente si no viene
+    if (source === 'UNKNOWN' && pageUrl) {
+      if (pageUrl.includes('tioanime')) source = 'TIO';
+      else if (pageUrl.includes('animeflv')) source = 'FLV';
+      else if (pageUrl.includes('animeid')) source = 'AID';
+      else if (pageUrl.includes('animeytx')) source = 'AYTX';
+    }
+
+    console.log("[SERVERS] PageUrl:", pageUrl);
+
     const videos = await extractAllVideoLinks(pageUrl);
     const valid = await filterValidVideos(videos);
+
+    if (!valid || valid.length === 0) {
+      return sendResponse('No se encontraron videos válidos');
+    }
+
     const enriched = valid.map(v => ({ ...v, source }));
-    res.json(enriched);
+    return sendResponse(null, enriched);
+
   } catch (e) {
     console.error('[servers] error:', e);
-    res.status(500).json({ error: 'Error al extraer videos: ' + e.message });
+    return sendResponse('Error al extraer videos: ' + e.message);
   }
 });
+
 
 // GET /api  <-- endpoint principal (ahora delegamos y devolvemos respuestas limpias)
 exports.api = asyncHandler(async (req, res) => {
@@ -293,25 +338,63 @@ exports.queueStatus = (req, res) => {
 
 // GET /app/v
 exports.appV = asyncHandler(async (req, res) => {
-/**
+  const requestedVersionCode = req.query.version ?? null;
 
-  const apiUrl = 'https://animeext.xo.je/app/beta/dw.php';
-  try {
-    const cookieVal = await getCookie(apiUrl);
-    console.log('[app/v] cookie obtenida:', cookieVal);
-    const { data } = await axios.get(apiUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Cookie': `__test=${cookieVal}`
-      },
-      timeout: 8000
+  // 1. Leer archivos del bucket
+  const { data: files, error } = await supabase
+    .storage
+    .from("AnimeExtApp")
+    .list("", { limit: 200 });
+
+  if (error) throw error;
+
+  // 2. Filtrar archivos APK con regex del estilo AnimeExt-6.0.2.apk
+  const apkList = files
+    .filter(f => /^AnimeExt-(\d+(?:\.\d+)*)\.apk$/.test(f.name))
+    .map(f => {
+      const match = f.name.match(/^AnimeExt-(\d+(?:\.\d+)*)\.apk$/);
+      const version = match[1];
+      const code = version.replace(/\./g, ""); // "6.0.2" → "602"
+      return {
+        nombre: f.name,
+        version,
+        code,
+      };
     });
 
-    // Aquí ya tienes el JSON con "actual", "anterior" y "anteriores"
-    res.json(data);
-  } catch (err) {
-    console.error('[app/v] error:', err.message);
-    res.status(500).json({ error: 'Error interno al obtener datos de la API' });
+  // 3. Si se solicita descarga por version code
+  if (requestedVersionCode) {
+    const apk = apkList.find(a => a.code === requestedVersionCode);
+
+    if (!apk) {
+      return res.status(404).json({ error: "Versión no encontrada" });
+    }
+
+    // 3.1 obtener URL firmada para descargar
+    const { data: signedUrlData, error: signedUrlError } = await supabase
+      .storage
+      .from("AnimeExtApp")
+      .createSignedUrl(apk.nombre, 60); // 60 seg de validez
+
+    if (signedUrlError) throw signedUrlError;
+
+    return res.json({
+      url: signedUrlData.signedUrl,
+      nombre: apk.nombre,
+    });
   }
- */  res.status(200).json({ status: 'No implementado' });
+
+  // 4. Ordenar versiones (igual que PHP)
+  apkList.sort((a, b) => {
+    return require("semver").rcompare(a.version, b.version);
+  });
+
+  // 5. Respuesta como en el PHP original
+  const response = {
+    actual: apkList[0] || null,
+    anterior: apkList[1] || null,
+    anteriores: apkList.slice(2),
+  };
+
+  res.json(response);
 });

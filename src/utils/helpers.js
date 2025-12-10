@@ -308,56 +308,6 @@ function toHex(arr) {
 // ----------------------
 // urlEpAX optimizado
 // ----------------------
-async function urlEpAX(urlPagina, capNum) {
-  console.log(`[URL EPAX] Buscando episodio ${capNum} en ${urlPagina}`);
-  const apiUrl = `https://animeext.xo.je/get_vid.php?url=${encodeURIComponent(urlPagina)}&ep=${encodeURIComponent(capNum)}`;
-
-  // request inicial
-  let html = null;
-  try {
-    const response = await axiosInstance.get(apiUrl, { timeout: 15000 });
-    html = response.data;
-  } catch (err) {
-    console.warn('[URL EPAX] Error obteniendo HTML:', err?.message || err);
-    return null;
-  }
-
-  try {
-    const match = html.match(/toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\).*toNumbers\("([0-9a-f]+)"\)/s);
-    if (!match) throw new Error("No se pudieron extraer datos de cifrado");
-
-    const a = toNumbers(match[1]);
-    const b = toNumbers(match[2]);
-    const c = toNumbers(match[3]);
-
-    const cookieVal = toHex(slowAES.decrypt(c, 2, a, b));
-
-    // limpiar html y arrays temporales antes de la segunda petición
-    html = null;
-    a.length = 0;
-    b.length = 0;
-    c.length = 0;
-
-    const { data: jsonData } = await axiosInstance.get(apiUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Cookie': `__test=${cookieVal}`
-      },
-      timeout: 15000
-    });
-
-    if (!jsonData.success) {
-      console.warn(`[URL EPAX] Error desde API: ${jsonData.error || 'Respuesta inválida'}`);
-      return null;
-    }
-    console.log(`[URL EPAX] Episodio encontrado: ${jsonData.capitulo} URL: ${jsonData.url_episodio}`);
-    return jsonData.url_episodio;
-  } catch (err) {
-    console.error('[URL EPAX] Error parseando cookie:', err?.message || err);
-    return null;
-  }
-}
-
 // ----------------------
 // getCookie optimizado
 // ----------------------
@@ -539,6 +489,5 @@ module.exports = {
   getDescription,
   streamVideo,
   downloadVideo,
-  urlEpAX,
   validateVideoUrl
 };
