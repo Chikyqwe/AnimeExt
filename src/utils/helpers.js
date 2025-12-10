@@ -399,11 +399,11 @@ async function getEpisodes(url) {
     data = response.data;
   } catch (error) {
     if (error.response) {
-      console.warn(`[Axios] Error HTTP ${error.response.status} al obtener ${url}`);
+      console.info(`[Axios] HTTP ${error.response.status} al obtener ${url}`);
     } else if (error.request) {
-      console.warn(`[Axios] No hubo respuesta al intentar ${url}`);
+      console.info(`[Axios] No hubo respuesta al intentar ${url}`);
     } else {
-      console.warn(`[Axios] Error al hacer request a ${url}:`, error.message);
+      console.infos(`[Axios] Error al hacer request a ${url}:`, error.message);
     }
     return { success: false };
   }
