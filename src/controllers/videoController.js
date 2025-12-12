@@ -77,7 +77,7 @@ async function filterValidVideos(videos) {
 
 // GET /api/servers
 exports.servers = asyncHandler(async (req, res) => {
-  const { url: pageUrlParam, uid: animeId, ep, mirror = 1, debug: debugParam } = req.query;
+  const { url: pageUrlParam, id: animeId, ep, mirror = 1, debug: debugParam } = req.query;
   const debugMode = debugParam === "true";
 
   let pageUrl = pageUrlParam;
@@ -109,7 +109,7 @@ exports.servers = asyncHandler(async (req, res) => {
   try {
     // si no viene pageUrl, intenta construirla
     if (!pageUrl && animeId) {
-      anime = getAnimeByUnitId(animeId);
+      anime = getAnimeById(animeId);
 
       if (!anime || !anime.unit_id) {
         return sendResponse(`No se encontró anime con id=${animeId}`);
