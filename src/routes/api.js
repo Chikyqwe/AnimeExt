@@ -21,6 +21,6 @@ router.get('/api/stream/download', videoController.download);
 router.get('/api/queue/status', videoController.queueStatus);
 
 // App
-router.get('/app/v', videoController.appV);
+//router.get('/app/v', videoController.appV);
 
 module.exports = router;
