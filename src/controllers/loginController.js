@@ -1,5 +1,6 @@
 const { saveUser, checkUserLogin, checkUserLoginByUUID } = require('../services/postgresqlbaseService');
-const argon2 = require('argon2');
+const bcrypt = require('bcryptjs');
+
 const crypto = require('crypto');
 const SendEmail = require('../services/emailService');
 const pendingTokens = new Map(); // email -> { token, expiresMs }
@@ -41,8 +42,8 @@ async function confirmRegistration(req, res) {
         console.log("Validación token en memoria:", valid);
         if (!valid) return res.status(400).json({ error: 'Token inválido o expirado' });
 
-        // hashear la contraseña con Argon2
-        const hashed = await argon2.hash(password, { type: argon2.argon2id });
+        // hashear la contraseña con bcrypt
+        const hashed = bcrypt.hashSync(password, 10); // 10 = salt rounds
         const newUuid = crypto.randomUUID();
         const user = {
             uuid: newUuid,

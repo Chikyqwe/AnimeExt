@@ -1,7 +1,7 @@
 require('dotenv').config();
 const supabase = require('./supabaseService'); // usa service_role key
 const crypto = require('crypto');
-const argon2 = require('argon2');
+const bcrypt = require('bcryptjs');
 const USERS_TABLE = process.env.USERS_TABLE || 'users';
 const USERS_T_TABLE = process.env.USERS_T_TABLE || 'users_t';
 
@@ -61,7 +61,7 @@ async function checkUserLogin({ email, password, newToken = null }) {
         return { status: "user_not_found" };
     }
 
-    const validPassword = await argon2.verify(
+    const validPassword = bcrypt.compareSync(
         user.password_hash,
         password
     );
