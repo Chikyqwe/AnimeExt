@@ -116,4 +116,5 @@ async function getUsers(req, res) {
     }
 }
 
+
 module.exports = { getUUID, registeranime, getanimes, getUsers, anulNot };

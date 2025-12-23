@@ -33,6 +33,7 @@ const apiRoutes         = safeRequire('./routes/api', 'apiRoutes');
 const WakeUP            = safeRequire('./utils/wakeUp', 'WakeUP');
 const notification      = safeRequire('./routes/notificationRoute', 'notificationRoutes');
 const animeRoutes        = safeRequire('./routes/index', 'animeRoutes');
+const loginRoutes       = safeRequire('./routes/login', 'loginRoutes');
 
 const app = express();
 
@@ -59,7 +60,7 @@ startEpisodeWorker();
 // =================== RUTAS ===================
 console.log('[INFO] Montando rutas...');
 
-[viewsRoutes, maintenanceRoutes, playerRoutes, apiRoutes, WakeUP, notification, animeRoutes]
+[viewsRoutes, maintenanceRoutes, playerRoutes, apiRoutes, WakeUP, notification, animeRoutes, loginRoutes]
   .filter(Boolean)
   .forEach((routeModule, idx) => {
     app.use('/', routeModule);

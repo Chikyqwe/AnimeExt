@@ -77,7 +77,7 @@ async function filterValidVideos(videos) {
 
 // GET /api/servers
 exports.servers = asyncHandler(async (req, res) => {
-  const { url: pageUrlParam, id: animeId, ep, mirror = 1, debug: debugParam } = req.query;
+  const { url: pageUrlParam, uid: animeId, ep, mirror = 1, debug: debugParam } = req.query;
   const debugMode = debugParam === "true";
 
   let pageUrl = pageUrlParam;
@@ -109,7 +109,7 @@ exports.servers = asyncHandler(async (req, res) => {
   try {
     // si no viene pageUrl, intenta construirla
     if (!pageUrl && animeId) {
-      anime = getAnimeById(animeId);
+      anime = getAnimeByUnitId(animeId);
 
       if (!anime || !anime.unit_id) {
         return sendResponse(`No se encontró anime con id=${animeId}`);
@@ -156,14 +156,14 @@ exports.servers = asyncHandler(async (req, res) => {
 
 // GET /api  <-- endpoint principal (ahora delegamos y devolvemos respuestas limpias)
 exports.api = asyncHandler(async (req, res) => {
-  const animeId = req.query.id ? parseInt(req.query.id) : undefined;
+  const animeId = req.query.uid ? parseInt(req.query.uid) : undefined;
   const ep = req.query.ep ? parseInt(req.query.ep) : undefined;
   const mirror = req.query.mirror ? parseInt(req.query.mirror) : 1;
   const serverRequested = normalizeServerName(req.query.server || '');
   let pageUrl = req.query.url;
 
   if (!pageUrl && animeId) {
-    const anime = getAnimeById(animeId);
+    const anime = getAnimeByUnitId(animeId);
     if (!anime || !anime.unit_id) return res.status(404).json({ error: 'Anime no encontrado o sin unit_id', id: animeId });
     if (!ep) return res.status(400).json({ error: 'Parámetro "ep" obligatorio' });
 
