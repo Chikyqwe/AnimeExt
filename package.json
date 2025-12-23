@@ -28,6 +28,7 @@
     "follow-redirects": "^1.15.9",
     "fs-extra": "^11.1.1",
     "js-beautify": "^1.15.4",
+    "js-unpacker": "^1.0.2",
     "jsdom": "^26.1.0",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.11",
@@ -37,6 +38,7 @@
     "pg": "^8.16.3",
     "request": "^2.88.2",
     "serve-favicon": "^2.5.1",
-    "tough-cookie": "^5.1.2"
+    "tough-cookie": "^5.1.2",
+    "unpacker": "^1.0.1"
   }
 }
