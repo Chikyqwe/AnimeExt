@@ -1,328 +1,409 @@
+// src/services/extractors.js
+
 const axios = require('axios');
 const qs = require('qs');
 const cheerio = require('cheerio');
 const { URL } = require('url');
 const { unpack, detect } = require('unpacker');
 
-/* =========================
-   CONFIG
-========================= */
-
-const UA =
+const UA_FIREFOX =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0';
 
-const ax = axios.create({
+// Axios instance reutilizable con timeout por defecto
+const axiosInstance = axios.create({
   timeout: 10000,
   headers: {
-    'User-Agent': UA,
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept': '*/*'
-  }
+    'User-Agent': UA_FIREFOX,
+    'Accept-Encoding': 'gzip, deflate, br'
+  },
+  // no follow config aquí: axios por defecto sigue redirects
 });
 
-/* =========================
-   UTILS
-========================= */
+// util: sleep
+function delay(ms) {
+  return new Promise((res) => setTimeout(res, ms));
+}
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-async function retry(fn, max = 3, base = 400) {
-  let err;
+// util: reintentos con backoff exponencial y abort support
+async function withRetries(fn, max = 4, base = 800) {
+  let lastErr;
   for (let i = 0; i < max; i++) {
-    try { return await fn(); }
-    catch (e) {
-      err = e;
-      await sleep(base * (i + 1));
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      const t = base * 2 ** i;
+      // backoff
+      await delay(t);
     }
   }
-  throw err;
+  throw lastErr;
 }
 
-async function get(url, opt = {}) {
-  return retry(async () => {
-    const c = new AbortController();
-    const t = setTimeout(() => c.abort(), (opt.timeout || 10000) + 100);
-    try {
-      return await ax.get(url, { ...opt, signal: c.signal });
-    } finally {
-      clearTimeout(t);
-    }
-  }, opt.retries);
+// conversores hex <-> bytes
+function toNumbers(d) {
+  const e = [];
+  d.replace(/(..)/g, (m) => e.push(parseInt(m, 16)));
+  return e;
+}
+function toHex(arr) {
+  return arr.map(v => (v < 16 ? '0' : '') + v.toString(16)).join('').toLowerCase();
 }
 
-async function post(url, data, opt = {}) {
-  return retry(async () => {
-    const c = new AbortController();
-    const t = setTimeout(() => c.abort(), (opt.timeout || 10000) + 100);
-    try {
-      return await ax.post(url, data, { ...opt, signal: c.signal });
-    } finally {
-      clearTimeout(t);
-    }
-  }, opt.retries);
-}
-
-function b64(str) {
+function transformObeywish(url) {
   try {
-    str = str.replace(/-/g, '+').replace(/_/g, '/');
-    while (str.length % 4) str += '=';
-    return Buffer.from(str, 'base64').toString('utf8');
-  } catch {
-    return null;
-  }
-}
-
-function fix(u) {
-  try {
-    const x = new URL(u);
-    if (x.hostname.includes('obeywish.com')) {
-      x.hostname = 'asnwish.com';
+    const u = new URL(url);
+    if (u.hostname.includes('obeywish.com')) {
+      u.hostname = 'asnwish.com';
+      return u.toString();
     }
-    return x.href;
+    return url;
   } catch {
-    return u;
+    return url;
   }
 }
 
-function obj(str) {
-  return JSON.parse(
-    str
-      .replace(/(\w+):/g, '"$1":')
-      .replace(/'/g, '"')
-  );
+// --------- Helpers axios con AbortController ----------
+async function axiosGet(url, opts = {}) {
+  const controller = new AbortController();
+  const timeout = opts.timeout != null ? opts.timeout : axiosInstance.defaults.timeout;
+  const timer = setTimeout(() => controller.abort(), timeout + 100); // un pequeño margen
+  try {
+    const res = await axiosInstance.get(url, { signal: controller.signal, ...opts });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-/* =========================
-   PAGE EXTRACTORS
-========================= */
-
-function exAnimeID($) {
-  const out = [];
-
-  $('#partes .parte').each((_, el) => {
-    let raw = $(el).attr('data');
-    if (!raw) return;
-
-    try {
-      raw = raw.replace(/'/g, '"');
-      const j = JSON.parse(raw);
-      if (!j.v) return;
-
-      const html = j.v
-        .replace(/\\u003C/g, '<')
-        .replace(/\\u003E/g, '>')
-        .replace(/\\u002F/g, '/');
-
-      const m = html.match(/src="([^"]+)"/i);
-      if (!m) return;
-
-      const url = fix(m[1]);
-      out.push({
-        server: new URL(url).hostname,
-        type: 'embed',
-        url
-      });
-    } catch {}
-  });
-
-  return out;
+async function axiosPost(url, data, opts = {}) {
+  const controller = new AbortController();
+  const timeout = opts.timeout != null ? opts.timeout : axiosInstance.defaults.timeout;
+  const timer = setTimeout(() => controller.abort(), timeout + 100);
+  try {
+    const res = await axiosInstance.post(url, data, { signal: controller.signal, ...opts });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-function exAnimeYTX($) {
-  const out = [];
+// ---------- Extractor principal ----------
+async function extractAllVideoLinks(pageUrl) {
+  console.log(`[EXTRACTOR] Extrayendo videos desde: ${pageUrl}`);
 
-  $('select.mirror option').each((_, el) => {
-    const v = $(el).attr('value');
-    if (!v) return;
-
-    const h = b64(v);
-    if (!h) return;
-
-    const $i = cheerio.load(h);
-    const src = $i('iframe').attr('src');
-    if (!src) return;
-
-    const url = fix(src);
-    out.push({
-      server: new URL(url).hostname,
-      type: 'embed',
-      url
-    });
-  });
-
-  return out;
-}
-
-function exGeneric($) {
-  const out = [];
-
-  $('script').each((_, el) => {
-    const s = $(el).html();
-    if (!s) return;
-
-    const m = s.match(/var\s+videos\s*=\s*(\[.*?\]|\{[\s\S]*?\});/s);
-    if (!m) return;
-
-    try {
-      const j = JSON.parse(m[1].replace(/\\\//g, '/'));
-
-      if (j.SUB) {
-        j.SUB.forEach(v => out.push({
-          server: v.server || v[0],
-          type: 'embed',
-          url: fix(v.url || v.code || v[1])
-        }));
-      } else if (Array.isArray(j)) {
-        j.forEach(v => out.push({
-          server: v[0],
-          type: 'embed',
-          url: fix(v[1])
-        }));
-      }
-    } catch {}
-  });
-
-  return out;
-}
-
-/* =========================
-   MAIN PAGE PARSER
-========================= */
-
-async function extractAll(pageUrl) {
   let html;
-
   try {
-    html = (await get(pageUrl, { timeout: 8000 })).data;
-  } catch {
+    const res = await axiosGet(pageUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept-Encoding': 'gzip, deflate, br'
+      },
+      timeout: 8000
+    });
+    html = res.data;
+  } catch (e) {
+    console.error('[EXTRACTOR] Error descargando página:', e.message);
     return [];
   }
 
   const $ = cheerio.load(html);
+  const videos = [];
 
-  if (/animeid/i.test(pageUrl)) return exAnimeID($);
-  if (/animeytx/i.test(pageUrl)) return exAnimeYTX($);
-  return exGeneric($);
-}
-
-/* =========================
-   M3U8 / STREAMWISH
-========================= */
-
-function best(master, base) {
-  const l = master.split('\n');
-  let r = null, s = 0;
-
-  for (let i = 0; i < l.length; i++) {
-    const m = /RESOLUTION=(\d+)x(\d+)/.exec(l[i]);
-    if (m && l[i + 1] && !l[i + 1].startsWith('#')) {
-      const n = m[1] * m[2];
-      if (n > s) {
-        s = n;
-        r = new URL(l[i + 1], base).href;
-      }
+  // --- 🔥 DECODIFICADOR BASE64 COMO EN PHP ---
+  function safeBase64Decode(str) {
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (str.length % 4 !== 0) str += '=';
+    try {
+      return Buffer.from(str, 'base64').toString('utf8');
+    } catch {
+      return null;
     }
   }
-  return r;
+
+  // ========================================================================
+  // 🟦 1. EXTRACTOR PARA animeid (TU LÓGICA ORIGINAL)
+  // ========================================================================
+  if (/animeid/i.test(pageUrl)) {
+    $('#partes .parte').each((_, el) => {
+      let raw = $(el).attr('data');
+      if (!raw) return;
+
+      try {
+        raw = raw.replace(/'/g, '"');
+        const parsed = JSON.parse(raw);
+        if (!parsed.v) return;
+
+        const iframeHtml = parsed.v
+          .replace(/\\u003C/g, '<')
+          .replace(/\\u003E/g, '>')
+          .replace(/\\u002F/g, '/');
+
+        const m = iframeHtml.match(/src="([^"]+)"/i);
+        if (!m) return;
+
+        const finalUrl = transformObeywish(m[1]);
+        videos.push({
+          servidor: new URL(finalUrl).hostname,
+          url: finalUrl
+        });
+
+      } catch (e) {
+        console.error('[EXTRACTOR] Error parseando parte animeid:', e.message);
+      }
+    });
+
+  // ========================================================================
+  // 🟩 2. NUEVO EXTRACTOR animeytx (BASE64 → HTML → IFRAME)
+  // ========================================================================
+  } else if (/animeytx/i.test(pageUrl)) {
+
+    $("select.mirror option").each((_, el) => {
+      const encoded = $(el).attr("value");
+      if (!encoded) return;
+
+      const decodedHTML = safeBase64Decode(encoded);
+      if (!decodedHTML) return;
+
+      try {
+        const $dec = cheerio.load(decodedHTML);
+
+        // buscar iframe
+        const src = $dec("iframe").attr("src");
+        if (!src) return;
+
+        const finalUrl = transformObeywish(src);
+
+        videos.push({
+          servidor: new URL(finalUrl).hostname,
+          url: finalUrl
+        });
+
+      } catch (e) {
+        console.error("[EXTRACTOR] Error procesando iframe animeytx:", e.message);
+      }
+    });
+
+  // ========================================================================
+  // 🟧 3. EXTRACTOR GENÉRICO (TU LÓGICA ORIGINAL)
+  // ========================================================================
+  } else {
+
+    $('script').each((_, el) => {
+      const scr = $(el).html();
+      if (!scr) return;
+
+      const match = scr.match(/var\s+videos\s*=\s*(\[.*?\]|\{[\s\S]*?\});/s);
+      if (!match) return;
+
+      try {
+        const rawJson = match[1].replace(/\\\//g, '/');
+        const parsed = JSON.parse(rawJson);
+
+        if (parsed?.SUB) {
+          parsed.SUB.forEach((v) =>
+            videos.push({
+              servidor: v.server || v[0],
+              url: transformObeywish(v.url || v.code || v[1])
+            })
+          );
+        } else if (Array.isArray(parsed)) {
+          parsed.forEach((v) =>
+            videos.push({
+              servidor: v[0],
+              url: transformObeywish(v[1])
+            })
+          );
+        }
+      } catch (e) {
+        console.error('[EXTRACTOR] Error parseando videos genéricos:', e.message);
+      }
+    });
+  }
+
+  // limpiar memoria
+  html = null;
+  try { global.gc(); } catch {}
+
+  console.log(`[EXTRACTOR] Videos extraídos: ${videos.length}`);
+  return videos;
 }
 
-async function redir(u) {
-  const dmca = ["hgplaycdn.com","habetar.com","yuguaab.com","guxhag.com"];
-  const main = ["kravaxxa.com","davioad.com","haxloppd.com"];
+// ---------- burstcloud extractor ----------
+async function burstcloudExtractor(pageUrl) {
+  console.log(`[BURSTCLOUD] Extrayendo video desde: ${pageUrl}`);
+  try {
+    const { data: html } = await withRetries(() =>
+      axiosGet(pageUrl, {
+        headers: { 'User-Agent': UA_FIREFOX },
+        timeout: 8000
+      })
+    );
 
-  const x = new URL(u);
-  const d = dmca[Math.floor(Math.random() * dmca.length)];
-  return `https://${d}${x.pathname}${x.search}`;
+    const $ = cheerio.load(html);
+    const fileId = $('#player').attr('data-file-id');
+    if (!fileId) throw new Error('No se encontró el data-file-id');
+
+    const postData = qs.stringify({ fileId });
+    const postResponse = await axiosPost(
+      'https://www.burstcloud.co/file/play-request/',
+      postData,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'Accept': 'application/json, text/javascript, */*; q=0.01',
+          'Origin': 'https://www.burstcloud.co',
+          'Referer': pageUrl,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        timeout: 8000
+      }
+    );
+
+    const cdnUrl = postResponse.data?.purchase?.cdnUrl;
+    if (!cdnUrl) throw new Error('No se encontró cdnUrl en la respuesta');
+
+    console.log(`[BURSTCLOUD] CDN URL encontrada: ${cdnUrl}`);
+    return { url: cdnUrl };
+  } catch (err) {
+    console.error('[BURSTCLOUD] Error:', err && err.message ? err.message : err);
+    return [];
+  }
 }
 
-async function exM3U8(url) {
-  const r = await redir(url);
-  const html = (await get(r)).data;
+// ---------- getRedirectUrl ----------
+function best(master, base) {
+  const lines = master.split('\n');
+  let bestUrl = null;
+  let bestScore = 0;
 
-  const m = html.match(/<script[^>]*>([\s\S]*?eval\(function\(p,a,c,k,e,d\)[\s\S]*?)<\/script>/i);
-  if (!m || !detect(m[1])) return [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = /RESOLUTION=(\d+)x(\d+)/.exec(lines[i]);
+    if (!m) continue;
 
-  const js = unpack(m[1]);
-  const l = js.match(/var\s+links\s*=\s*(\{[\s\S]*?\});/i);
-  if (!l) return [];
+    const next = lines[i + 1];
+    if (!next || next.startsWith('#')) continue;
 
-  const links = obj(l[1]);
+    const score = m[1] * m[2];
+    if (score > bestScore) {
+      bestScore = score;
+      bestUrl = new URL(next, base).href;
+    }
+  }
+
+  return bestUrl;
+}
+async function redir(pageUrl) {
+  try {
+    const dmca = ["hgplaycdn.com", "habetar.com", "yuguaab.com", "guxhag.com", "auvexiug.com", "xenolyzb.com"];
+    const main = ["kravaxxa.com", "davioad.com", "haxloppd.com", "tryzendm.com", "dumbalag.com"];
+    const rules = ["dhcplay.com", "hglink.to", "test.hglink.to", "wish-redirect.aiavh.com"];
+
+    const url = new URL(pageUrl);
+    const destination = rules.includes(url.hostname)
+      ? main[Math.floor(Math.random() * main.length)]
+      : dmca[Math.floor(Math.random() * dmca.length)];
+
+    const finalURL = "https://" + destination + url.pathname + url.search;
+    return finalURL;
+  } catch (error) {
+    console.error('Error al generar redirectUrl:', error && error.message ? error.message : error);
+    return pageUrl;
+  }
+}
+
+// ---------- extractM3u8 (mejor manejo de JSDOM y limpieza) ----------
+
+async function extractM3u8(pageUrl) {
+  const finalUrl = await redir(pageUrl);
+  console.log(`[M3U8 EXTRACTOR] URL redirigida: ${finalUrl}`);
+  const html = (await axiosGet(finalUrl)).data;
+
+  const scriptMatch = html.match(
+    /<script[^>]*type=['"]text\/javascript['"][^>]*>\s*(eval\(function\(p,a,c,k,e,d\)[\s\S]*?)<\/script>/i
+  );
+
+
+  if (!scriptMatch) return [];
+
+  const packedJs = scriptMatch[1];
+  if (!detect(packedJs)) return [];
+
+  const unpacked = unpack(packedJs);
+
+  const linksMatch = unpacked.match(
+    /var\s+links\s*=\s*(\{[\s\S]*?\});/i
+  );
+  if (!linksMatch) return [];
+
+  const links = JSON.parse(linksMatch[1]);
+  console.log(links)
   if (!links.hls4) return [];
 
-  const master = links.hls4.startsWith('/')
-    ? new URL(links.hls4, r).href
+
+  const masterUrl = links.hls4.startsWith('/')
+    ? new URL(links.hls4, finalUrl).href
     : links.hls4;
-
-  const txt = (await get(master)).data;
-  const base = master.slice(0, master.lastIndexOf('/') + 1);
-  const bestUrl = best(txt, base) || master;
-
+  const playlist = (await axiosGet(masterUrl)).data;
+  const base = masterUrl.slice(0, masterUrl.lastIndexOf('/') + 1);
+  const bestUrl = best(playlist, base) || masterUrl;
+  const bestPlaylist = (await axiosGet(bestUrl)).data;
+  console.log(`[M3U8 EXTRACTOR] Mejor URL seleccionada: ${bestUrl}`);
   return [{
-    server: 'streamwish',
-    type: 'hls',
-    url: bestUrl
+    url: masterUrl,
+    content: bestPlaylist
   }];
 }
 
-/* =========================
-   BURSTCLOUD
-========================= */
-
-async function exBC(url) {
-  const html = (await get(url)).data;
-  const $ = cheerio.load(html);
-  const id = $('#player').attr('data-file-id');
-  if (!id) return [];
-
-  const r = await post(
-    'https://www.burstcloud.co/file/play-request/',
-    qs.stringify({ fileId: id }),
-    {
+// ---------- JWPlayer MP4 extractor ----------
+async function getJWPlayerFile(pageUrl) {
+  try {
+    const { data: html } = await axiosGet(pageUrl, {
       headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
+      },
+      timeout: 10000
+    });
+
+    const match = html.match(/file:\s*['"]([^'"]+\.mp4[^'"]*)['"]/i);
+
+    if (match && match[1]) {
+      const videoUrl = match[1];
+      if (videoUrl.toLowerCase().includes('novideo.mp4')) {
+        throw new Error('El video no existe');
       }
+      return { url: videoUrl };
     }
-  );
 
-  const cdn = r.data?.purchase?.cdnUrl;
-  if (!cdn) return [];
-
-  return [{ server: 'burstcloud', type: 'mp4', url: cdn }];
+    throw new Error('No se encontró URL del archivo MP4');
+  } catch (err) {
+    console.error('[getJWPlayerFile] Error:', err && err.message ? err.message : err);
+    return null;
+  }
 }
 
-/* =========================
-   JWPLAYER MP4
-========================= */
-
-async function exMP4(url) {
-  const html = (await get(url)).data;
-  const m = html.match(/file:\s*['"]([^'"]+\.mp4[^'"]*)/i);
-  if (!m) return [];
-  if (m[1].includes('novideo.mp4')) return [];
-  return [{ server: 'jwplayer', type: 'mp4', url: m[1] }];
+function pass() {
+  return;
 }
 
-/* =========================
-   ROUTER
-========================= */
+const mp4 = (u) => getJWPlayerFile(u);
 
-const map = {
-  yourupload: exMP4,
-  yu: exMP4,
-  streamwish: exM3U8,
-  sw: exM3U8,
-  obeywish: exM3U8,
-  swiftplayers: exM3U8,
-  burstcloud: exBC,
-  bc: exBC
+const extractors = {
+  yourupload: mp4,
+  yu: mp4,
+  streamwish: extractM3u8,
+  sw: extractM3u8,
+  swiftplayers: extractM3u8,
+  obeywish: extractM3u8,
+  'burstcloud.co': burstcloudExtractor,
+  bc: burstcloudExtractor
 };
 
-const getEx = (n) => map[n.toLowerCase()];
-
-/* ========================= */
+function getExtractor(name) {
+  return extractors[name.toLowerCase()];
+}
 
 module.exports = {
-  extractAllVideoLinks: extractAll,
-  getExtractor: getEx
+  extractAllVideoLinks,
+  getExtractor
 };
