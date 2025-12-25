@@ -27,13 +27,13 @@ exports.last = (req, res) => res.sendFile(getJSONPath('lastep.json'));
 
 // /anime/description
 exports.description = asyncHandler(async (req, res) => {
-  const { id } = req.body;
-  if (!id) return res.status(400).json({ error: 'Falta parámetro id' });
+  const { uid } = req.body;
+  if (!uid) return res.status(400).json({ error: 'Falta parámetro uid' });
 
-  const anime = getAnimeById(id);
-  if (!anime) return res.status(404).json({ error: `No se encontró anime con id=${id}` });
+  const anime = getAnimeByUnitId(uid);
+  if (!anime) return res.status(404).json({ error: `No se encontró anime con uid=${uid}` });
 
-  const cacheKey = `desc:${id}`;
+  const cacheKey = `desc:${uid}`;
   const cached = cache.get(cacheKey);
   if (cached) return res.json({ description: cached, cached: true });
 

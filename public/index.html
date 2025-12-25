@@ -90,12 +90,11 @@
       <button id="hamburgerBtn" class="btn btn-outline-light me-2" type="button" aria-label="Abrir menú">
         <i class="fa fa-bars fa-lg"></i>
       </button>
-
       <nav class="main-nav">
-        <a href="#" id="navInicio" class="nav-item active" onclick="mostrarInicio(event)">Inicio</a>
-        <a href="#" id="navDirectorio" class="nav-item" onclick="mostrarDirectorio(event)">Directory</a>
-        <a href="#" id="navHistorial" class="nav-item" onclick="mostrarHistorial(event)">Historial</a>
-        <a href="#" id="navFavoritos" class="nav-item" onclick="mostrarFavoritos(event)">Favoritos</a>
+        <a href="#" id="navInicio" class="nav-item active">Inicio</a>
+        <a href="#" id="navDirectorio" class="nav-item">Directory</a>
+        <a href="#" id="navHistorial" class="nav-item">Historial</a>
+        <a href="#" id="navFavoritos" class="nav-item">Favoritos</a>
       </nav>
 
       <form class="search-form d-flex ms-auto align-items-center" role="search" onsubmit="searchAnime(event)">
@@ -110,14 +109,11 @@
         <ul id="search-suggestions" class="suggestions-list"></ul>
       </form>
       <div id="mobileDropdownMenu" class="mobileDropdownMenu" role="menu" aria-hidden="true">
-        <a href="#" id="mobileNavInicio" class="active" role="menuitem"
-          onclick="mostrarInicio(event); toggleMobileMenu(false)">Inicio</a>
-        <a href="#" id="mobileNavDirectorio" role="menuitem"
-          onclick="mostrarDirectorio(event); toggleMobileMenu(false)">Directory</a>
-        <a href="#" id="mobileNavHistorial" role="menuitem"
-          onclick="mostrarHistorial(event); toggleMobileMenu(false)">Historial</a>
-        <a href="#" id="mobileNavFavoritos" role="menuitem"
-          onclick="mostrarFavoritos(event); toggleMobileMenu(false)">Favoritos <i class="fa fa-heart"></i></a>
+        <a href="#" id="mobileNavInicio" class="active" role="menuitem">Inicio</a>
+        <a href="#" id="mobileNavDirectorio" role="menuitem">Directory</a>
+        <a href="#" id="mobileNavHistorial" role="menuitem">Historial</a>
+        <a href="#" id="mobileNavFavoritos" role="menuitem">Favoritos <i class="fa fa-heart"></i></a>
+        <a href="#" id="mobileNavSubs" role="menuitem">Subscripciones <i class="fa fa-bell"></i></a>
       </div>
     </header>
     <div>
@@ -206,12 +202,12 @@
         <div class="policy-header d-flex justify-content-between align-items-center">
           <i class="fa fa-gear"></i>
           <div style="text-align:center;">
-            <span>Anime EXT 15.0.0</span>
+            <span>Anime EXT 15.0.6</span>
           </div>
           <button onclick="cerrarOverlay('menuOverlay')" style="background:none;border:none;font-size:1.2rem;"><i
               class="fa fa-xmark"></i></button>
         </div>
-7
+
         <div class="menu-grid">
           <div class="menu-circle" onclick="verAds()">
             <i class="fa fa-tv"></i>
