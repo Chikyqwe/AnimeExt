@@ -313,71 +313,46 @@ async function redir(pageUrl) {
 }
 
 // ---------- extractM3u8 (mejor manejo de JSDOM y limpieza) ----------
+
 async function extractM3u8(pageUrl) {
-  try {
-    const finalUrl = await redir(pageUrl);
-    console.log('[M3U8] Redir:', finalUrl);
+  const finalUrl = await redir(pageUrl);
+  console.log(`[M3U8 EXTRACTOR] URL redirigida: ${finalUrl}`);
+  const html = (await axiosGet(finalUrl)).data;
 
-    const html = (await axiosGet(finalUrl)).data;
+  const scriptMatch = html.match(
+    /<script[^>]*type=['"]text\/javascript['"][^>]*>\s*(eval\(function\(p,a,c,k,e,d\)[\s\S]*?)<\/script>/i
+  );
 
-    const m = html.match(
-      /<script[^>]*>([\s\S]*?eval\(function\(p,a,c,k,e,d\)[\s\S]*?)<\/script>/i
-    );
-    if (!m) return [];
 
-    const packed = m[1];
-    if (!detect(packed)) return [];
+  if (!scriptMatch) return [];
 
-    const js = unpack(packed);
+  const packedJs = scriptMatch[1];
+  if (!detect(packedJs)) return [];
 
-    const lm = js.match(/links\s*=\s*(\{[\s\S]*?\})/i);
-    if (!lm) return [];
+  const unpacked = unpack(packedJs);
 
-    let links;
-    try {
-      links = JSON.parse(lm[1]);
-    } catch {
-      return [];
-    }
+  const linksMatch = unpacked.match(
+    /var\s+links\s*=\s*(\{[\s\S]*?\});/i
+  );
+  if (!linksMatch) return [];
 
-    const hlsList = [
-      links.hls4,
-      links.hls3,
-      links.hls2,
-      links.hls1
-    ].filter(Boolean);
+  const links = JSON.parse(linksMatch[1]);
+  console.log(links)
+  const link = links.hls1 || links.hls2 || links.hls3 || links.hls4;
+  if (!link) return [];
 
-    for (const hls of hlsList) {
-      try {
-        const masterUrl = hls.startsWith('http')
-          ? hls
-          : new URL(hls, finalUrl).href;
-
-        const master = (await axiosGet(masterUrl)).data;
-
-        const base = masterUrl.slice(0, masterUrl.lastIndexOf('/') + 1);
-        const bestUrl = best(master, base) || masterUrl;
-
-        const finalPlaylist = (await axiosGet(bestUrl)).data;
-
-        console.log('[M3U8] Final:', bestUrl);
-
-        return [{
-          url: bestUrl,
-          content: finalPlaylist
-        }];
-
-      } catch (e) {
-        // falla este hls → intenta el siguiente
-        continue;
-      }
-    }
-
-    return [];
-
-  } catch (e) {
-    return [];
-  }
+  const masterUrl = link.startsWith('/')
+    ? new URL(link, finalUrl).href
+    : link;
+  const playlist = (await axiosGet(masterUrl, { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': '*/*' }, 'Referer': finalUrl })).data;
+  const base = masterUrl.slice(0, masterUrl.lastIndexOf('/') + 1);
+  const bestUrl = best(playlist, base) || masterUrl;
+  const bestPlaylist = (await axiosGet(bestUrl, { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': '*/*' }, 'Referer': finalUrl })).data;
+  console.log(`[M3U8 EXTRACTOR] Mejor URL seleccionada: ${bestUrl}`);
+  return [{
+    url: masterUrl,
+    content: bestPlaylist
+  }];
 }
 
 // ---------- JWPlayer MP4 extractor ----------
