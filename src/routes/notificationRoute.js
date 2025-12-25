@@ -3,10 +3,9 @@ const { getUUID, registeranime, getanimes, anulNot, getUsers } = require('../con
 const express = require('express');
 const router = express.Router();
 
-router.post('/notification/getUUID', getUUID);
-router.post('/notification/subscribe', registeranime);
-router.post('/notification/subscriptions', getanimes);
-router.post('/notification/anulatedSub', anulNot);
-router.post('/notification/admin/users', getUsers);
+router.post('/api/user/add/subscription', registeranime);
+router.post('/api/user/get/subscription', getanimes);
+router.post('/api/user/rm/subscription', anulNot);
+
 
 module.exports = router;
