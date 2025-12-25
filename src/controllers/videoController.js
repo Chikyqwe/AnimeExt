@@ -164,123 +164,159 @@ exports.api = asyncHandler(async (req, res) => {
 
   if (!pageUrl && animeId) {
     const anime = getAnimeByUnitId(animeId);
-    if (!anime || !anime.unit_id) return res.status(404).json({ error: 'Anime no encontrado o sin unit_id', id: animeId });
-    if (!ep) return res.status(400).json({ error: 'Parámetro "ep" obligatorio' });
+    if (!anime?.unit_id)
+      return res.status(404).json({ error: 'Anime no encontrado o sin unit_id', id: animeId });
+
+    if (!ep)
+      return res.status(400).json({ error: 'Parámetro "ep" obligatorio' });
 
     pageUrl = await buildEpisodeUrl(anime, ep, mirror);
-    if (!pageUrl) return res.status(400).json({ error: 'No se pudo construir la URL del episodio' });
+    if (!pageUrl)
+      return res.status(400).json({ error: 'No se pudo construir la URL del episodio' });
   }
 
-  // Encolamos el procesamiento para limitar concurrencia y proteger extractores
   apiQueue.add(async () => {
     if (!pageUrl || typeof pageUrl !== 'string') {
-      // retornamos un objeto especial que el .then() del queue manejará
       return { status: 400, message: 'URL no válida' };
     }
 
     const videos = await extractAllVideoLinks(pageUrl);
+
     const valid = videos
       .map(v => ({ ...v, servidor: normalizeServerName(v.servidor) }))
       .filter(v => getExtractor(v.servidor));
 
-    if (valid.length === 0) return { status: 404, message: 'No hay servidores validos' };
+    if (!valid.length)
+      return { status: 404, message: 'No hay servidores válidos' };
 
-    // M3U8 SWIFT (caso especial)
+    /* ======================================================
+       CASO ESPECIAL: SW / SWIFT (M3U8 DIRECTO)
+    ====================================================== */
     if (serverRequested === 'sw') {
-      const swVideo = valid.find(v => v.servidor === 'sw' || v.servidor.includes('swift'));
-      if (!swVideo) return { status: 404, message: '#EXTM3U\n#EXT-X-ENDLIST\n' };
+      const swVideo = valid.find(v =>
+        v.servidor === 'sw' || v.servidor.includes('swift')
+      );
+
+      if (!swVideo)
+        return { status: 404, message: '#EXTM3U\n#EXT-X-ENDLIST\n' };
 
       const extractor = getExtractor(swVideo.servidor);
       const swResult = await extractor(swVideo.url);
       const files = Array.isArray(swResult) ? swResult : [];
-      const best = files.find(f => f.url.includes('index-f2')) || files[0];
 
-      if (!best || !best.content) return { status: 404, message: '#EXTM3U\n#EXT-X-ENDLIST\n' };
+      const best =
+        files.find(f => f.url?.includes('index-f2')) || files[0];
 
-      // Enviamos directamente el m3u8 (no lo adicionamos al historial)
-      return { stream: true, contentType: 'application/vnd.apple.mpegurl', body: best.content };
+      if (!best?.content)
+        return { status: 404, message: '#EXTM3U\n#EXT-X-ENDLIST\n' };
+      return {
+        stream: true,
+        contentType: 'application/vnd.apple.mpegurl',
+        headers: {
+          'X-HLS-Source': best.url || '',
+          'Cache-Control': 'no-store'
+        },
+        body: best.content
+      };
     }
 
-    // Selección de servidor demandado por query
+    /* ======================================================
+       RESTO DE SERVIDORES
+    ====================================================== */
     let selected = valid[0];
+
     if (serverRequested) {
       const found = valid.find(v => v.servidor === serverRequested);
-      if (!found) return { status: 404, message: `Servidor '${serverRequested}' no soportado` };
+      if (!found)
+        return { status: 404, message: `Servidor '${serverRequested}' no soportado` };
       selected = found;
     }
 
     const extractor = getExtractor(selected.servidor);
     const result = await extractor(selected.url);
 
-    // Si el extractor devolvió lista (varios archivos)
+    /* ===== MULTI RESULTADO ===== */
     if (Array.isArray(result) && result[0]?.content) {
-      // Validamos las URLs externas (sin guardar objetos pesados en el historial)
       const validatedResults = [];
+
       for (const r of result) {
         try {
-          const isValid = await validateVideoUrl(r.url);
-          if (isValid) {
+          const ok = await validateVideoUrl(r.url);
+          if (ok) {
             validatedResults.push({
               url: r.url,
               userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(r.url)}`,
-              label: r.label || r.name || '',
+              label: r.label || r.name || ''
             });
           }
-        } catch (err) {
-          // ignorar fallo en una URL
+        } catch {}
+      }
+
+      if (!validatedResults.length)
+        return { status: 404, message: 'No se encontró ninguna URL válida' };
+
+      return {
+        json: {
+          count: validatedResults.length,
+          files: validatedResults,
+          firstUrl: validatedResults[0].url,
+          firstUserUrl: validatedResults[0].userUrl
+        }
+      };
+    }
+
+    /* ===== RESULTADO SIMPLE ===== */
+    if (result?.url) {
+      const ok = await validateVideoUrl(result.url);
+      if (!ok)
+        return { status: 404, message: 'La URI no pasó la validación', uri: result.url };
+
+      return {
+        json: {
+          url: result.url,
+          userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(result.url)}`,
+          baseUrl: selected.url,
+          valid: ok,
+          id: animeId
+        }
+      };
+    }
+
+    return { status: 500, message: 'Formato de extractor no reconocido' };
+
+  }).then(result => {
+    if (!result || res.headersSent) return;
+
+    if (result.status)
+      return res.status(result.status).send(result.message);
+
+    if (result.stream) {
+      res.setHeader(
+        'Content-Type',
+        result.contentType || 'application/vnd.apple.mpegurl'
+      );
+
+      if (result.headers) {
+        for (const [k, v] of Object.entries(result.headers)) {
+          res.setHeader(k, String(v));
         }
       }
 
-      if (validatedResults.length === 0) {
-        return { status: 404, message: 'No se encontró ninguna URL de video válida' };
-      }
-
-      return { json: { count: validatedResults.length, files: validatedResults, firstUrl: validatedResults[0].url, firstUserUrl: validatedResults[0].userUrl } };
+      return res.send(result.body);
     }
 
-    // Si el extractor devolvió objeto simple con url
-    if (result?.url) {
-      const isValid = await validateVideoUrl(result.url);
-      if (!isValid) return { status: 404, message: 'La URI No paso la validacion', uri: result.url };
+    if (result.json)
+      return res.json(result.json);
 
-      return { json: { url: result.url, userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(result.url)}`, baseUrl: selected.url, valid: isValid, id: animeId } };
-    }
+    res.json(result);
 
-    // Formato no reconocido
-    return { status: 500, message: 'Formato de extractor no reconocido' };
-
-  }).then(queueResult => {
-    // Si no se envió respuesta antes, manejamos la respuesta aquí
-    if (!queueResult) {
-      if (!res.headersSent) res.status(500).send('No hay resultado de la cola');
-      return;
-    }
-
-    if (queueResult.status && !res.headersSent) {
-      res.status(queueResult.status).send(queueResult.message);
-      return;
-    }
-
-    if (queueResult.stream && !res.headersSent) {
-      res.setHeader('Content-Type', queueResult.contentType || 'application/vnd.apple.mpegurl');
-      res.send(queueResult.body);
-      return;
-    }
-
-    if (queueResult.json && !res.headersSent) {
-      res.json(queueResult.json);
-      return;
-    }
-
-    if (queueResult && !res.headersSent) {
-      res.json(queueResult);
-      return;
-    }
-  }).catch(error => {
-    console.error('[api] error:', error);
-    if (!res.headersSent) res.status(500).send('Error al procesar la solicitud: ' + error.message);
+  }).catch(err => {
+    console.error('[api] error:', err);
+    if (!res.headersSent)
+      res.status(500).send('Error interno: ' + err.message);
   });
 });
+
 
 // GET /api/stream (form + streaming)
 exports.stream = asyncHandler(async (req, res) => {
@@ -397,4 +433,26 @@ exports.appV = asyncHandler(async (req, res) => {
   };
 
   res.json(response);
+});
+
+exports.hlsProxy = asyncHandler(async (req, res) => {
+  const url = req.query.url;
+  const ref = req.query.ref || null;
+  if (!url) return res.status(400).json({ error: 'Falta parámetro url' });
+
+  try {
+    const response = await axios.get(url, {
+      responseType: 'stream',
+      timeout: 10000,
+      headers: ref ? { 'Referer': ref } : {}
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+    res.setHeader('Cache-Control', 'no-store');
+
+    response.data.pipe(res);
+  } catch (err) {
+    console.error('[hlsProxy] error:', err.message);
+    res.status(500).json({ error: 'Error al obtener el recurso HLS' });
+  }
 });

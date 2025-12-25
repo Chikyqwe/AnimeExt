@@ -19,8 +19,9 @@ router.get('/api/stream', videoController.stream);
 router.get('/api/req', videoController.reqProxy);
 router.get('/api/stream/download', videoController.download);
 router.get('/api/queue/status', videoController.queueStatus);
+router.get('/proxy/hls', videoController.hlsProxy);
 
 // App
-//router.get('/app/v', videoController.appV);
+router.get('/app/v', videoController.appV);
 
 module.exports = router;

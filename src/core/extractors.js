@@ -313,6 +313,24 @@ async function redir(pageUrl) {
 }
 
 // ---------- extractM3u8 (mejor manejo de JSDOM y limpieza) ----------
+function rewriteM3U8(m3u8, finalUrl) {
+  return m3u8
+    .split('\n')
+    .map(line => {
+      const l = line.trim();
+
+      // Ignorar líneas vacías o directivas EXT
+      if (!l || l.startsWith('#')) return line;
+
+      // Solo reescribimos URLs absolutas (segmentos .ts, playlists, etc)
+      if (/^https?:\/\//i.test(l)) {
+        return `https://animeext-m5lt.onrender.com/proxy/hls?url=${encodeURIComponent(l)}&ref=${encodeURIComponent(finalUrl)}`;
+      }
+
+      return line;
+    })
+    .join('\n');
+}
 
 async function extractM3u8(pageUrl) {
   const finalUrl = await redir(pageUrl);
@@ -344,15 +362,39 @@ async function extractM3u8(pageUrl) {
   const masterUrl = link.startsWith('/')
     ? new URL(link, finalUrl).href
     : link;
-  const playlist = (await axiosGet(masterUrl, { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': '*/*' }, 'Referer': finalUrl })).data;
+  const playlist = (
+    await axiosGet(masterUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': '*/*',
+        'Referer': finalUrl
+      }
+    })
+  ).data;
+
   const base = masterUrl.slice(0, masterUrl.lastIndexOf('/') + 1);
   const bestUrl = best(playlist, base) || masterUrl;
-  const bestPlaylist = (await axiosGet(bestUrl, { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': '*/*' }, 'Referer': finalUrl })).data;
+
+  const bestPlaylistRaw = (
+    await axiosGet(bestUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': '*/*',
+        'Referer': finalUrl
+      }
+    })
+  ).data;
+
+  // 🔥 REESCRIBIR EL M3U8
+  const bestPlaylist = rewriteM3U8(bestPlaylistRaw, finalUrl);
+
   console.log(`[M3U8 EXTRACTOR] Mejor URL seleccionada: ${bestUrl}`);
+
   return [{
-    url: masterUrl,
+    url: finalUrl,
     content: bestPlaylist
   }];
+
 }
 
 // ---------- JWPlayer MP4 extractor ----------
@@ -380,10 +422,6 @@ async function getJWPlayerFile(pageUrl) {
     console.error('[getJWPlayerFile] Error:', err && err.message ? err.message : err);
     return null;
   }
-}
-
-function pass() {
-  return;
 }
 
 const mp4 = (u) => getJWPlayerFile(u);
