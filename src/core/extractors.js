@@ -313,7 +313,7 @@ async function redir(pageUrl) {
 }
 
 // ---------- extractM3u8 (mejor manejo de JSDOM y limpieza) ----------
-function rewriteM3U8(m3u8, finalUrl) {
+function rewriteM3U8(m3u8, playlistUrl, referer) {
   return m3u8
     .split('\n')
     .map(line => {
@@ -322,15 +322,28 @@ function rewriteM3U8(m3u8, finalUrl) {
       // Ignorar líneas vacías o directivas EXT
       if (!l || l.startsWith('#')) return line;
 
-      // Solo reescribimos URLs absolutas (segmentos .ts, playlists, etc)
+      let absoluteUrl;
+
+      // ✅ Si ya es absoluta, no la toques
       if (/^https?:\/\//i.test(l)) {
-        return `https://animeext-m5lt.onrender.com/proxy/hls?url=${encodeURIComponent(l)}&ref=${encodeURIComponent(finalUrl)}`;
+        absoluteUrl = l;
+      } else {
+        // 🔥 Si es relativa, convertirla a absoluta
+        try {
+          absoluteUrl = new URL(l, playlistUrl).href;
+        } catch (e) {
+          return line;
+        }
       }
 
-      return line;
+      // 🔁 Pasar por el proxy
+      return `https://animeext-m5lt.onrender.com/proxy/hls?url=${encodeURIComponent(
+        absoluteUrl
+      )}&ref=${encodeURIComponent(referer)}`;
     })
     .join('\n');
 }
+
 
 async function extractM3u8(pageUrl) {
   const finalUrl = await redir(pageUrl);
@@ -386,7 +399,7 @@ async function extractM3u8(pageUrl) {
   ).data;
 
   // 🔥 REESCRIBIR EL M3U8
-  const bestPlaylist = rewriteM3U8(bestPlaylistRaw, finalUrl);
+  const bestPlaylist = rewriteM3U8(bestPlaylistRaw, bestUrl, finalUrl);
 
   console.log(`[M3U8 EXTRACTOR] Mejor URL seleccionada: ${bestUrl}`);
 
