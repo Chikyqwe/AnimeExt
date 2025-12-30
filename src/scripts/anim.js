@@ -260,4 +260,4 @@ const main = async ({ log = console.log } = {}) => {
   process.exit(0);
 };
 
-main();
+module.exports = { main };

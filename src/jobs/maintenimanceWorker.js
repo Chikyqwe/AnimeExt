@@ -1,5 +1,5 @@
 const { parentPort } = require('worker_threads');
-const { main } = require('../scripts/anim'); // Asegúrate que este nombre coincida
+const { main } = require('../scripts/anim');
 
 (async () => {
   try {
@@ -8,6 +8,9 @@ const { main } = require('../scripts/anim'); // Asegúrate que este nombre coinc
     });
     parentPort.postMessage({ type: 'done' });
   } catch (err) {
-    parentPort.postMessage({ type: 'error', err: err.message || String(err) });
+    parentPort.postMessage({
+      type: 'error',
+      err: err.message || String(err)
+    });
   }
 })();

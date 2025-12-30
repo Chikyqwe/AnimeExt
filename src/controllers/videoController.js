@@ -1,4 +1,7 @@
 // src/controllers/videoController.js
+const http = require('http');
+const https = require('https');
+const { URL } = require('url');
 const asyncHandler = require('../middlewares/asyncHandler');
 const cache = require('../services/cacheService');
 const apiQueue = require('../core/queueService');
@@ -436,23 +439,52 @@ exports.appV = asyncHandler(async (req, res) => {
 });
 
 exports.hlsProxy = asyncHandler(async (req, res) => {
-  const url = req.query.url;
-  const ref = req.query.ref || null;
-  if (!url) return res.status(400).json({ error: 'Falta parámetro url' });
+  const targetUrl = req.query.url;
+  const ref = req.query.ref;
 
-  try {
-    const response = await axios.get(url, {
-      responseType: 'stream',
-      timeout: 10000,
-      headers: ref ? { 'Referer': ref } : {}
+  if (!targetUrl) {
+    return res.status(400).json({ error: 'Falta parámetro url' });
+  }
+
+  const parsed = new URL(targetUrl);
+  const client = parsed.protocol === 'https:' ? https : http;
+
+  const options = {
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': '*/*',
+      'Connection': 'keep-alive',
+      ...(ref && { Referer: ref })
+    }
+  };
+
+  const proxyReq = client.get(targetUrl, options, (proxyRes) => {
+    // Pasar status y headers originales
+    res.writeHead(proxyRes.statusCode, {
+      'Content-Type': proxyRes.headers['content-type'] || 'application/vnd.apple.mpegurl',
+      'Cache-Control': 'no-store',
+      'Access-Control-Allow-Origin': '*'
     });
 
-    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
-    res.setHeader('Cache-Control', 'no-store');
+    // STREAM DIRECTO SIN BUFFER
+    proxyRes.pipe(res, { end: true });
 
-    response.data.pipe(res);
-  } catch (err) {
-    console.error('[hlsProxy] error:', err.message);
-    res.status(500).json({ error: 'Error al obtener el recurso HLS' });
-  }
+    proxyRes.on('end', () => res.end());
+  });
+
+  // 🔥 Timeout alto (stream)
+  proxyReq.setTimeout(60000, () => {
+    proxyReq.destroy();
+  });
+
+  proxyReq.on('error', (err) => {
+    console.error('[hlsProxy]', err.message);
+    if (!res.headersSent) {
+      res.status(502).end('Error HLS');
+    }
+  });
+
+  req.on('close', () => {
+    proxyReq.destroy();
+  });
 });
