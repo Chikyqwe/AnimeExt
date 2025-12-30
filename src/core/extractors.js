@@ -356,7 +356,7 @@ async function extractM3u8(pageUrl) {
 
   const links = JSON.parse(linksMatch[1]);
   console.log(links)
-  const link = links.hls1 || links.hls2 || links.hls3 || links.hls4;
+  const link = links.hls4 || links.hls3 || links.hls1 || links.hls2;
   if (!link) return [];
 
   const masterUrl = link.startsWith('/')
