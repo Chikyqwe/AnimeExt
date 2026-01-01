@@ -437,6 +437,161 @@ async function getJWPlayerFile(pageUrl) {
   }
 }
 
+// Funciones de decodificación
+function rot13(str) {
+  return str.replace(/[A-Za-z]/g, (c) =>
+    String.fromCharCode(c.charCodeAt(0) + (c.toLowerCase() < 'n' ? 13 : -13))
+  );
+}
+
+function sanitizeSpecialChars(str) {
+  const patterns = ['@$', '^^', '~@', '%?', '*~', '!!', '#&'];
+  patterns.forEach((p) => {
+    const regex = new RegExp(p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    str = str.replace(regex, '_');
+  });
+  return str;
+}
+
+function removeUnderscores(str) {
+  return str.split('_').join('');
+}
+
+function decodeBase64(str) {
+  return Buffer.from(str, 'base64').toString('utf-8');
+}
+
+function shiftChars(str, shift) {
+  return str
+    .split('')
+    .map((c) => String.fromCharCode(c.charCodeAt(0) - shift))
+    .join('');
+}
+
+function reverseString(str) {
+  return str.split('').reverse().join('');
+}
+
+function decodeObfuscatedData(obfuscated) {
+  try {
+    let step = rot13(obfuscated);
+    step = sanitizeSpecialChars(step);
+    step = removeUnderscores(step);
+    step = decodeBase64(step);
+    step = shiftChars(step, 3);
+    step = reverseString(step);
+    step = decodeBase64(step);
+    return JSON.parse(step);
+  } catch (err) {
+    console.error('Error decoding data:', err);
+    return null;
+  }
+}
+
+// Función principal
+async function extractVoe(pageUrl) {
+    console.log(`[VOE EXTRACTOR] Extrayendo video desde: ${pageUrl}`);
+    let html;
+    try {
+        const res = await axios.get(pageUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0',
+                'Accept-Encoding': 'gzip, deflate, br'
+            },
+            timeout: 8000
+        });
+        html = res.data;
+    } catch (e) {
+        console.error('[VOE EXTRACTOR] Error descargando página:', e.message);
+        return null;
+    }
+
+    // Detectar redirección tipo JS
+    if (html.includes('window.location.href')) {
+        const match = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/);
+        if (match && match[1]) {
+            const redirectUrl = match[1];
+            console.log('[VOE EXTRACTOR] Redirección detectada a:', redirectUrl);
+
+            try {
+                const redirectRes = await axios.get(redirectUrl, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0',
+                        'Accept-Encoding': 'gzip, deflate, br'
+                    },
+                    timeout: 8000
+                });
+                html = redirectRes.data; // reemplazamos el HTML original con el de la redirección
+            } catch (err) {
+                console.error('[VOE EXTRACTOR] Error descargando URL redirigida:', err.message);
+                return null;
+            }
+        }
+    }
+
+    const $ = cheerio.load(html);
+  // Buscar script JSON
+  const script = $('script[type="application/json"]').get().find(s => {
+    try {
+      const parsed = JSON.parse($(s).html());
+      return Array.isArray(parsed) && typeof parsed[0] === 'string';
+    } catch (e) {
+      return false;
+    }
+  });
+
+  if (!script) {
+    console.error('[VOE EXTRACTOR] No se encontró JSON ofuscado.');
+    return null;
+  }
+
+  const obfuscated = $(script).html();
+  const data = decodeObfuscatedData(obfuscated);
+
+  if (!data || !data.source) {
+    console.error('[VOE EXTRACTOR] No se pudieron extraer los enlaces.');
+    return null;
+  }
+
+  const result = {
+    hls: data.source,
+    mp4: data.direct_access_url || null
+  };
+  
+  const masterUrl = result.hls;
+  let playlist = await axiosGet(masterUrl, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': '*/*',
+      'Referer': pageUrl
+    }
+  }).then(res => res.data);
+
+  const base = masterUrl.slice(0, masterUrl.lastIndexOf('/') + 1);
+  const bestUrl = best(playlist, base) || masterUrl;
+
+  const bestPlaylistRaw = (
+    await axiosGet(bestUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': '*/*',
+        'Referer': pageUrl
+      }
+    })
+  ).data;
+
+  // 🔥 REESCRIBIR EL M3U8
+  const bestPlaylist = rewriteM3U8(bestPlaylistRaw, bestUrl, pageUrl);
+
+  result.hls = {
+    url: bestUrl,
+    content: bestPlaylist
+  };
+  
+  return result;
+}
+
+
 const mp4 = (u) => getJWPlayerFile(u);
 
 const extractors = {
@@ -444,9 +599,10 @@ const extractors = {
   yu: mp4,
   streamwish: extractM3u8,
   sw: extractM3u8,
+  voe: extractVoe,
   swiftplayers: extractM3u8,
   obeywish: extractM3u8,
-  'burstcloud.co': burstcloudExtractor,
+  burstcloud: burstcloudExtractor,
   bc: burstcloudExtractor
 };
 

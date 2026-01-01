@@ -26,7 +26,7 @@ Instalación
 3. Abre el navegador en:
 
    ```
-   http://localhost:2015
+   http://localhost:{PORT}
    ```
 
 

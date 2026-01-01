@@ -159,166 +159,107 @@ exports.servers = asyncHandler(async (req, res) => {
 
 // GET /api  <-- endpoint principal (ahora delegamos y devolvemos respuestas limpias)
 exports.api = asyncHandler(async (req, res) => {
-  const animeId = req.query.uid ? parseInt(req.query.uid) : undefined;
-  const ep = req.query.ep ? parseInt(req.query.ep) : undefined;
-  const mirror = req.query.mirror ? parseInt(req.query.mirror) : 1;
-  const serverRequested = normalizeServerName(req.query.server || '');
-  let pageUrl = req.query.url;
+  try {
+    const animeId = req.query.uid ? parseInt(req.query.uid) : undefined;
+    const ep = req.query.ep ? parseInt(req.query.ep) : undefined;
+    const mirror = req.query.mirror ? parseInt(req.query.mirror) : 1;
+    const serverRequested = normalizeServerName(req.query.server || '');
+    let pageUrl = req.query.url;
 
-  if (!pageUrl && animeId) {
-    const anime = getAnimeByUnitId(animeId);
-    if (!anime?.unit_id)
-      return res.status(404).json({ error: 'Anime no encontrado o sin unit_id', id: animeId });
+    // =============================
+    // VALIDACIONES INICIALES
+    // =============================
+    if (!pageUrl && animeId) {
+      const anime = getAnimeByUnitId(animeId);
+      if (!anime?.unit_id) return res.status(404).json({ error: 'Anime no encontrado o sin unit_id', id: animeId });
+      if (!ep) return res.status(400).json({ error: 'Parámetro "ep" obligatorio' });
 
-    if (!ep)
-      return res.status(400).json({ error: 'Parámetro "ep" obligatorio' });
-
-    pageUrl = await buildEpisodeUrl(anime, ep, mirror);
-    if (!pageUrl)
-      return res.status(400).json({ error: 'No se pudo construir la URL del episodio' });
-  }
-
-  apiQueue.add(async () => {
-    if (!pageUrl || typeof pageUrl !== 'string') {
-      return { status: 400, message: 'URL no válida' };
+      pageUrl = await buildEpisodeUrl(anime, ep, mirror);
+      if (!pageUrl) return res.status(400).json({ error: 'No se pudo construir la URL del episodio' });
     }
 
-    const videos = await extractAllVideoLinks(pageUrl);
+    if (!pageUrl || typeof pageUrl !== 'string') return res.status(400).json({ error: 'URL no válida' });
 
-    const valid = videos
-      .map(v => ({ ...v, servidor: normalizeServerName(v.servidor) }))
-      .filter(v => getExtractor(v.servidor));
+    // =============================
+    // EXTRACCIÓN DE VIDEOS
+    // =============================
+    let videos = [];
+    if (!pageUrl && serverRequested) {
+      videos = serverRequested ? [{ servidor: serverRequested, url: pageUrl }] : [];
+    } else {
+      videos = await extractAllVideoLinks(pageUrl);
+    }
+    const validVideos = videos.map(v => ({ ...v, servidor: normalizeServerName(v.servidor) }));
 
-    if (!valid.length)
-      return { status: 404, message: 'No hay servidores válidos' };
-
-    /* ======================================================
-       CASO ESPECIAL: SW / SWIFT (M3U8 DIRECTO)
-    ====================================================== */
+    if (!validVideos.length) return res.status(404).json({ error: 'No hay servidores válidos' });
+     
+    // =============================
+    // CASO ESPECIAL SW / SWIFT
+    // =============================
     if (serverRequested === 'sw') {
-      const swVideo = valid.find(v =>
-        v.servidor === 'sw' || v.servidor.includes('swift')
-      );
-
-      if (!swVideo)
-        return { status: 404, message: '#EXTM3U\n#EXT-X-ENDLIST\n' };
-
+      const swVideo = validVideos.find(v => v.servidor === 'sw' || v.servidor.includes('swift'));
+      if (!swVideo) return res.status(404).send('#EXTM3U\n#EXT-X-ENDLIST\n');
+   
       const extractor = getExtractor(swVideo.servidor);
-      const swResult = await extractor(swVideo.url);
-      const files = Array.isArray(swResult) ? swResult : [];
+      const result = await extractor(swVideo.url);
+      const best = Array.isArray(result) ? result[0] : result;
 
-      const best =
-        files.find(f => f.url?.includes('index-f2')) || files[0];
-
-      if (!best?.content)
-        return { status: 404, message: '#EXTM3U\n#EXT-X-ENDLIST\n' };
-      return {
-        stream: true,
-        contentType: 'application/vnd.apple.mpegurl',
-        headers: {
-          'X-HLS-Source': best.url || '',
-          'Cache-Control': 'no-store'
-        },
-        body: best.content
-      };
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+      res.setHeader('X-HLS-Source', best.url || '');
+      res.setHeader('Cache-Control', 'no-store');
+      return res.send(best.content || '');
     }
+    if (serverRequested === 'voe') {
+      const voeVideo = validVideos.find(v => v.servidor === 'voe');
+      if (!voeVideo) return res.status(404).send('#EXTM3U\n#EXT-X-ENDLIST\n');
 
-    /* ======================================================
-       RESTO DE SERVIDORES
-    ====================================================== */
-    let selected = valid[0];
-
+      const extractor = getExtractor(voeVideo.servidor);
+      const result = await extractor(voeVideo.url);
+      console.log('VOE result:', result);
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+      res.setHeader('X-HLS-Source', result.hls.url || '');
+      res.setHeader('Cache-Control', 'no-store');
+      return res.send(result.hls.content || '');
+    }
+    // =============================
+    // SELECCIÓN DE SERVIDOR
+    // =============================
+    let selectedVideo = validVideos[0];
     if (serverRequested) {
-      const found = valid.find(v => v.servidor === serverRequested);
-      if (!found)
-        return { status: 404, message: `Servidor '${serverRequested}' no soportado` };
-      selected = found;
+      const found = validVideos.find(v => v.servidor === serverRequested);
+      if (!found) return res.status(404).json({ error: `Servidor '${serverRequested}' no soportado` });
+      selectedVideo = found;
     }
 
-    const extractor = getExtractor(selected.servidor);
-    const result = await extractor(selected.url);
+    const extractor = getExtractor(selectedVideo.servidor);
+    const result = await extractor(selectedVideo.url);
 
-    /* ===== MULTI RESULTADO ===== */
-    if (Array.isArray(result) && result[0]?.content) {
-      const validatedResults = [];
-
-      for (const r of result) {
-        try {
-          const ok = await validateVideoUrl(r.url);
-          if (ok) {
-            validatedResults.push({
-              url: r.url,
-              userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(r.url)}`,
-              label: r.label || r.name || ''
-            });
-          }
-        } catch {}
-      }
-
-      if (!validatedResults.length)
-        return { status: 404, message: 'No se encontró ninguna URL válida' };
-
-      return {
-        json: {
-          count: validatedResults.length,
-          files: validatedResults,
-          firstUrl: validatedResults[0].url,
-          firstUserUrl: validatedResults[0].userUrl
-        }
-      };
+    // =============================
+    // RESULTADO SIMPLE SIN VERIFICACIONES
+    // =============================
+    if (Array.isArray(result)) {
+      // Si es array, devolvemos todos tal cual
+      return res.json(result);
     }
 
-    /* ===== RESULTADO SIMPLE ===== */
     if (result?.url) {
-      const ok = await validateVideoUrl(result.url);
-      if (!ok)
-        return { status: 404, message: 'La URI no pasó la validación', uri: result.url };
-
-      return {
-        json: {
-          url: result.url,
-          userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(result.url)}`,
-          baseUrl: selected.url,
-          valid: ok,
-          id: animeId
-        }
-      };
+      return res.json({
+        url: result.url,
+        userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(result.url)}`,
+        baseUrl: selectedVideo.url,
+        id: animeId
+      });
     }
 
-    return { status: 500, message: 'Formato de extractor no reconocido' };
+    return res.status(500).json({ error: 'Formato de extractor no reconocido', format: result });
 
-  }).then(result => {
-    if (!result || res.headersSent) return;
-
-    if (result.status)
-      return res.status(result.status).send(result.message);
-
-    if (result.stream) {
-      res.setHeader(
-        'Content-Type',
-        result.contentType || 'application/vnd.apple.mpegurl'
-      );
-
-      if (result.headers) {
-        for (const [k, v] of Object.entries(result.headers)) {
-          res.setHeader(k, String(v));
-        }
-      }
-
-      return res.send(result.body);
-    }
-
-    if (result.json)
-      return res.json(result.json);
-
-    res.json(result);
-
-  }).catch(err => {
+  } catch (err) {
     console.error('[api] error:', err);
-    if (!res.headersSent)
-      res.status(500).send('Error interno: ' + err.message);
-  });
+    if (!res.headersSent) return res.status(500).send('Error interno: ' + err.message);
+  }
 });
+
+
 
 
 // GET /api/stream (form + streaming)

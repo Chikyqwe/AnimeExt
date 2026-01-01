@@ -44,7 +44,7 @@ router.get('/api/player', async (req, res) => {
 
     const episodesCount = bestSource.count;
 
-    if (ep <= 0 || ep > episodesCount) {
+    if (ep <= -1 || ep > episodesCount) {
       return res.status(406).json({
         error: "Episodio inválido",
         redirect_url_example: !isNaN(uid)
