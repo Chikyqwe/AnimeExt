@@ -248,8 +248,10 @@ exports.api = asyncHandler(async (req, res) => {
     }
 
     if (result?.url) {
-      await validateVideoUrl(result.url);
-      if (!result.ok) return res.status(400).json({ error: 'URL de video no válida' });
+      if (!ignoreVerify) {
+        await validateVideoUrl(result.url);
+        if (!result.ok) return res.status(400).json({ error: 'URL de video no válida' });
+      }
       return res.json({
         url: result.url,
         userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(result.url)}`,
