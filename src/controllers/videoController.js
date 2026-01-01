@@ -165,6 +165,7 @@ exports.api = asyncHandler(async (req, res) => {
     const mirror = req.query.mirror ? parseInt(req.query.mirror) : 1;
     const serverRequested = normalizeServerName(req.query.server || '');
     let pageUrl = req.query.url;
+    const ignoreVerify = req.query.ignoreVerify === 'true';
 
     // =============================
     // VALIDACIONES INICIALES
@@ -238,11 +239,17 @@ exports.api = asyncHandler(async (req, res) => {
     // RESULTADO SIMPLE SIN VERIFICACIONES
     // =============================
     if (Array.isArray(result)) {
-      // Si es array, devolvemos todos tal cual
+      await Promise.all(result.map(async (item) => {
+        if (item?.url) {
+          await validateVideoUrl(item.url);
+        }
+      }));
       return res.json(result);
     }
 
     if (result?.url) {
+      await validateVideoUrl(result.url);
+      if (!result.ok) return res.status(400).json({ error: 'URL de video no válida' });
       return res.json({
         url: result.url,
         userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(result.url)}`,

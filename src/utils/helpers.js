@@ -185,31 +185,64 @@ const StreamModule = (() => {
     return 'https://www.mp4upload.com/';
   }
 
+
   function validateVideoUrl(videoUrl, timeoutMs = 5000) {
     return new Promise(resolve => {
-      if (!videoUrl) return resolve(false);
+      if (!videoUrl) return resolve({ ok: false });
 
-      const u = urlLib.parse(videoUrl);
-      const proto = u.protocol === 'https:' ? https : http;
+      let redirects = 0;
+      const maxRedirects = 5;
 
-      const req = proto.request({
-        method: 'HEAD',
-        hostname: u.hostname,
-        path: u.path,
-        headers: {
-          Referer: getRefererForHost(u.hostname),
-          'User-Agent': 'Mozilla/5.0'
-        },
-        timeout: timeoutMs
-      }, res => {
-        const ok = [200, 206].includes(res.statusCode);
-        resolve(ok);
-      });
+      const doRequest = (currentUrl) => {
+        try {
+          const u = urlLib.parse(currentUrl);
+          const proto = u.protocol === 'https:' ? https : http;
 
-      req.on('error', () => resolve(false));
-      req.end();
+          const req = proto.request({
+            method: 'HEAD',
+            hostname: u.hostname,
+            path: u.path + (u.search || ''),
+            headers: {
+              Referer: getRefererForHost(u.hostname),
+              'User-Agent': 'Mozilla/5.0'
+            },
+            timeout: timeoutMs
+          }, res => {
+            // manejo de redirecciones
+            if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
+              redirects++;
+              if (redirects > maxRedirects) return resolve({ ok: false });
+              return doRequest(res.headers.location);
+            }
+
+            const okStatus = [200, 206].includes(res.statusCode);
+            const contentType = res.headers['content-type'] || '';
+            const isVideo = contentType.startsWith('video/');
+            const contentLength = parseInt(res.headers['content-length']) || 0;
+            const acceptRanges = res.headers['accept-ranges'] === 'bytes';
+
+            resolve({
+              ok: okStatus && isVideo,
+              contentLength,
+              acceptRanges
+            });
+          });
+
+          req.on('timeout', () => {
+            req.destroy();
+            resolve({ ok: false });
+          });
+          req.on('error', () => resolve({ ok: false }));
+          req.end();
+        } catch (e) {
+          resolve({ ok: false });
+        }
+      };
+
+      doRequest(videoUrl);
     });
   }
+
 
   async function proxyImage(url, res) {
     try {
