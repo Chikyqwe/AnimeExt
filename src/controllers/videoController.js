@@ -248,8 +248,9 @@ exports.api = asyncHandler(async (req, res) => {
     }
 
     if (result?.url) {
+      let valy = null;
       if (!ignoreVerify) {
-        const valy = await validateVideoUrl(result.url);
+        valy = await validateVideoUrl(result.url);
         console.log('[api] URL verificada:', result.url);
         if (!valy.ok) return res.status(400).json({ error: 'URL de video no válida', debug: valy });
       }
@@ -257,7 +258,8 @@ exports.api = asyncHandler(async (req, res) => {
         url: result.url,
         userUrl: `${req.protocol}://${req.get('host')}/api/stream?videoUrl=${encodeURIComponent(result.url)}`,
         baseUrl: selectedVideo.url,
-        id: animeId
+        id: animeId,
+        verify_Instance: valy
       });
     }
 

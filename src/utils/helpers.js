@@ -277,16 +277,47 @@ const StreamModule = (() => {
           }
 
           const contentType = res.headers['content-type'] || '';
+          const contentLength = Number(res.headers['content-length'] || 0);
+
+          pushLog('content_info', {
+            contentType,
+            contentLength
+          });
+
           const isVideo =
             contentType.startsWith('video/') ||
             contentType.includes('octet-stream');
 
+          let reason = null;
+
+          switch (true) {
+            case ![200, 206].includes(res.statusCode):
+              reason = 'bad_status_code';
+              break;
+
+            case !isVideo:
+              reason = 'not_video_mime';
+              break;
+
+            case contentLength <= 0:
+              reason = 'empty_or_unknown_size';
+              break;
+
+            default:
+              reason = 'ok';
+          }
+
+          const ok = reason === 'ok';
+
           finish({
-            ok: [200, 206].includes(res.statusCode) && isVideo,
+            ok,
             statusCode: res.statusCode,
             contentType,
-            finalUrl: currentUrl
+            contentLength,
+            finalUrl: currentUrl,
+            reason
           });
+
         });
 
         req.on('error', (err) => {
