@@ -185,58 +185,139 @@ const StreamModule = (() => {
     return 'https://www.mp4upload.com/';
   }
 
-
   function validateVideoUrl(videoUrl, timeoutMs = 5000) {
-    return new Promise(resolve => {
-      if (!videoUrl) return resolve({ ok: false });
-
+    return new Promise((resolve) => {
       let redirects = 0;
       const maxRedirects = 5;
+      let resolved = false;
 
-      const doRequest = (currentUrl) => {
-        try {
-          const u = urlLib.parse(currentUrl);
-          const proto = u.protocol === 'https:' ? https : http;
+      const logs = [];
 
-          const req = proto.request({
-            method: 'HEAD',
-            hostname: u.hostname,
-            path: u.path + (u.search || ''),
-            headers: {
-              Referer: getRefererForHost(u.hostname),
-              'User-Agent': 'Mozilla/5.0'
-            },
-            timeout: timeoutMs
-          }, res => {
-            // manejo de redirecciones
-            if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
-              redirects++;
-              if (redirects > maxRedirects) return resolve({ ok: false });
-              return doRequest(res.headers.location);
+      const pushLog = (type, data) => {
+        logs.push({
+          time: new Date().toISOString(),
+          type,
+          data
+        });
+      };
+
+      const finish = (data) => {
+        if (resolved) return;
+        resolved = true;
+        resolve({
+          ...data,
+          log: logs
+        });
+      };
+
+      const doRequest = (currentUrl, method = 'HEAD') => {
+        pushLog('request', {
+          url: currentUrl,
+          method
+        });
+
+        const u = urlLib.parse(currentUrl);
+        const isHttps = u.protocol === 'https:';
+
+        const agent = isHttps
+          ? new https.Agent({
+              keepAlive: true,
+              servername: u.hostname,
+              rejectUnauthorized: false
+            })
+          : undefined;
+
+        const options = {
+          method,
+          hostname: u.hostname,
+          port: u.port || (isHttps ? 443 : 80),
+          path: (u.pathname || '/') + (u.search || ''),
+          headers: {
+            Referer: 'https://www.yourupload.com/',
+            'User-Agent': 'Mozilla/5.0',
+            ...(method === 'GET' ? { Range: 'bytes=0-1023' } : {})
+          },
+          agent,
+          timeout: timeoutMs
+        };
+
+        pushLog('options', {
+          method: options.method,
+          hostname: options.hostname,
+          port: options.port,
+          path: options.path,
+          timeout: options.timeout,
+          headers: options.headers
+        });
+
+        const proto = isHttps ? https : http;
+
+        const req = proto.request(options, (res) => {
+          pushLog('response', {
+            statusCode: res.statusCode,
+            headers: res.headers
+          });
+
+          // 🔁 Redirecciones
+          if ([301,302,303,307,308].includes(res.statusCode) && res.headers.location) {
+            if (++redirects > maxRedirects) {
+              return finish({
+                ok: false,
+                reason: 'too_many_redirects'
+              });
             }
 
-            const okStatus = [200, 206].includes(res.statusCode);
-            const contentType = res.headers['content-type'] || '';
-            const isVideo = contentType.startsWith('video/');
-            const contentLength = parseInt(res.headers['content-length']) || 0;
-            const acceptRanges = res.headers['accept-ranges'] === 'bytes';
-
-            resolve({
-              ok: okStatus && isVideo,
-              contentLength,
-              acceptRanges
+            const nextUrl = urlLib.resolve(currentUrl, res.headers.location);
+            pushLog('redirect', {
+              from: currentUrl,
+              to: nextUrl
             });
+
+            return doRequest(nextUrl, method);
+          }
+
+          const contentType = res.headers['content-type'] || '';
+          const isVideo =
+            contentType.startsWith('video/') ||
+            contentType.includes('octet-stream');
+
+          finish({
+            ok: [200, 206].includes(res.statusCode) && isVideo,
+            statusCode: res.statusCode,
+            contentType,
+            finalUrl: currentUrl
+          });
+        });
+
+        req.on('error', (err) => {
+          pushLog('error', {
+            method,
+            message: err.message,
+            code: err.code
           });
 
-          req.on('timeout', () => {
-            req.destroy();
-            resolve({ ok: false });
+          if (method === 'HEAD') return doRequest(currentUrl, 'GET');
+
+          finish({
+            ok: false,
+            reason: 'request_error'
           });
-          req.on('error', () => resolve({ ok: false }));
-          req.end();
-        } catch (e) {
-          resolve({ ok: false });
-        }
+        });
+
+        req.on('timeout', () => {
+          pushLog('timeout', {
+            method,
+            timeoutMs
+          });
+          req.destroy();
+
+          finish({
+            ok: false,
+            reason: 'timeout'
+          });
+        });
+
+        req.end();
       };
 
       doRequest(videoUrl);

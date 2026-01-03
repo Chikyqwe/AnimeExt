@@ -249,8 +249,9 @@ exports.api = asyncHandler(async (req, res) => {
 
     if (result?.url) {
       if (!ignoreVerify) {
-        await validateVideoUrl(result.url);
-        if (!result.ok) return res.status(400).json({ error: 'URL de video no válida' });
+        const valy = await validateVideoUrl(result.url);
+        console.log('[api] URL verificada:', result.url);
+        if (!valy.ok) return res.status(400).json({ error: 'URL de video no válida', debug: valy });
       }
       return res.json({
         url: result.url,
