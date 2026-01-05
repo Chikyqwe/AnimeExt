@@ -39,6 +39,7 @@
     "request": "^2.88.2",
     "serve-favicon": "^2.5.1",
     "tough-cookie": "^5.1.2",
-    "unpacker": "^1.0.1"
+    "unpacker": "^1.0.1",
+    "uuid": "^13.0.0"
   }
 }
