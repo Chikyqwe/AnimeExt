@@ -1,373 +1,401 @@
 [
   {
     "origen": "Scraper",
-    "contexto": "https://www3.animeflv.net/browse?page=151",
-    "mensaje": "Request failed with status code 500",
-    "url": "https://www3.animeflv.net/browse?page=151",
-    "timestamp": "2026-01-05T03:15:42.384Z"
-  },
-  {
-    "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=152",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=152",
-    "timestamp": "2026-01-05T03:15:42.399Z"
+    "timestamp": "2026-01-06T16:16:56.014Z"
+  },
+  {
+    "origen": "Scraper",
+    "contexto": "https://www3.animeflv.net/browse?page=151",
+    "mensaje": "Request failed with status code 500",
+    "url": "https://www3.animeflv.net/browse?page=151",
+    "timestamp": "2026-01-06T16:16:56.017Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=153",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=153",
-    "timestamp": "2026-01-05T03:15:42.468Z"
+    "timestamp": "2026-01-06T16:16:56.018Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=154",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=154",
-    "timestamp": "2026-01-05T03:15:42.469Z"
-  },
-  {
-    "origen": "Scraper",
-    "contexto": "https://www3.animeflv.net/browse?page=156",
-    "mensaje": "Request failed with status code 500",
-    "url": "https://www3.animeflv.net/browse?page=156",
-    "timestamp": "2026-01-05T03:15:42.469Z"
+    "timestamp": "2026-01-06T16:16:56.053Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=155",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=155",
-    "timestamp": "2026-01-05T03:15:42.470Z"
+    "timestamp": "2026-01-06T16:16:56.053Z"
+  },
+  {
+    "origen": "Scraper",
+    "contexto": "https://www3.animeflv.net/browse?page=156",
+    "mensaje": "Request failed with status code 500",
+    "url": "https://www3.animeflv.net/browse?page=156",
+    "timestamp": "2026-01-06T16:16:56.096Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=157",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=157",
-    "timestamp": "2026-01-05T03:15:42.471Z"
+    "timestamp": "2026-01-06T16:16:56.144Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=158",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=158",
-    "timestamp": "2026-01-05T03:15:42.472Z"
-  },
-  {
-    "origen": "Scraper",
-    "contexto": "https://www3.animeflv.net/browse?page=160",
-    "mensaje": "Request failed with status code 500",
-    "url": "https://www3.animeflv.net/browse?page=160",
-    "timestamp": "2026-01-05T03:15:42.519Z"
-  },
-  {
-    "origen": "Scraper",
-    "contexto": "https://www3.animeflv.net/browse?page=161",
-    "mensaje": "Request failed with status code 500",
-    "url": "https://www3.animeflv.net/browse?page=161",
-    "timestamp": "2026-01-05T03:15:42.520Z"
+    "timestamp": "2026-01-06T16:16:56.144Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=159",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=159",
-    "timestamp": "2026-01-05T03:15:42.521Z"
+    "timestamp": "2026-01-06T16:16:56.169Z"
+  },
+  {
+    "origen": "Scraper",
+    "contexto": "https://www3.animeflv.net/browse?page=161",
+    "mensaje": "Request failed with status code 500",
+    "url": "https://www3.animeflv.net/browse?page=161",
+    "timestamp": "2026-01-06T16:16:56.170Z"
+  },
+  {
+    "origen": "Scraper",
+    "contexto": "https://www3.animeflv.net/browse?page=160",
+    "mensaje": "Request failed with status code 500",
+    "url": "https://www3.animeflv.net/browse?page=160",
+    "timestamp": "2026-01-06T16:16:56.170Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=162",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=162",
-    "timestamp": "2026-01-05T03:15:42.522Z"
-  },
-  {
-    "origen": "Scraper",
-    "contexto": "https://www3.animeflv.net/browse?page=163",
-    "mensaje": "Request failed with status code 500",
-    "url": "https://www3.animeflv.net/browse?page=163",
-    "timestamp": "2026-01-05T03:15:42.523Z"
+    "timestamp": "2026-01-06T16:16:56.170Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=164",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=164",
-    "timestamp": "2026-01-05T03:15:42.524Z"
+    "timestamp": "2026-01-06T16:16:56.171Z"
+  },
+  {
+    "origen": "Scraper",
+    "contexto": "https://www3.animeflv.net/browse?page=163",
+    "mensaje": "Request failed with status code 500",
+    "url": "https://www3.animeflv.net/browse?page=163",
+    "timestamp": "2026-01-06T16:16:56.171Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=165",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=165",
-    "timestamp": "2026-01-05T03:15:42.647Z"
+    "timestamp": "2026-01-06T16:16:56.171Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=166",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=166",
-    "timestamp": "2026-01-05T03:15:42.648Z"
-  },
-  {
-    "origen": "Scraper",
-    "contexto": "https://www3.animeflv.net/browse?page=167",
-    "mensaje": "Request failed with status code 500",
-    "url": "https://www3.animeflv.net/browse?page=167",
-    "timestamp": "2026-01-05T03:15:42.721Z"
+    "timestamp": "2026-01-06T16:16:56.183Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=168",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=168",
-    "timestamp": "2026-01-05T03:15:42.722Z"
+    "timestamp": "2026-01-06T16:16:56.184Z"
+  },
+  {
+    "origen": "Scraper",
+    "contexto": "https://www3.animeflv.net/browse?page=167",
+    "mensaje": "Request failed with status code 500",
+    "url": "https://www3.animeflv.net/browse?page=167",
+    "timestamp": "2026-01-06T16:16:56.201Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=169",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=169",
-    "timestamp": "2026-01-05T03:15:42.723Z"
+    "timestamp": "2026-01-06T16:16:56.202Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=170",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=170",
-    "timestamp": "2026-01-05T03:15:42.723Z"
+    "timestamp": "2026-01-06T16:16:56.213Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=171",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=171",
-    "timestamp": "2026-01-05T03:15:42.724Z"
+    "timestamp": "2026-01-06T16:16:56.214Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=172",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=172",
-    "timestamp": "2026-01-05T03:15:42.725Z"
+    "timestamp": "2026-01-06T16:16:56.214Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://www3.animeflv.net/browse?page=173",
     "mensaje": "Request failed with status code 500",
     "url": "https://www3.animeflv.net/browse?page=173",
-    "timestamp": "2026-01-05T03:15:42.725Z"
+    "timestamp": "2026-01-06T16:16:56.232Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=1",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=1",
-    "timestamp": "2026-01-05T03:15:52.904Z"
+    "timestamp": "2026-01-06T16:17:06.289Z"
+  },
+  {
+    "origen": "Scraper",
+    "contexto": "https://animeytx.com/tv/?page=2",
+    "mensaje": "timeout of 10000ms exceeded",
+    "url": "https://animeytx.com/tv/?page=2",
+    "timestamp": "2026-01-06T16:17:06.289Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=3",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=3",
-    "timestamp": "2026-01-05T03:15:52.905Z"
+    "timestamp": "2026-01-06T16:17:06.289Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=4",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=4",
-    "timestamp": "2026-01-05T03:15:52.905Z"
+    "timestamp": "2026-01-06T16:17:06.289Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=5",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=5",
-    "timestamp": "2026-01-05T03:15:52.905Z"
+    "timestamp": "2026-01-06T16:17:06.289Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=6",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=6",
-    "timestamp": "2026-01-05T03:15:52.905Z"
+    "timestamp": "2026-01-06T16:17:06.289Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=7",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=7",
-    "timestamp": "2026-01-05T03:15:52.905Z"
+    "timestamp": "2026-01-06T16:17:06.289Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=8",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=8",
-    "timestamp": "2026-01-05T03:15:52.905Z"
+    "timestamp": "2026-01-06T16:17:06.289Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=9",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=9",
-    "timestamp": "2026-01-05T03:15:52.905Z"
+    "timestamp": "2026-01-06T16:17:06.289Z"
+  },
+  {
+    "origen": "Scraper",
+    "contexto": "https://animeytx.com/tv/?page=10",
+    "mensaje": "timeout of 10000ms exceeded",
+    "url": "https://animeytx.com/tv/?page=10",
+    "timestamp": "2026-01-06T16:17:06.289Z"
+  },
+  {
+    "origen": "Scraper",
+    "contexto": "https://animeytx.com/tv/?page=11",
+    "mensaje": "timeout of 10000ms exceeded",
+    "url": "https://animeytx.com/tv/?page=11",
+    "timestamp": "2026-01-06T16:17:06.289Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=12",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=12",
-    "timestamp": "2026-01-05T03:15:52.905Z"
+    "timestamp": "2026-01-06T16:17:06.289Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=13",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=13",
-    "timestamp": "2026-01-05T03:15:52.905Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=14",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=14",
-    "timestamp": "2026-01-05T03:15:52.905Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=15",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=15",
-    "timestamp": "2026-01-05T03:15:52.905Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
+  },
+  {
+    "origen": "Scraper",
+    "contexto": "https://animeytx.com/tv/?page=16",
+    "mensaje": "timeout of 10000ms exceeded",
+    "url": "https://animeytx.com/tv/?page=16",
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=17",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=17",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=18",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=18",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=19",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=19",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=20",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=20",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=21",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=21",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=22",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=22",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=23",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=23",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=24",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=24",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=25",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=25",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.290Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=26",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=26",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.291Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=27",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=27",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.291Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=28",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=28",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.291Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=29",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=29",
-    "timestamp": "2026-01-05T03:15:52.906Z"
+    "timestamp": "2026-01-06T16:17:06.291Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=30",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=30",
-    "timestamp": "2026-01-05T03:15:52.907Z"
+    "timestamp": "2026-01-06T16:17:06.291Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=31",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=31",
-    "timestamp": "2026-01-05T03:15:52.907Z"
+    "timestamp": "2026-01-06T16:17:06.291Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=32",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=32",
-    "timestamp": "2026-01-05T03:15:52.907Z"
+    "timestamp": "2026-01-06T16:17:06.291Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=33",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=33",
-    "timestamp": "2026-01-05T03:15:52.907Z"
+    "timestamp": "2026-01-06T16:17:06.291Z"
   },
   {
     "origen": "Scraper",
     "contexto": "https://animeytx.com/tv/?page=34",
     "mensaje": "timeout of 10000ms exceeded",
     "url": "https://animeytx.com/tv/?page=34",
-    "timestamp": "2026-01-05T03:15:52.907Z"
+    "timestamp": "2026-01-06T16:17:06.291Z"
   }
 ]

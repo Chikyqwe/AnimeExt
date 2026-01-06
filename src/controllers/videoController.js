@@ -280,7 +280,7 @@ exports.api = asyncHandler(async (req, res) => {
         let nowDate = Date.now();
         return res.status(200).json({
           ok: Rc.ok,
-          mediaurl: `${req.protocol}://${req.get('host')}/api/get/hls/${uuid}`,
+          mediaurl: `https://${req.get('host')}/api/get/hls/${uuid}`,
           uuid,
           originalSize: Rc.originalSize,
           compressedSize: Rc.compressedSize,
@@ -325,7 +325,7 @@ exports.api = asyncHandler(async (req, res) => {
         let nowDate = Date.now();
         return res.status(200).json({
           ok: Rc.ok,
-          mediaurl: `${req.protocol}://${req.get('host')}/api/get/hls/${uuid}`,
+          mediaurl: `https://${req.get('host')}/api/get/hls/${uuid}`,
           uuid,
           originalSize: Rc.originalSize,
           compressedSize: Rc.compressedSize,
