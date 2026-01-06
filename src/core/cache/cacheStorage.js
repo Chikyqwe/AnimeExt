@@ -22,7 +22,7 @@ class M3U8Store {
             expiresAt: Date.now() + this.ttlMs
         });
 
-        // Retornar info de compresión
+        // Retornar info de compresi ón
         return {
             ok: true,
             originalSize: Buffer.byteLength(m3u8Text, 'utf8'),
