@@ -179,6 +179,32 @@ class keyStore {
             GlobalRegistry.save(registry);
         }
     }
+    cleanup() {
+        const now = Date.now();
+        const registry = GlobalRegistry.load();
+        let changed = false;
+
+        for (const [id, entry] of Object.entries(registry)) {
+            // Solo procesamos entradas de tipo "key"
+            if (entry.type === "key" && now > entry.exp) {
+                try {
+                    const filePath = path.join(DIRS.keys, entry.file);
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                    }
+                } catch (err) {
+                    console.error(`[KeyStore Cleanup Error] ${id}:`, err.message);
+                }
+                delete registry[id];
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            GlobalRegistry.save(registry);
+            console.log(`[KeyStore] Cleanup ejecutado: registros expirados eliminados.`);
+        }
+    }
 }
 
 /**
