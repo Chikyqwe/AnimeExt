@@ -106,6 +106,22 @@ class TextStore {
         }
         return true;
     }
+    cleanup() {
+        const now = Date.now();
+        const registry = GlobalRegistry.load();
+        let changed = false;
+
+        for (const [id, entry] of Object.entries(registry)) {
+            if (entry.type === "text" && now > entry.exp) {
+                try {
+                    fs.unlinkSync(path.join(DIRS.text, entry.file));
+                } catch {}
+                delete registry[id];
+                changed = true;
+            }
+        }
+        if (changed) GlobalRegistry.save(registry);
+    }
 }
 
 /**
