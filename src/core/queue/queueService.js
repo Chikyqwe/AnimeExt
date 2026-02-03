@@ -1,27 +1,26 @@
-// src/core/queue/queueService.js
-
 class RequestQueue {
-  constructor() {
+  /**
+   * @param {Object} options
+   * @param {number} options.concurrency Cantidad máxima de tareas paralelas (default: 1)
+   * @param {number} options.historyLimit Máximo historial de completed/failed (default: 100)
+   */
+  constructor({ concurrency = 1, historyLimit = 100 } = {}) {
     this.queue = [];
-    this.processing = false;
+    this.processingCount = 0;
+    this.concurrency = concurrency;
+    this.historyLimit = historyLimit;
+
     this.completed = [];
     this.failed = [];
-    this.currentTask = null;
+    this.currentTasks = new Set();
   }
 
-  /**
-   * Agrega una tarea a la cola.
-   * @param {Function|Object} task  Función o { fn, name, meta }
-   * @param {Object} [options] Opciones extra { name, meta }
-   */
   add(task, options = {}) {
-    console.log('[QUEUE] Agregando tarea a la cola...');
     const normalizedTask =
       typeof task === 'function'
         ? { fn: task }
         : task;
 
-    // Metadata
     const meta = {
       name:
         options.name ||
@@ -41,18 +40,21 @@ class RequestQueue {
         meta
       });
 
-      // Inicia procesamiento
-      this.processNext().catch(() => {});
+      this._processQueue().catch(() => {});
     });
   }
 
-  async processNext() {
-    if (this.processing || this.queue.length === 0) return;
-
-    this.processing = true;
+  async _processQueue() {
+    if (
+      this.processingCount >= this.concurrency ||
+      this.queue.length === 0
+    ) return;
 
     const { task, resolve, reject, meta } = this.queue.shift();
-    this.currentTask = { meta, startedAt: new Date() };
+    const now = new Date();
+    const currentTask = { meta, startedAt: now };
+    this.currentTasks.add(currentTask);
+    this.processingCount++;
 
     try {
       const result = await Promise.resolve(task());
@@ -63,6 +65,8 @@ class RequestQueue {
         status: 'completed',
         result
       });
+      if (this.completed.length > this.historyLimit)
+        this.completed.shift();
 
       resolve(result);
     } catch (error) {
@@ -72,21 +76,23 @@ class RequestQueue {
         status: 'failed',
         error
       });
+      if (this.failed.length > this.historyLimit)
+        this.failed.shift();
 
       reject(error);
     } finally {
-      this.currentTask = null;
-      this.processing = false;
-      setTimeout(() => this.processNext().catch(() => {}), 0);
+      this.currentTasks.delete(currentTask);
+      this.processingCount--;
+      setImmediate(() => this._processQueue().catch(() => {}));
     }
   }
 
   getPendingCount() {
-    return this.queue.length + (this.processing ? 1 : 0);
+    return this.queue.length + this.processingCount;
   }
 
-  getCurrentTask() {
-    return this.currentTask;
+  getCurrentTasks() {
+    return Array.from(this.currentTasks);
   }
 
   getPendingTasks() {
@@ -105,7 +111,12 @@ class RequestQueue {
     this.completed = [];
     this.failed = [];
   }
+
+  clearQueue() {
+    this.queue = [];
+  }
 }
 
-const apiQueue = new RequestQueue();
+// Singleton
+const apiQueue = new RequestQueue({ concurrency: 2, historyLimit: 200 });
 module.exports = apiQueue;

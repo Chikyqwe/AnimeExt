@@ -1,13 +1,22 @@
 // src/controllers/animeController.js
 const path = require('path');
 const asyncHandler = require('../middlewares/asyncHandler');
-const cache = require('../services/cacheService');
+
+// Importamos las nuevas clases
+const { MemoryCache, DiskCache } = require('../core/cache/cache');
+
+/**
+ * Modernización: Usamos MemoryCache para descripciones (Ultra rápido)
+ * Si prefieres que persista en disco tras reiniciar, usa: new DiskCache()
+ */
+const descriptionCache = new MemoryCache({ 
+    maxEntries: 500, 
+    maxStringLength: 10000 
+});
 
 const {
   getJSONPath,
-  getAnimeById,
   getAnimeByUnitId,
-  buildEpisodeUrl
 } = require('../services/jsonService');
 
 const {
@@ -17,12 +26,12 @@ const {
 
 const LRU_DESCRIPTION_TTL = 60_000 * 5; // 5 minutos
 
-// /anime/list  (protegida por middleware de token)
+// /anime/list
 exports.list = asyncHandler(async (req, res) => {
-  // Envía archivo JSON directamente (rápido y sin parsear)
   res.sendFile(getJSONPath('anime_list.json'));
 });
-// GET /anime/last (simple)
+
+// GET /anime/last
 exports.last = (req, res) => res.sendFile(getJSONPath('lastep.json'));
 
 // /anime/description
@@ -34,7 +43,9 @@ exports.description = asyncHandler(async (req, res) => {
   if (!anime) return res.status(404).json({ error: `No se encontró anime con uid=${uid}` });
 
   const cacheKey = `desc:${uid}`;
-  const cached = cache.get(cacheKey);
+  
+  // MODERNIZACIÓN: Uso de descriptionCache.load (antes cache.get)
+  const cached = descriptionCache.load(cacheKey);
   if (cached) return res.json({ description: cached, cached: true });
 
   const sources = anime.sources || {};
@@ -49,7 +60,6 @@ exports.description = asyncHandler(async (req, res) => {
       description = await getDescription(url);
       if (description) break;
     } catch (err) {
-      // no romper la ejecución por una fuente mala
       console.warn(`[DESCRIPTION] Error en fuente ${url}: ${err.message}`);
     }
   }
@@ -58,7 +68,9 @@ exports.description = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'No se pudo obtener la descripción de ninguna fuente' });
   }
 
-  cache.set(cacheKey, description, LRU_DESCRIPTION_TTL);
+  // MODERNIZACIÓN: Uso de descriptionCache.save (antes cache.set)
+  descriptionCache.save(cacheKey, description, LRU_DESCRIPTION_TTL);
+
   res.json({ description });
 });
 

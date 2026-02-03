@@ -1,27 +1,37 @@
 // src/services/jsonService.js
 const fs = require('fs');
 const path = require('path');
-const cache = require('./cacheService');
 const { JSON_FOLDER, ANIME_FILE } = require('../config');
+
+// Importamos las nuevas clases de caché
+const { KeyCache, MemoryCache } = require('../core/cache/cache');
+
+/**
+ * Modernización: 
+ * Usamos MemoryCache para el JSON bruto (acceso ultra rápido).
+ * Usamos KeyCache para los animes individuales por ID (persisten comprimidos).
+ */
+const rawCache = new MemoryCache({ maxEntries: 10 }); 
+const itemCache = new KeyCache({ ttlMs: 10 * 60 * 1000 }); // 10 min persistentes
 
 if (!fs.existsSync(JSON_FOLDER)) fs.mkdirSync(JSON_FOLDER, { recursive: true });
 
 /**
- * Lee el JSON completo y lo cachea
+ * Lee el JSON completo y lo cachea en RAM
  */
 function readRawJson() {
   const cacheKey = 'rawJson';
-  let data = cache.get(cacheKey);
+  let data = rawCache.load(cacheKey);
   if (data) return data;
 
   try {
     if (!fs.existsSync(ANIME_FILE)) {
       data = { metadata: {}, animes: [] };
     } else {
-      // Leer y parsear solo una vez
       data = JSON.parse(fs.readFileSync(ANIME_FILE, 'utf8'));
     }
-    cache.set(cacheKey, data, 5000); // TTL 5s
+    // Guardamos en RAM por 5 segundos para no saturar el disco en peticiones concurrentes
+    rawCache.save(cacheKey, data, 5000); 
     return data;
   } catch (err) {
     console.error('[JSON SERVICE] Error leyendo JSON:', err);
@@ -37,41 +47,41 @@ function getMetadata() {
 }
 
 /**
- * Devuelve lista de animes (sin duplicar objetos)
+ * Devuelve lista de animes
  */
 function readAnimeList() {
   return readRawJson().animes || [];
 }
 
 /**
- * Busca anime por ID, cache individual por ID
+ * Busca anime por ID, usa KeyCache (Disco + Gzip)
  */
 function getAnimeById(id) {
   const numId = parseInt(id, 10);
   if (isNaN(numId)) return null;
 
   const cacheKey = `animeId:${numId}`;
-  let anime = cache.get(cacheKey);
+  let anime = itemCache.load(cacheKey);
   if (anime) return anime;
 
   anime = readAnimeList().find(a => a.id === numId) || null;
-  if (anime) cache.set(cacheKey, anime, 5000);
+  if (anime) itemCache.save(cacheKey, anime);
   return anime;
 }
 
 /**
- * Busca anime por unit_id, cache individual
+ * Busca anime por unit_id, usa KeyCache (Disco + Gzip)
  */
 function getAnimeByUnitId(unitId) {
   const numId = parseInt(unitId, 10);
   if (isNaN(numId)) return null;
 
   const cacheKey = `animeUnitId:${numId}`;
-  let anime = cache.get(cacheKey);
+  let anime = itemCache.load(cacheKey);
   if (anime) return anime;
 
   anime = readAnimeList().find(a => a.unit_id === numId) || null;
-  if (anime) cache.set(cacheKey, anime, 5000);
+  if (anime) itemCache.save(cacheKey, anime);
   return anime;
 }
 
@@ -90,7 +100,7 @@ async function buildEpisodeUrl(anime, ep, mirror = 1) {
       if (anime.sources.ANIMEYTX) {
         return anime.sources.ANIMEYTX
           .replace('/tv/', '/anime/')
-          .replace(/\/$/, '') // elimina / final
+          .replace(/\/$/, '') 
           + '-capitulo-' + ep;
       }
       break;
