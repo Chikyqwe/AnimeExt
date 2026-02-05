@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const supabase = require('./supabaseService'); // usa service_role key
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
