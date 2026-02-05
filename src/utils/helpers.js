@@ -357,142 +357,120 @@ const StreamModule = (() => {
 
 
   async function proxyImage(url, res) {
+    const controller = new AbortController();
+
     try {
-      const r = await HttpModule.axiosInstance.get(url, { responseType: 'stream' });
+      const r = await HttpModule.axiosInstance.get(url, {
+        responseType: 'stream',
+        signal: controller.signal,
+      });
+
       res.setHeader('Content-Type', r.headers['content-type'] || 'image/jpeg');
-      r.data.pipe(res);
-    } catch {
-      res.status(500).end();
+
+      const stream = r.data;
+
+      const cleanup = () => {
+        controller.abort();
+        stream.destroy();
+      };
+
+      res.on('close', cleanup);
+      res.on('error', cleanup);
+      stream.on('error', cleanup);
+
+      stream.pipe(res);
+
+    } catch (err) {
+      res.headersSent ? res.end() : res.status(500).end();
     }
   }
 
   function streamVideo(videoUrl, req, res) {
-    if (!videoUrl) {
-      return res.status(400).send("Falta parámetro videoUrl");
-    }
+    if (!videoUrl) return res.status(400).send("Falta parámetro videoUrl");
 
     // CORS
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-    res.setHeader("Access-Control-Expose-Headers", "Content-Range, Content-Length");
 
-    const parsedUrl = urlLib.parse(videoUrl);
-    const isHttps = parsedUrl.protocol === "https:";
-    const protocol = isHttps ? https : http;
-    const referer = getRefererForHost(parsedUrl.hostname);
+    const parsedUrl = new URL(videoUrl);
+    const protocol = parsedUrl.protocol === "https:" ? https : http;
 
+    const controller = new AbortController();
     let start = 0;
-    const rangeHeader = req.headers.range;
+    let reconnectCount = 0;
+    const MAX_RECONNECT = 3;
 
-    if (rangeHeader) {
-      const match = rangeHeader.match(/bytes=(\d+)-/);
-      if (match) start = parseInt(match[1], 10);
-    }
+    const clean = () => {
+      controller.abort();
+      res.end();
+    };
 
-    const MAX_RECONNECTS = 3;
-    let reconnectAttempts = 0;
-    let destroyed = false;
-    let activeReq = null;
+    req.on("close", clean);
+    res.on("close", clean);
 
-    req.on("close", () => {
-      destroyed = true;
-      activeReq?.destroy?.();
-    });
-
-    function requestChunk(from) {
-      if (destroyed) return;
-
-      const headers = {
-        "Referer": referer,
-        "Origin": referer,
-        "User-Agent": "Mozilla/5.0"
-      };
-
-      if (from > 0) headers["Range"] = `bytes=${from}-`;
+    const requestChunk = () => {
+      if (controller.signal.aborted) return;
 
       const options = {
-        hostname: parsedUrl.hostname,
-        port: parsedUrl.port || (isHttps ? 443 : 80),
-        path: parsedUrl.path + (parsedUrl.search || ""),
         method: "GET",
-        headers,
-        rejectUnauthorized: false
+        signal: controller.signal,
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          "Referer": parsedUrl.origin,
+          "Origin": parsedUrl.origin,
+          ...(start > 0 ? { Range: `bytes=${start}-` } : {})
+        }
       };
 
-      reconnectAttempts++;
-      activeReq = protocol.request(options, (proxyRes) => {
-        reconnectAttempts = 0;
-
+      const proxyReq = protocol.request(parsedUrl, options, (proxyRes) => {
         if (proxyRes.statusCode >= 400) {
-          if (!res.headersSent) {
-            res.status(proxyRes.statusCode).send("Video no disponible");
-          }
-          return;
+          if (!res.headersSent) res.status(proxyRes.statusCode).end("Video no disponible");
+          return clean();
         }
 
-        // headers iniciales al cliente, una sola vez
         if (!res.headersSent) {
-          const headersToSend = {
+          const outHeaders = {
             "Content-Type": proxyRes.headers["content-type"] || "video/mp4",
             "Accept-Ranges": "bytes",
             "Content-Length": proxyRes.headers["content-length"],
-            "Content-Disposition": "inline",
           };
 
           if (proxyRes.headers["content-range"]) {
-            headersToSend["Content-Range"] = proxyRes.headers["content-range"];
+            outHeaders["Content-Range"] = proxyRes.headers["content-range"];
           }
 
-          res.writeHead(proxyRes.statusCode, headersToSend);
+          res.writeHead(proxyRes.statusCode, outHeaders);
         }
 
-        // ⬇️⬇️ AQUÍ está la magia: backpressure automático ⬇️⬇️
+        proxyRes.on("data", (chunk) => start += chunk.length);
+        proxyRes.on("error", handleError);
+        proxyRes.on("end", () => res.end());
+
         proxyRes.pipe(res);
-
-        proxyRes.on("data", c => {
-          start += c.length; // posición actual para reconectar
-        });
-
-        proxyRes.on("end", () => {
-          if (!res.writableEnded) res.end();
-        });
-
-        proxyRes.on("error", () => {
-          if (destroyed) return;
-          if (reconnectAttempts < MAX_RECONNECTS) {
-            setTimeout(() => requestChunk(start), reconnectAttempts * 500);
-          } else if (!res.headersSent) {
-            res.status(502).end("Error streaming video");
-          }
-        });
-
-        res.on("close", () => proxyRes.destroy());
       });
 
-      activeReq.on("timeout", () => {
-        activeReq.abort();
-        if (!destroyed && reconnectAttempts < MAX_RECONNECTS) {
-          setTimeout(() => requestChunk(start), reconnectAttempts * 500);
-        }
-      });
+      const handleError = () => {
+        if (controller.signal.aborted) return;
 
-      activeReq.on("error", () => {
-        if (destroyed) return;
-        if (reconnectAttempts < MAX_RECONNECTS) {
-          setTimeout(() => requestChunk(start), reconnectAttempts * 500);
+        if (reconnectCount < MAX_RECONNECT) {
+          reconnectCount++;
+          setTimeout(requestChunk, reconnectCount * 300);
         } else if (!res.headersSent) {
-          res.status(502).end("Error en conexión al origen");
+          res.status(502).end("Error streaming video");
         }
-      });
 
-      activeReq.setTimeout(20000);
-      activeReq.end();
-    }
+        proxyReq.destroy();
+      };
 
-    requestChunk(start);
-  } 
+      proxyReq.on("error", handleError);
+      proxyReq.setTimeout(20000, handleError);
+      proxyReq.end();
+    };
+
+    requestChunk();
+  }
+
 
   return { validateVideoUrl, proxyImage, streamVideo };
 })();
