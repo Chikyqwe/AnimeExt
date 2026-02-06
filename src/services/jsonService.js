@@ -89,22 +89,36 @@ function getAnimeByUnitId(unitId) {
  * Construye URL de episodio según mirror
  */
 async function buildEpisodeUrl(anime, ep, mirror = 1) {
-  if (!anime?.sources || !ep) return null;
+  // Convertimos a números para evitar el error de "1" vs 1
+  const m = parseInt(mirror, 10);
+  const e = parseInt(ep, 10);
+  
+  console.log(`[buildEpisodeUrl] Procesando: Mirror ${m}, Ep ${e}`);
 
-  switch (mirror) {
+  if (!anime?.sources) {
+    console.log('[buildEpisodeUrl] Error: El objeto anime no tiene sources');
+    return null;
+  }
+
+  switch (m) {
     case 1:
-      return anime.sources.FLV?.replace('/anime/', '/ver/') + `-${ep}` || null;
+      if (anime.sources.FLV) {
+        return anime.sources.FLV.replace('/anime/', '/ver/') + `-${e}`;
+      }
+      break;
     case 2:
-      return anime.sources.TIO?.replace('/anime/', '/ver/') + `-${ep}` || null;
+      if (anime.sources.TIO) {
+        return anime.sources.TIO.replace('/anime/', '/ver/') + `-${e}`;
+      }
+      break;
     case 3:
       if (anime.sources.ANIMEYTX) {
-        return anime.sources.ANIMEYTX
-          .replace('/tv/', '/anime/')
-          .replace(/\/$/, '') 
-          + '-capitulo-' + ep;
+        return anime.sources.ANIMEYTX.replace('/tv/', '/anime/').replace(/\/$/, '') + `-capitulo-${e}`;
       }
       break;
   }
+
+  console.log(`[buildEpisodeUrl] No se encontró coincidencia para mirror ${m}`);
   return null;
 }
 

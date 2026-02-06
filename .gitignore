@@ -1,3 +1,4 @@
 list.js
 .env
 -/node_modules
+~/src/core/tmp/*

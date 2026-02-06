@@ -1,4 +1,3 @@
-const { extractAllVideoLinks } = require('../services/browserlessExtractors');
 const { getAnimeById, buildEpisodeUrl } = require('../services/jsonService');
 const readline = require('readline');
 
@@ -9,8 +8,7 @@ async function getVideoLinks(animeId, episode, mirror = 1) {
     const pageUrl = buildEpisodeUrl(anime, episode, mirror);
     if (!pageUrl) throw new Error('URL de episodio no válida');
 
-    const videos = await extractAllVideoLinks(pageUrl);
-    return videos;
+    return pageUrl;
 }
 
 function askQuestion(query) {

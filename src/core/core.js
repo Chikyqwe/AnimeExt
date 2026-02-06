@@ -3,6 +3,11 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { URL } = require('url');
+const crypto = require('crypto'); // Para el hash de la URL
+const { TextCache } = require('./cache/cache'); // Importamos tu clase de caché
+
+// Configuramos un caché para las listas de videos (10 minutos de vida)
+const linksCache = new TextCache({ ttlMs: 10 * 60 * 1000 });
 
 // ================== AXIOS ==================
 const UA_FIREFOX =
@@ -57,6 +62,19 @@ function safeBase64Decode(str) {
 
 // ================== PAGE VIDEO EXTRACTOR ==================
 async function extractAllVideoLinks(pageUrl) {
+  // 1. Generar llave única para la URL de la página
+  const pageKey = crypto.createHash('md5').update(pageUrl).digest('hex');
+
+  // 2. Verificar si ya tenemos los links de esta página en caché
+  if (linksCache.exists(pageKey)) {
+    console.log(`[CACHE-LINKS] Reusando lista de videos para: ${pageUrl}`);
+    try {
+      return JSON.parse(linksCache.load(pageKey));
+    } catch (e) {
+      console.error("[CACHE-LINKS] Error parseando caché, re-extrayendo...");
+    }
+  }
+
   console.log(`[EXTRACTOR] Extrayendo videos desde: ${pageUrl}`);
 
   let html;
@@ -71,106 +89,64 @@ async function extractAllVideoLinks(pageUrl) {
   const $ = cheerio.load(html);
   const videos = [];
 
-  // =====================================================================
-  // 🟦 animeid
-  // =====================================================================
+  // --- Lógica de extracción (animeid, animeytx, genérico) ---
   if (/animeid/i.test(pageUrl)) {
     $('#partes .parte').each((_, el) => {
       let raw = $(el).attr('data');
       if (!raw) return;
-
       try {
         raw = raw.replace(/'/g, '"');
         const parsed = JSON.parse(raw);
         if (!parsed?.v) return;
-
-        const iframeHtml = parsed.v
-          .replace(/\\u003C/g, '<')
-          .replace(/\\u003E/g, '>')
-          .replace(/\\u002F/g, '/');
-
+        const iframeHtml = parsed.v.replace(/\\u003C/g, '<').replace(/\\u003E/g, '>').replace(/\\u002F/g, '/');
         const m = iframeHtml.match(/src="([^"]+)"/i);
         if (!m) return;
-
         const finalUrl = transformObeywish(m[1]);
-        videos.push({
-          servidor: new URL(finalUrl).hostname.toLowerCase(),
-          url: finalUrl
-        });
-      } catch (e) {
-        console.error('[EXTRACTOR] animeid error:', e.message);
-        return { status: 707, mjs: e.message }
-      }
+        videos.push({ servidor: new URL(finalUrl).hostname.toLowerCase(), url: finalUrl });
+      } catch (e) { console.error('[EXTRACTOR] animeid error:', e.message); }
     });
-
-  // =====================================================================
-  // 🟩 animeytx
-  // =====================================================================
   } else if (/animeytx/i.test(pageUrl)) {
     $('select.mirror option').each((_, el) => {
       const encoded = $(el).attr('value');
       if (!encoded) return;
-
       const decoded = safeBase64Decode(encoded);
       if (!decoded) return;
-
       try {
         const $dec = cheerio.load(decoded);
         const src = $dec('iframe').attr('src');
         if (!src) return;
-
         const finalUrl = transformObeywish(src);
-        videos.push({
-          servidor: new URL(finalUrl).hostname.toLowerCase(),
-          url: finalUrl
-        });
-      } catch (e) {
-        console.error('[EXTRACTOR] animeytx error:', e.message);
-        return { status: 706, mjs: e.message }
-      }
+        videos.push({ servidor: new URL(finalUrl).hostname.toLowerCase(), url: finalUrl });
+      } catch (e) { console.error('[EXTRACTOR] animeytx error:', e.message); }
     });
-
-  // =====================================================================
-  // 🟧 genérico
-  // =====================================================================
   } else {
     $('script').each((_, el) => {
       const scr = $(el).html();
       if (!scr) return;
-
       const match = scr.match(/var\s+videos\s*=\s*(\[.*?\]|\{[\s\S]*?\});/s);
       if (!match) return;
-
       try {
         const parsed = JSON.parse(match[1].replace(/\\\//g, '/'));
-
         if (parsed?.SUB) {
           parsed.SUB.forEach(v => {
             const url = transformObeywish(v.code || v[1]);
             if (!url) return;
-            videos.push({
-              servidor: (v.server || v[0] || '').toLowerCase(),
-              url
-            });
+            videos.push({ servidor: (v.server || v[0] || '').toLowerCase(), url });
           });
         } else if (Array.isArray(parsed)) {
           parsed.forEach(v => {
             if (!v[1]) return;
-            videos.push({
-              servidor: (v[0] || '').toLowerCase(),
-              url: transformObeywish(v[1])
-            });
+            videos.push({ servidor: (v[0] || '').toLowerCase(), url: transformObeywish(v[1]) });
           });
         }
-      } catch (e) {
-        console.error('[EXTRACTOR] genérico error:', e.message);
-        return { status: 705, mjs: e.message }
-      }
+      } catch (e) { console.error('[EXTRACTOR] genérico error:', e.message); }
     });
   }
 
-  html = null;
-  try { global.gc(); } catch {}
+  // 3. Guardar en caché antes de retornar (Convertimos a string para TextCache)
+  if (videos.length > 0) {
+    linksCache.save(pageKey, JSON.stringify(videos));
+  }
 
   console.log(`[EXTRACTOR] Videos encontrados: ${videos.length}`);
   return videos;
@@ -190,7 +166,6 @@ function normalizeExtractor(mod) {
   if (typeof mod?.extractST === 'function') return mod.extractST;
   if (typeof mod?.extractVoe === 'function') return mod.extractVoe;
   if (typeof mod?.extractM3u8 === 'function') return mod.extractM3u8;
-
   throw new Error('Extractor inválido');
 }
 
@@ -211,16 +186,12 @@ const extractorMap = {
 function getExtractor(name) {
   const mod = extractorMap[name?.toLowerCase()];
   if (!mod) return null;
-
   const fn = normalizeExtractor(mod);
-  // 🔥 Wrapper universal
   return async function wrappedExtractor(url) {
-    const raw = await fn(url);
-    return raw;
+    return await fn(url);
   };
 }
 
-// ================== EXPORTS ==================
 module.exports = {
   axiosGet,
   cheerio,

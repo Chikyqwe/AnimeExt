@@ -1,7 +1,23 @@
 {
-    "desc:8876": {
-        "type": "mem",
-        "file": "RAM",
-        "exp": 1770258753277
+    "8bf1db685d7f10d79c1b599fad9e87cf": {
+        "type": "text",
+        "file": "8bf1db685d7f10d79c1b599fad9e87cf.gz",
+        "size": 6587,
+        "create": 1770342238812,
+        "exp": 1770343138812
+    },
+    "animeUnitId:3491": {
+        "type": "key",
+        "file": "animeUnitId:3491.json.gz",
+        "size": 230,
+        "create": 1770342806790,
+        "exp": 1770343406790
+    },
+    "5fc52ec7454dde4074018620fa0fe0b5": {
+        "type": "text",
+        "file": "5fc52ec7454dde4074018620fa0fe0b5.gz",
+        "size": 371,
+        "create": 1770342861535,
+        "exp": 1770343461535
     }
 }

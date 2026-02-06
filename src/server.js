@@ -36,11 +36,45 @@ const INTERVALO = 45 * 60 * 1000;
 mantenimientoInterval = setInterval(ejecutarMantenimiento, INTERVALO);
 
 // =================== SERVIDOR INICIADO ===================
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[SUCCESS] Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`[INFO] Contraseña para mantenimiento (/up): ${MAINTENANCE_PASSWORD}`);
-});
+const SendEmail = require('./services/emailService');
 
+// =================== MONITOR DE MEMORIA ===================
+const MEM_LIMIT_GC = 360 * 1024 * 1024;      // 360 MB para GC
+const MEM_LIMIT_RESTART = 430 * 1024 * 1024; // 430 MB para Reinicio
+let reportando = false;
+
+setInterval(async () => {
+  const rss = process.memoryUsage().rss;
+  const rssMB = (rss / 1024 / 1024).toFixed(2);
+
+  if (rss > MEM_LIMIT_RESTART && !reportando) {
+    reportando = true; // Evitar bucle de correos
+    console.error(`[CRÍTICO] Memoria en ${rssMB} MB. Reiniciando...`);
+    
+    // Enviar email de reporte
+    const reportEmail = process.env.RrportEmail;
+    if (reportEmail) {
+      await SendEmail(reportEmail, `El servidor se reinició automáticamente al alcanzar ${rssMB} MB.`, true);
+    }
+
+    // Reinicio discreto
+    process.exit(1); 
+  } 
+  else if (rss > MEM_LIMIT_GC) {
+    if (global.gc) {
+      console.log(`[LIMPIEZA] Memoria alta (${rssMB} MB). Ejecutando Garbage Collector...`);
+      global.gc();
+    } else {
+      console.log(`[AVISO] Memoria en ${rssMB} MB. Inicia con --expose-gc para limpieza automática.`);
+    }
+  }
+}, 10000); // Revisar cada 10 segundos
+
+// =================== SERVIDOR INICIADO ===================
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[SUCCESS] Servidor corriendo en http://localhost:${PORT}`);
+  global.server = server; // Guardamos referencia global para cerrar conexiones si fuera necesario
+});
 // =================== CONSOLA INTERACTIVA ===================
 const rl = readline.createInterface({
   input: process.stdin,

@@ -385,91 +385,136 @@ const StreamModule = (() => {
     }
   }
 
-  function streamVideo(videoUrl, req, res) {
-    if (!videoUrl) return res.status(400).send("Falta parámetro videoUrl");
+function streamVideo(videoUrl, req, res) {
+  if (!videoUrl) {
+    return res.status(400).send("Falta parámetro videoUrl");
+  }
 
-    // CORS
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  // Aumentamos el límite de listeners para evitar warnings
+  res.setMaxListeners(20);
 
-    const parsedUrl = new URL(videoUrl);
-    const protocol = parsedUrl.protocol === "https:" ? https : http;
+  // CORS
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  res.setHeader("Access-Control-Expose-Headers", "Content-Range, Content-Length");
 
-    const controller = new AbortController();
-    let start = 0;
-    let reconnectCount = 0;
-    const MAX_RECONNECT = 3;
+  const parsedUrl = urlLib.parse(videoUrl);
+  const isHttps = parsedUrl.protocol === "https:";
+  const protocol = isHttps ? https : http;
+  const referer = getRefererForHost(parsedUrl.hostname);
 
-    const clean = () => {
-      controller.abort();
-      res.end();
+  let start = 0;
+  const rangeHeader = req.headers.range;
+
+  if (rangeHeader) {
+    const match = rangeHeader.match(/bytes=(\d+)-/);
+    if (match) start = parseInt(match[1], 10);
+  }
+
+  const MAX_RECONNECTS = 3;
+  let reconnectAttempts = 0;
+  let destroyed = false;
+  let activeReq = null;
+
+  // Usamos once para evitar múltiples listeners
+  req.once("close", () => {
+    destroyed = true;
+    activeReq?.destroy?.();
+  });
+
+  function requestChunk(from) {
+    if (destroyed) return;
+
+    const headers = {
+      "Referer": referer,
+      "Origin": referer,
+      "User-Agent": "Mozilla/5.0"
     };
 
-    req.on("close", clean);
-    res.on("close", clean);
+    if (from > 0) headers["Range"] = `bytes=${from}-`;
 
-    const requestChunk = () => {
-      if (controller.signal.aborted) return;
+    const options = {
+      hostname: parsedUrl.hostname,
+      port: parsedUrl.port || (isHttps ? 443 : 80),
+      path: parsedUrl.path + (parsedUrl.search || ""),
+      method: "GET",
+      headers,
+      rejectUnauthorized: false
+    };
 
-      const options = {
-        method: "GET",
-        signal: controller.signal,
-        headers: {
-          "User-Agent": "Mozilla/5.0",
-          "Referer": parsedUrl.origin,
-          "Origin": parsedUrl.origin,
-          ...(start > 0 ? { Range: `bytes=${start}-` } : {})
-        }
-      };
+    reconnectAttempts++;
+    activeReq = protocol.request(options, (proxyRes) => {
+      reconnectAttempts = 0;
 
-      const proxyReq = protocol.request(parsedUrl, options, (proxyRes) => {
-        if (proxyRes.statusCode >= 400) {
-          if (!res.headersSent) res.status(proxyRes.statusCode).end("Video no disponible");
-          return clean();
-        }
-
+      if (proxyRes.statusCode >= 400) {
         if (!res.headersSent) {
-          const outHeaders = {
-            "Content-Type": proxyRes.headers["content-type"] || "video/mp4",
-            "Accept-Ranges": "bytes",
-            "Content-Length": proxyRes.headers["content-length"],
-          };
+          res.status(proxyRes.statusCode).send("Video no disponible");
+        }
+        return;
+      }
 
-          if (proxyRes.headers["content-range"]) {
-            outHeaders["Content-Range"] = proxyRes.headers["content-range"];
-          }
+      if (!res.headersSent) {
+        const headersToSend = {
+          "Content-Type": proxyRes.headers["content-type"] || "video/mp4",
+          "Accept-Ranges": "bytes",
+          "Content-Length": proxyRes.headers["content-length"],
+          "Content-Disposition": "inline",
+        };
 
-          res.writeHead(proxyRes.statusCode, outHeaders);
+        if (proxyRes.headers["content-range"]) {
+          headersToSend["Content-Range"] = proxyRes.headers["content-range"];
         }
 
-        proxyRes.on("data", (chunk) => start += chunk.length);
-        proxyRes.on("error", handleError);
-        proxyRes.on("end", () => res.end());
+        res.writeHead(proxyRes.statusCode, headersToSend);
+      }
 
-        proxyRes.pipe(res);
+      // Usamos once en vez de on donde solo necesitamos un disparo
+      proxyRes.once("end", () => {
+        if (!res.writableEnded) res.end();
       });
 
-      const handleError = () => {
-        if (controller.signal.aborted) return;
-
-        if (reconnectCount < MAX_RECONNECT) {
-          reconnectCount++;
-          setTimeout(requestChunk, reconnectCount * 300);
+      proxyRes.once("error", () => {
+        if (destroyed) return;
+        if (reconnectAttempts < MAX_RECONNECTS) {
+          setTimeout(() => requestChunk(start), reconnectAttempts * 500);
         } else if (!res.headersSent) {
           res.status(502).end("Error streaming video");
         }
+      });
 
-        proxyReq.destroy();
-      };
+      proxyRes.on("data", c => start += c.length);
 
-      proxyReq.on("error", handleError);
-      proxyReq.setTimeout(20000, handleError);
-      proxyReq.end();
-    };
+      // Destruimos proxyRes si res se cierra
+      res.once("close", () => proxyRes.destroy());
 
-    requestChunk();
+      proxyRes.pipe(res);
+    });
+
+    activeReq.setTimeout(20000);
+
+    activeReq.once("timeout", () => {
+      activeReq.abort();
+      if (!destroyed && reconnectAttempts < MAX_RECONNECTS) {
+        setTimeout(() => requestChunk(start), reconnectAttempts * 500);
+      }
+    });
+
+    activeReq.once("error", () => {
+      if (destroyed) return;
+      if (reconnectAttempts < MAX_RECONNECTS) {
+        setTimeout(() => requestChunk(start), reconnectAttempts * 500);
+      } else if (!res.headersSent) {
+        res.status(502).end("Error en conexión al origen");
+      }
+    });
+
+    activeReq.end();
   }
+
+  requestChunk(start);
+}
 
 
   return { validateVideoUrl, proxyImage, streamVideo };
