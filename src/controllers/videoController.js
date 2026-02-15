@@ -258,4 +258,4 @@ exports.hlsProxy = asyncHandler(async (req,res)=>{
   rq.setTimeout(60000,()=>rq.destroy());
   rq.on('error',e=>{ console.error('[hlsProxy]',e.message); if(!res.headersSent) res.status(502).end('Error HLS'); });
   req.on('close',()=>rq.destroy());
-});
+}); 
