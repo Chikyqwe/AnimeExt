@@ -154,7 +154,7 @@ exports.api = asyncHandler(async (req, res) => {
 
     // --- SISTEMA DE CACHÉ UNIFICADO ---
     // Agregamos los servidores que suelen devolver listas HLS/M3U8
-    if (['sw', 'voe', 'yu', 'bc'].includes(sel.servidor)) {
+    if (['sw', 'voe'].includes(sel.servidor)) {
       const { uuid: id, Rc } = await getVid(sel.servidor, sel.url, uuid, force);
       return res.json({ 
         ok: true, 
@@ -258,4 +258,4 @@ exports.hlsProxy = asyncHandler(async (req,res)=>{
   rq.setTimeout(60000,()=>rq.destroy());
   rq.on('error',e=>{ console.error('[hlsProxy]',e.message); if(!res.headersSent) res.status(502).end('Error HLS'); });
   req.on('close',()=>rq.destroy());
-}); 
+});
