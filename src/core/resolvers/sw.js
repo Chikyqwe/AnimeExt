@@ -1,4 +1,4 @@
-  const { axiosGet } = require('../helpersCore');
+const { axiosGet } = require('../helpersCore');
 const { unpack, detect } = require('unpacker');
 const { URL } = require('url');
 
@@ -26,7 +26,7 @@ function best(master, base) {
 
 async function redir(pageUrl) {
   try {
-    const dmca = ["hgplaycdn.com", "habetar.com", "yuguaab.com", "guxhag.com", "auvexiug.com", "xenolyzb.com"];
+    const dmca = ["playnixes.com", "niramirus.com", "medixiru.com", "hgplaycdn.com", "hglamioz.com"];
     const main = ["kravaxxa.com","davioad.com","haxloppd.com","tryzendm.com","dumbalag.com"];
     const rules = ["dhcplay.com","hglink.to","test.hglink.to","wish-redirect.aiavh.com"];
 
@@ -43,7 +43,6 @@ async function redir(pageUrl) {
   }
 }
 
-// ---------- extractM3u8 (mejor manejo de JSDOM y limpieza) ----------
 function rewriteM3U8(m3u8, playlistUrl, referer) {
   const result = m3u8
     .split('\n')
