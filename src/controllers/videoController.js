@@ -5,6 +5,7 @@ const { URL } = require('url');
 const crypto = require('crypto'); // Para generar IDs consistentes
 const asyncHandler = require('../middlewares/asyncHandler');
 const { TextCache } = require('../core/cache/cache');
+const { Transform } = require('stream');
 const { v7: uuidv7 } = require('uuid');
 const apiQueue = require('../core/queue/queueService');
 const supabase = require("../services/supabaseService");
@@ -246,16 +247,58 @@ exports.appV = asyncHandler(async (req, res) => {
   res.json({ actual: apk[0]||null, anterior: apk[1]||null, anteriores: apk.slice(2) });
 });
 
-exports.hlsProxy = asyncHandler(async (req,res)=>{
-  const u = req.query.url; if(!u) return res.status(400).json({error:'Falta url'});
-  const r = req.query.ref;
-  const p = new URL(u), c = p.protocol==='https:'?https:http;
-  const o = { headers:{'User-Agent':'Mozilla/5.0','Accept':'*/*','Connection':'keep-alive', ...(r&&{Referer:r}) } };
-  const rq = c.get(u,o,pr=>{
-    res.writeHead(pr.statusCode,{'Content-Type':pr.headers['content-type']||'application/vnd.apple.mpegurl','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});
-    pr.pipe(res,{end:true}); pr.on('end',()=>res.end());
-  });
-  rq.setTimeout(60000,()=>rq.destroy());
-  rq.on('error',e=>{ console.error('[hlsProxy]',e.message); if(!res.headersSent) res.status(502).end('Error HLS'); });
-  req.on('close',()=>rq.destroy());
+// Esta función es el corazón de la limpieza de stream para Roku
+const createVideoCleaner = () => {
+    let buffer = Buffer.alloc(0);
+    return new Transform({
+        transform(chunk, encoding, callback) {
+            buffer = Buffer.concat([buffer, chunk]);
+            
+            // Procesamos mientras tengamos al menos un paquete completo
+            while (buffer.length >= 188) {
+                const syncIndex = buffer.indexOf(0x47);
+                
+                // Si no hay byte de sincronización, tiramos toda la basura
+                if (syncIndex === -1) {
+                    buffer = Buffer.alloc(0);
+                    break;
+                }
+                
+                // Si el 0x47 no está al inicio, descartamos la basura acumulada
+                if (syncIndex > 0) {
+                    buffer = buffer.slice(syncIndex);
+                    if (buffer.length < 188) break;
+                }
+                
+                // Extraemos el paquete de 188 bytes (estándar MPEG-TS)
+                this.push(buffer.slice(0, 188));
+                buffer = buffer.slice(188);
+            }
+            callback();
+        }
+    });
+};
+
+exports.hlsProxy = asyncHandler(async (req, res) => {
+    const u = req.query.url;
+    if (!u) return res.status(400).json({ error: 'Falta url' });
+    const r = req.query.ref;
+    const p = new URL(u), c = p.protocol === 'https:' ? https : http;
+    const o = { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': r || '' } };
+
+    const rq = c.get(u, o, (pr) => {
+        res.writeHead(pr.statusCode, {
+            'Content-Type': 'video/MP2T',
+            'Access-Control-Allow-Origin': '*'
+        });
+
+        // Aplicamos el limpiador de paquetes de 188 bytes
+        const cleaner = createVideoCleaner();
+        pr.pipe(cleaner).pipe(res);
+    });
+
+    rq.on('error', e => {
+        console.error('[hlsProxy]', e.message);
+        if (!res.headersSent) res.status(502).end();
+    });
 });
