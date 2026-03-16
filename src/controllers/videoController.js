@@ -250,30 +250,44 @@ exports.appV = asyncHandler(async (req, res) => {
 // Esta función es el corazón de la limpieza de stream para Roku
 const createVideoCleaner = () => {
     let buffer = Buffer.alloc(0);
+    let synced = false;
+
     return new Transform({
         transform(chunk, encoding, callback) {
             buffer = Buffer.concat([buffer, chunk]);
-            
-            // Procesamos mientras tengamos al menos un paquete completo
+
             while (buffer.length >= 188) {
-                const syncIndex = buffer.indexOf(0x47);
-                
-                // Si no hay byte de sincronización, tiramos toda la basura
-                if (syncIndex === -1) {
-                    buffer = Buffer.alloc(0);
-                    break;
+
+                // Buscar sincronización real
+                if (!synced) {
+                    let found = -1;
+
+                    for (let i = 0; i < buffer.length - 376; i++) {
+                        if (
+                            buffer[i] === 0x47 &&
+                            buffer[i + 188] === 0x47 &&
+                            buffer[i + 376] === 0x47
+                        ) {
+                            found = i;
+                            break;
+                        }
+                    }
+
+                    if (found === -1) {
+                        buffer = buffer.slice(buffer.length - 376);
+                        break;
+                    }
+
+                    buffer = buffer.slice(found);
+                    synced = true;
                 }
-                
-                // Si el 0x47 no está al inicio, descartamos la basura acumulada
-                if (syncIndex > 0) {
-                    buffer = buffer.slice(syncIndex);
-                    if (buffer.length < 188) break;
-                }
-                
-                // Extraemos el paquete de 188 bytes (estándar MPEG-TS)
+
+                if (buffer.length < 188) break;
+
                 this.push(buffer.slice(0, 188));
                 buffer = buffer.slice(188);
             }
+
             callback();
         }
     });
