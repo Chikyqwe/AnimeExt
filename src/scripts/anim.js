@@ -10,7 +10,7 @@ const { last } = require("./lastep");
 // Configuración general
 // --------------------------------------------
 const CONFIG = {
-  FLV_BASE_URL: "https://www3.animeflv.net",
+  FLV_BASE_URL: "https://www4.animeflv.net",
   TIO_BASE_URL: "https://tioanime.com",
   ANIMEYTX_BASE_URL: "https://animeytx.com/tv/?page=",
   FLV_MAX_PAGES: 173,
