@@ -4,7 +4,7 @@ const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
 
-const FUENTE1_URL = 'https://www3.animeflv.net/';
+const FUENTE1_URL = 'https://www4.animeflv.net/';
 const FUENTE2_URL = 'https://tioanime.com/';
 
 const ANIME_LIST_PATH = path.join(__dirname, "..", "..", "data", "anime_list.json");

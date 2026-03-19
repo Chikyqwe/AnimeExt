@@ -1,363 +1,375 @@
-/* Modal */
+/* =========================================
+   AnimeEXT — Modal & Overlay styles
+   ========================================= */
+
+/* ── Anime info modal (Bootstrap) ── */
+#animeModal { backdrop-filter: blur(10px); padding-left: 0; }
+
 .modal-content {
-    background: #212121;
-    border-radius: 1rem;
-    border: 1px solid #444;
-    color: #ddd;
+  background: var(--bg-2);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-primary);
+  overflow: visible;
 }
-.modal-content {
-  overflow: visible !important;
-}
-.modal-header,
-.modal-footer {
-    padding: 1rem 2rem;
-    border: none;
+
+.modal-header, .modal-footer {
+  padding: 14px 20px;
+  border: none;
 }
 
 .modal-body {
-    display: flex;
-    flex-direction: row;
-    gap: 30px;
-    padding: 1rem 2rem;
-    overflow-y: auto;
-    background: #181818;
-    border-radius: 1rem;    
+  display: flex;
+  flex-direction: row;
+  gap: 28px;
+  padding: 16px 20px 20px;
+  overflow-y: auto;
+  background: var(--bg-1);
+  border-radius: var(--radius-xl);
 }
 
+/* ── Modal left column ── */
 .modal-left {
-    max-width: 320px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 1;
+  max-width: 280px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  gap: 14px;
 }
 
+/* Desktop: meta (rating + botones) en columna debajo de la imagen */
+.modal-left-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* ── Poster image ── */
 .modal-img-wrapper {
-    position: relative;
-    overflow: visible; /* permite que el blur salga */
-    border-radius: 16px;
-    isolation: isolate; /* el blur no contamina elementos externos */
+  position: relative;
+  overflow: visible;
+  border-radius: var(--radius-lg);
+  isolation: isolate;
+  width: 100%;
 }
 
-/* Capa difuminada detrás */
 .modal-img-wrapper::before {
-    content: "";
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    right: -5px;
-    bottom: -5px;
-
-    background: var(--blur-bg, transparent) center/cover no-repeat;
-
-    filter: blur(55px) brightness(0.85);
-    border-radius: inherit;
-    z-index: 0;
-
-    opacity: 1;
-    transition:
-        opacity 0.6s ease-out,
-        background-image 0.6s linear;
+  content: "";
+  position: absolute;
+  inset: -8px;
+  background: var(--blur-bg, transparent) center / cover no-repeat;
+  filter: blur(50px) brightness(0.75);
+  border-radius: inherit;
+  z-index: 0;
+  transition: background-image 0.5s ease;
 }
 
-/* Imagen real encima */
 .modal-img {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    height: auto;
-    border-radius: inherit;
-    display: block;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  display: block;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
 }
 
-.modal-info {
-    flex: 2;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.download-btn {
-    margin-top: 15px;
-    width: 100%;
-    background: #00bfa5;
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 191, 165, 0.5);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    user-select: none;
-}
-
-.download-btn:hover {
-    background: #009e87;
-    box-shadow: 0 6px 20px rgba(0, 158, 135, 0.7);
-}
-
-.modal-title {
-    font-size: 2.4rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    color: #ffffff;
-    text-align: center;
-}
-
-/* Lista de Episodios - Estilo Formal */
-/* Estado del Episodio */
-.episode-status {
-    cursor: default;
-    width: 100%;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    color: #aaa;
-    text-align: center;
-    font-size: 0.9rem;
-    letter-spacing: 0.5px;
-}
-
-.episodes-list {
-    background: #1e1e1e;
-    border-radius: 10px;
-    padding: 16px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 14px;
-    max-height: 640px;
-    overflow-y: auto;
-}
-
-
-/* Scrollbar */
-.episodes-list::-webkit-scrollbar {
-    width: 8px;
-}
-
-.episodes-list::-webkit-scrollbar-track {
-    background: #1e1e1e;
-    border-radius: 10px;
-}
-
-.episodes-list::-webkit-scrollbar-thumb {
-    background: #555;
-    border-radius: 10px;
-}
-
-.episodes-list::-webkit-scrollbar-thumb:hover {
-    background: #777;
-}
-
-/* Estado del episodio */
-.episode-status {
-    background: #2a2a2a;
-    color: #c5c5c5;
-    border-radius: 8px;
-    padding: 10px 12px;
-    text-align: center;
-    font-size: 0.9rem;
-    letter-spacing: 0.4px;
-}
-
-/* Botón del episodio */
-.episode-button {
-    width: 100%;
-    padding: 12px 16px;
-    background: #2b2b2b;
-    color: #e4e4e4;
-    border: 1px solid #3a3a3a;
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 0.95rem;
-    cursor: pointer;
-    text-align: center;
-    user-select: none;
-    transition: all 0.25s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.episode-button:hover {
-    background: #333;
-    color: #ffffff;
-    border-color: #505050;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    transform: translateY(-1px);
-}
-
-.episode-button:active {
-    background: #292929;
-    transform: translateY(0);
-}
-
-/* Separación entre episodios */
-.episode-item:not(:last-child) {
-    margin-bottom: 4px;
-}
-.modal-description {
-    background-color: rgba(255, 255, 255, 0.08);
-    /* más sutil que violeta sólido */
-    border-radius: 12px;
-    margin-bottom: 15px;
-    padding: 15px 20px;
-    /* espacio interno para que respire */
-    color: #eaeaea;
-    /* texto en tono claro */
-    line-height: 1.6;
-    /* más legible */
-}
-
-.description-title {
-    font-size: 1.4rem;
-    font-weight: 600;
-    margin-bottom: 0.8rem;
-    color: #ffffff;
-    text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    /* separador */
-    padding-bottom: 5px;
-}
-
-.description-text {
-    max-height: 200px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
+/* ── Rating ── */
 .rating-box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #222;
-    padding: 6px 10px;
-    border-radius: 6px;
-    margin-top: 8px;
-    color: #fff;
-    font-family: Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--bg-3);
+  border: 1px solid var(--bg-4);
+  padding: 6px 14px;
+  border-radius: 999px;
+  width: 100%;
 }
 
 .rating-score {
-    font-size: 1.4rem;
-    font-weight: bold;
-    color: #dddddd;
-    /* azul brillante */
-    margin-right: 10px;
-    min-width: 40px;
-    text-align: center;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  min-width: 36px;
+  text-align: center;
 }
 
-.rating-stars {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-}
+.rating-stars { display: flex; align-items: center; gap: 2px; }
 
 .rating-stars i {
-    font-size: 1.2rem;
-    color: #ffc107;
-    /* amarillo dorado */
-    margin-right: 2px;
+  font-size: 1rem;
+  color: var(--gold);
 }
 
-.rating-stars i.inactive {
-    color: #444;
-    /* gris oscuro para vacías */
+.rating-stars i.inactive { color: var(--bg-4); }
+
+/* ── Action buttons (fav / share) ── */
+.modal-left .btn-outline-light {
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border: 1px solid var(--bg-4);
+  background: var(--bg-3);
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  flex: 1;
 }
-/* Responsive */
-@media (max-width: 576px) {
-    .modal-content {
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
 
-    .modal-header {
-        padding: 0.5rem 1rem;
-    }
-
-    .modal-body {
-        flex: 1 1 auto;
-        flex-direction: column;
-        padding: 1rem;
-        gap: 20px;
-    }
-
-    .modal-left {
-        width: 100%;
-        max-width: 100%;
-        align-items: center;
-    }
-
-    .modal-img {
-        width: 100%;
-        max-height: 500px;
-    }
-
-    .modal-info {
-        width: 100%;
-    }
-
-    .episodes-list {
-        max-height: none;
-        flex: 1 1 auto;
-    }
-
-    #adsOverlay .policy-modal {
-        height: 400px;
-        width: 100%;
-    }
+.modal-left .btn-outline-light:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
 }
+
+/* ── Modal right column (info) ── */
+.modal-info {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.modal-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 14px;
+  color: var(--text-primary);
+  text-align: center;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* ── Description ── */
+.modal-description {
+  background: var(--bg-3);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  padding: 14px 18px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.description-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: 6px;
+}
+
+.description-text {
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-size: 0.9rem;
+}
+
+/* ── Episodes list ── */
+.episodes-list {
+  background: var(--bg-2);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  max-height: 600px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-4) var(--bg-2);
+}
+
+.episodes-list::-webkit-scrollbar { width: 6px; }
+.episodes-list::-webkit-scrollbar-track { background: var(--bg-2); }
+.episodes-list::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 999px; }
+.episodes-list::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Episode button */
+.episode-button {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-3);
+  color: var(--text-secondary);
+  border: 1px solid var(--bg-4);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-align: center;
+  user-select: none;
+  transition: all var(--transition);
+}
+
+.episode-button:hover {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.episode-button:active { transform: none; }
+
+.episode-status {
+  width: 100%;
+  padding: 10px;
+  background: var(--bg-3);
+  color: var(--text-muted);
+  border: none;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+/* Episode card (thumbnail style) */
 .episode-card {
-    background: transparent;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    height: 90px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  height: 90px;
 }
 
 .ep-thumb {
-    position: relative;
-    border-radius: 10px;
-    overflow: hidden;
-    background: #2a2a2a;
-    box-shadow: 0 4px 10px rgba(0,0,0,.4);
-    transition: transform .25s ease, box-shadow .25s ease;
+  position: relative;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-3);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 
 .ep-thumb img {
-    width: 100%;
-    height: 90px;
-    object-fit: cover;
-    display: block;
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  display: block;
 }
 
 .ep-thumb::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,.65), transparent 60%);
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.65), transparent 60%);
 }
+
 .ep-number {
-    position: absolute;
-    bottom: 0px;
-    left: 0px;
-    font-size: .9rem;
-    font-weight: 600;
-    color: #fff;
-    z-index: 2;
-    background: rgb(30, 30, 50);
-    padding: 4px 10px;
-    border-top-left-radius: 0px;
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
-    border-bottom-left-radius: 0px;
+  position: absolute;
+  bottom: 0; left: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  z-index: 2;
+  background: rgba(0, 217, 192, 0.9);
+  padding: 3px 10px;
+  border-top-right-radius: var(--radius-sm);
 }
 
 .episode-card:hover .ep-thumb {
-    transform: translateY(-3px) scale(1.03);
-    box-shadow: 0 8px 18px rgba(0,0,0,.6);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+/* ── Responsive modal ── */
+@media (max-width: 576px) {
+  .modal-dialog {
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .modal-content {
+    display: flex;
+    flex-direction: column;
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    padding: 8px 14px;
+    flex-shrink: 0;
+  }
+
+  .modal-body {
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    gap: 14px;
+    overflow-y: auto;
+  }
+
+  /* Imagen centrada, ancho generoso */
+  .modal-left {
+    width: 100%;
+    max-width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .modal-img-wrapper {
+    width: 260px;
+    max-width: 80vw;
+  }
+
+  .modal-left-meta {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .rating-box {
+    width: 100%;
+    border-radius: var(--radius-md);
+  }
+
+  .modal-left-meta .d-flex {
+    width: 100%;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .modal-left-meta .btn-outline-light {
+    flex: 1;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 8px;
+    font-size: 0.85rem;
+  }
+
+  /* Info en columna debajo */
+  .modal-info {
+    width: 100%;
+  }
+
+  .modal-title {
+    font-size: 1.5rem;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .description-text {
+    max-height: 120px;
+  }
+
+  .episodes-list {
+    max-height: none;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+  }
 }
