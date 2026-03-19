@@ -95,6 +95,8 @@ body.light-theme .loader { background: rgba(245,245,245,0.96); }
 
 /* Loader: morphing ring */
 .loader-ring {
+  position: relative;
+  top: 20px;
   width: 56px;
   height: 56px;
   border: 3px solid var(--bg-4);
@@ -130,6 +132,8 @@ body.light-theme .loader { background: rgba(245,245,245,0.96); }
 }
 
 .loader span {
+  position: relative;
+  top: 23px;
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-secondary);

@@ -108,7 +108,13 @@ async function buildEpisodeUrl(anime, ep, mirror = 1) {
       break;
     case 2:
       if (anime.sources.TIO) {
-        return anime.sources.TIO.replace('/anime/', '/ver/') + `-${e}`;
+        let url = anime.sources.TIO;
+
+        if (url.includes('tioanime.com')) {
+          return url.replace('/anime/', '/ver/') + `-${e}`;
+        } else if (url.includes('tiohentai.com')) {
+          return url.replace('/hentai/', '/ver/') + `-${e}`;
+        }
       }
       break;
     case 3:

@@ -35,11 +35,8 @@ const HttpModule = (() => {
 // ============================================================================
 const ParseModule = (() => {
   const ANIME_INFO = /var\s+anime_info\s*=\s*(\[[^\]]+\])/;
-  const EPISODES = /var\s+episodes\s*=\s*(\[[\s\S]*?\]);/;
-
-  const safeEval = code =>
-    vm.runInNewContext(code, {}, { timeout: 100 });
-
+  const EPISODES   = /var\s+episodes\s*=\s*(\[[\s\S]*?\]);/;
+  const safeEval   = code => vm.runInNewContext(code, {}, { timeout: 100 });
   return { ANIME_INFO, EPISODES, safeEval };
 })();
 
@@ -47,34 +44,22 @@ const ParseModule = (() => {
 // MÓDULO: PATRONES (CACHE)
 // ============================================================================
 const PatternModule = (() => {
-  const cache = {
-    animeflv: { data: null, ts: 0 },
-    tio: { data: null, ts: 0 }
-  };
+  const cache = { animeflv: { data: null, ts: 0 }, tio: { data: null, ts: 0 } };
   const TTL = 60 * 60 * 1000;
 
   async function getAnimeFLVPattern() {
-    if (cache.animeflv.data && Date.now() - cache.animeflv.ts < TTL)
-      return cache.animeflv.data;
-
-    cache.animeflv.data = {
-      thumbnail: (id, ep) =>
-        `https://cdn.animeflv.net/screenshots/${id}/${ep}/th_3.jpg`
-    };
-
+    if (cache.animeflv.data && Date.now() - cache.animeflv.ts < TTL) return cache.animeflv.data;
+    cache.animeflv.data = { thumbnail: (id, ep) => `https://cdn.animeflv.net/screenshots/${id}/${ep}/th_3.jpg` };
     cache.animeflv.ts = Date.now();
     return cache.animeflv.data;
   }
 
   async function getTioPattern() {
-    if (cache.tio.data && Date.now() - cache.tio.ts < TTL)
-      return cache.tio.data;
-
+    if (cache.tio.data && Date.now() - cache.tio.ts < TTL) return cache.tio.data;
     cache.tio.data = {
-      episode: (slug, ep) => `https://tioanime.com/ver/${slug}-${ep}`,
+      episode:   (slug, ep) => `https://tioanime.com/ver/${slug}-${ep}`,
       thumbnail: id => `https://tioanime.com/uploads/thumbs/${id}.jpg`
     };
-
     cache.tio.ts = Date.now();
     return cache.tio.data;
   }
@@ -86,63 +71,45 @@ const PatternModule = (() => {
 // MÓDULO: SCRAPERS
 // ============================================================================
 const ScraperModule = (() => {
-
   async function extractAnimeFLV(data) {
     const info = data.match(ParseModule.ANIME_INFO);
-    const eps = data.match(ParseModule.EPISODES);
+    const eps  = data.match(ParseModule.EPISODES);
     if (!info || !eps) return null;
 
-    const anime_info = ParseModule.safeEval(info[1]);
+    const anime_info  = ParseModule.safeEval(info[1]);
     const episodesRaw = ParseModule.safeEval(eps[1]);
-    const pattern = await PatternModule.getAnimeFLVPattern();
+    const pattern     = await PatternModule.getAnimeFLVPattern();
 
     const episodes = episodesRaw.map(e => {
       const num = Array.isArray(e) ? e[0] : e;
-      return {
-        number: num,
-        img: pattern.thumbnail(anime_info[0], num)
-      };
+      return { number: num, img: pattern.thumbnail(anime_info[0], num) };
     });
 
     return {
-      source: 'AnimeFLV',
-      title: anime_info[2],
-      slug: anime_info[1],
-      animeId: anime_info[0],
-      isNewEP: anime_info[3],
-      isEnd: anime_info.length === 3,
-      episodes_count: episodes.length,
-      episodes
+      source: 'AnimeFLV', title: anime_info[2], slug: anime_info[1],
+      animeId: anime_info[0], isNewEP: anime_info[3],
+      isEnd: anime_info.length === 3, episodes_count: episodes.length, episodes
     };
   }
 
   async function extractTio(data) {
     const info = data.match(ParseModule.ANIME_INFO);
-    const eps = data.match(ParseModule.EPISODES);
+    const eps  = data.match(ParseModule.EPISODES);
     if (!info || !eps) return null;
 
-    const anime_info = ParseModule.safeEval(info[1]);
+    const anime_info  = ParseModule.safeEval(info[1]);
     const episodesRaw = ParseModule.safeEval(eps[1]);
-    const pattern = await PatternModule.getTioPattern();
+    const pattern     = await PatternModule.getTioPattern();
 
     const episodes = episodesRaw.map(e => {
       const num = Array.isArray(e) ? e[0] : e;
-      return {
-        number: num,
-        url: pattern.episode(anime_info[1], num),
-        img: pattern.thumbnail(anime_info[0])
-      };
+      return { number: num, url: pattern.episode(anime_info[1], num), img: pattern.thumbnail(anime_info[0]) };
     });
 
     return {
-      source: 'TIO',
-      title: anime_info[2],
-      slug: anime_info[1],
-      animeId: anime_info[0],
-      isNewEP: anime_info[3],
-      isEnd: anime_info.length === 3,
-      episodes_count: episodes.length,
-      episodes
+      source: 'TIO', title: anime_info[2], slug: anime_info[1],
+      animeId: anime_info[0], isNewEP: anime_info[3],
+      isEnd: anime_info.length === 3, episodes_count: episodes.length, episodes
     };
   }
 
@@ -150,24 +117,17 @@ const ScraperModule = (() => {
     try {
       const $ = cheerio.load(data);
       const eps = [];
-
       $('li[data-index]').each((_, el) => {
         const n = parseInt($(el).find('.epl-num').text(), 10);
         if (!isNaN(n)) eps.push({ number: n });
       });
-
       if (!eps.length) return null;
-
       return {
         source: 'AnimeYTX',
         title: $('title').text().replace(' - AnimeYT', '').trim(),
-        isEnd: false,
-        episodes_count: eps.length,
-        episodes: eps
+        isEnd: false, episodes_count: eps.length, episodes: eps
       };
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
 
   return { extractAnimeFLV, extractTio, extractAnimeYTX };
@@ -181,7 +141,7 @@ const StreamModule = (() => {
   function getRefererForHost(host) {
     if (!host) return 'https://www.mp4upload.com/';
     if (host.includes('burstcloud')) return 'https://burstcloud.co/';
-    if (host.includes('vidcache')) return 'https://www.yourupload.com/';
+    if (host.includes('vidcache'))   return 'https://www.yourupload.com/';
     return 'https://www.mp4upload.com/';
   }
 
@@ -190,162 +150,62 @@ const StreamModule = (() => {
       let redirects = 0;
       const maxRedirects = 5;
       let resolved = false;
-
       const logs = [];
 
-      const pushLog = (type, data) => {
-        logs.push({
-          time: new Date().toISOString(),
-          type,
-          data
-        });
-      };
-
-      const finish = (data) => {
-        if (resolved) return;
-        resolved = true;
-        resolve({
-          ...data,
-          log: logs
-        });
-      };
+      const pushLog = (type, data) => logs.push({ time: new Date().toISOString(), type, data });
+      const finish  = (data) => { if (resolved) return; resolved = true; resolve({ ...data, log: logs }); };
 
       const doRequest = (currentUrl, method = 'HEAD') => {
-        pushLog('request', {
-          url: currentUrl,
-          method
-        });
-
+        pushLog('request', { url: currentUrl, method });
         const u = urlLib.parse(currentUrl);
         const isHttps = u.protocol === 'https:';
-
         const agent = isHttps
-          ? new https.Agent({
-              keepAlive: true,
-              servername: u.hostname,
-              rejectUnauthorized: false
-            })
+          ? new https.Agent({ keepAlive: true, servername: u.hostname, rejectUnauthorized: false })
           : undefined;
 
         const options = {
-          method,
-          hostname: u.hostname,
+          method, hostname: u.hostname,
           port: u.port || (isHttps ? 443 : 80),
           path: (u.pathname || '/') + (u.search || ''),
           headers: {
-            Referer: 'https://www.yourupload.com/',
-            'User-Agent': 'Mozilla/5.0',
+            Referer: 'https://www.yourupload.com/', 'User-Agent': 'Mozilla/5.0',
             ...(method === 'GET' ? { Range: 'bytes=0-1023' } : {})
           },
-          agent,
-          timeout: timeoutMs
+          agent, timeout: timeoutMs
         };
 
-        pushLog('options', {
-          method: options.method,
-          hostname: options.hostname,
-          port: options.port,
-          path: options.path,
-          timeout: options.timeout,
-          headers: options.headers
-        });
-
         const proto = isHttps ? https : http;
-
         const req = proto.request(options, (res) => {
-          pushLog('response', {
-            statusCode: res.statusCode,
-            headers: res.headers
-          });
+          pushLog('response', { statusCode: res.statusCode, headers: res.headers });
 
-          // 🔁 Redirecciones
-          if ([301,302,303,307,308].includes(res.statusCode) && res.headers.location) {
-            if (++redirects > maxRedirects) {
-              return finish({
-                ok: false,
-                reason: 'too_many_redirects'
-              });
-            }
-
+          if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
+            if (++redirects > maxRedirects) return finish({ ok: false, reason: 'too_many_redirects' });
             const nextUrl = urlLib.resolve(currentUrl, res.headers.location);
-            pushLog('redirect', {
-              from: currentUrl,
-              to: nextUrl
-            });
-
             return doRequest(nextUrl, method);
           }
 
-          const contentType = res.headers['content-type'] || '';
+          const contentType   = res.headers['content-type'] || '';
           const contentLength = Number(res.headers['content-length'] || 0);
+          const isVideo = contentType.startsWith('video/') || contentType.includes('octet-stream');
 
-          pushLog('content_info', {
-            contentType,
-            contentLength
-          });
+          let reason;
+          if (![200, 206].includes(res.statusCode)) reason = 'bad_status_code';
+          else if (!isVideo)                         reason = 'not_video_mime';
+          else if (contentLength <= 0)               reason = 'empty_or_unknown_size';
+          else                                       reason = 'ok';
 
-          const isVideo =
-            contentType.startsWith('video/') ||
-            contentType.includes('octet-stream');
-
-          let reason = null;
-
-          switch (true) {
-            case ![200, 206].includes(res.statusCode):
-              reason = 'bad_status_code';
-              break;
-
-            case !isVideo:
-              reason = 'not_video_mime';
-              break;
-
-            case contentLength <= 0:
-              reason = 'empty_or_unknown_size';
-              break;
-
-            default:
-              reason = 'ok';
-          }
-
-          const ok = reason === 'ok';
-
-          finish({
-            ok,
-            statusCode: res.statusCode,
-            contentType,
-            contentLength,
-            finalUrl: currentUrl,
-            reason
-          });
-
+          finish({ ok: reason === 'ok', statusCode: res.statusCode, contentType, contentLength, finalUrl: currentUrl, reason });
         });
 
         req.on('error', (err) => {
-          pushLog('error', {
-            method,
-            message: err.message,
-            code: err.code
-          });
-
+          pushLog('error', { method, message: err.message, code: err.code });
           if (method === 'HEAD') return doRequest(currentUrl, 'GET');
-
-          finish({
-            ok: false,
-            reason: 'request_error'
-          });
+          finish({ ok: false, reason: 'request_error' });
         });
 
         req.on('timeout', () => {
-          pushLog('timeout', {
-            method,
-            timeoutMs
-          });
           req.destroy();
-
-          finish({
-            ok: false,
-            reason: 'timeout'
-          });
+          finish({ ok: false, reason: 'timeout' });
         });
 
         req.end();
@@ -355,167 +215,181 @@ const StreamModule = (() => {
     });
   }
 
-
   async function proxyImage(url, res) {
     const controller = new AbortController();
-
     try {
-      const r = await HttpModule.axiosInstance.get(url, {
-        responseType: 'stream',
-        signal: controller.signal,
-      });
-
+      const r = await HttpModule.axiosInstance.get(url, { responseType: 'stream', signal: controller.signal });
       res.setHeader('Content-Type', r.headers['content-type'] || 'image/jpeg');
-
       const stream = r.data;
-
-      const cleanup = () => {
-        controller.abort();
-        stream.destroy();
-      };
-
+      const cleanup = () => { controller.abort(); stream.destroy(); };
       res.on('close', cleanup);
       res.on('error', cleanup);
       stream.on('error', cleanup);
-
       stream.pipe(res);
-
-    } catch (err) {
+    } catch {
       res.headersSent ? res.end() : res.status(500).end();
     }
   }
 
-function streamVideo(videoUrl, req, res) {
-  if (!videoUrl) {
-    return res.status(400).send("Falta parámetro videoUrl");
-  }
+  // ============================================================================
+  // streamVideo
+  //
+  // PROBLEMA RAÍZ anterior: cada llamada a originRes.pipe(res) registraba
+  // ~5 listeners internos (close, finish, drain, error, unpipe) en `res`.
+  // Con reconexiones, esos listeners se acumulaban → MaxListenersExceededWarning
+  // y memory leaks.
+  //
+  // SOLUCIÓN: escribir manualmente con originRes.on('data') + res.write(),
+  // manejando back-pressure con pause/resume. Cero listeners extra en `res`.
+  // ============================================================================
+  function streamVideo(videoUrl, req, res) {
+    if (!videoUrl) return res.status(400).send('Falta parámetro videoUrl');
 
-  // Aumentamos el límite de listeners para evitar warnings
-  res.setMaxListeners(20);
+    // CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length');
 
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-  res.setHeader("Access-Control-Expose-Headers", "Content-Range, Content-Length");
+    const parsedUrl = urlLib.parse(videoUrl);
+    const isHttps   = parsedUrl.protocol === 'https:';
+    const protocol  = isHttps ? https : http;
+    const referer   = getRefererForHost(parsedUrl.hostname);
 
-  const parsedUrl = urlLib.parse(videoUrl);
-  const isHttps = parsedUrl.protocol === "https:";
-  const protocol = isHttps ? https : http;
-  const referer = getRefererForHost(parsedUrl.hostname);
+    // Offset inicial desde el header Range del cliente
+    let byteOffset = 0;
+    const rangeHeader = req.headers.range;
+    if (rangeHeader) {
+      const m = rangeHeader.match(/bytes=(\d+)-/);
+      if (m) byteOffset = parseInt(m[1], 10);
+    }
 
-  let start = 0;
-  const rangeHeader = req.headers.range;
+    // ---- Ciclo de vida ----
+    let done    = false;
+    let retries = 0;
+    const MAX_RETRIES   = 3;
+    const RETRY_BASE_MS = 800;
 
-  if (rangeHeader) {
-    const match = rangeHeader.match(/bytes=(\d+)-/);
-    if (match) start = parseInt(match[1], 10);
-  }
-
-  const MAX_RECONNECTS = 3;
-  let reconnectAttempts = 0;
-  let destroyed = false;
-  let activeReq = null;
-
-  // Usamos once para evitar múltiples listeners
-  req.once("close", () => {
-    destroyed = true;
-    activeReq?.destroy?.();
-  });
-
-  function requestChunk(from) {
-    if (destroyed) return;
-
-    const headers = {
-      "Referer": referer,
-      "Origin": referer,
-      "User-Agent": "Mozilla/5.0"
-    };
-
-    if (from > 0) headers["Range"] = `bytes=${from}-`;
-
-    const options = {
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port || (isHttps ? 443 : 80),
-      path: parsedUrl.path + (parsedUrl.search || ""),
-      method: "GET",
-      headers,
-      rejectUnauthorized: false
-    };
-
-    reconnectAttempts++;
-    activeReq = protocol.request(options, (proxyRes) => {
-      reconnectAttempts = 0;
-
-      if (proxyRes.statusCode >= 400) {
-        if (!res.headersSent) {
-          res.status(proxyRes.statusCode).send("Video no disponible");
-        }
-        return;
-      }
-
+    // Termina definitivamente. Solo se ejecuta una vez.
+    function terminate(code, msg) {
+      if (done) return;
+      done = true;
       if (!res.headersSent) {
-        const headersToSend = {
-          "Content-Type": proxyRes.headers["content-type"] || "video/mp4",
-          "Accept-Ranges": "bytes",
-          "Content-Length": proxyRes.headers["content-length"],
-          "Content-Disposition": "inline",
-        };
+        res.status(code).end(msg ?? undefined);
+      } else if (!res.writableEnded) {
+        res.end();
+      }
+    }
 
-        if (proxyRes.headers["content-range"]) {
-          headersToSend["Content-Range"] = proxyRes.headers["content-range"];
+    // Si el cliente cierra la pestaña, paramos sin reintentar
+    req.once('close', () => { done = true; });
+
+    // ---- Conexión al origen ----
+    function connect(fromByte) {
+      if (done) return;
+
+      const reqHeaders = {
+        'Referer':    referer,
+        'Origin':     referer,
+        'User-Agent': 'Mozilla/5.0',
+      };
+      if (fromByte > 0) reqHeaders['Range'] = `bytes=${fromByte}-`;
+
+      const options = {
+        hostname: parsedUrl.hostname,
+        port:     parsedUrl.port || (isHttps ? 443 : 80),
+        path:     (parsedUrl.pathname || '/') + (parsedUrl.search || ''),
+        method:   'GET',
+        headers:  reqHeaders,
+        rejectUnauthorized: false,
+      };
+
+      const originReq = protocol.request(options, (originRes) => {
+        // Si el cliente ya cerró, drenar y salir
+        if (done) { originRes.resume(); return; }
+
+        retries = 0; // respuesta exitosa → resetear
+
+        // El servidor rechazó la petición
+        if (originRes.statusCode >= 400) {
+          originRes.resume();
+          return terminate(originRes.statusCode, 'Video no disponible');
         }
 
-        res.writeHead(proxyRes.statusCode, headersToSend);
-      }
+        // Enviar cabeceras al cliente (solo la primera vez)
+        if (!res.headersSent) {
+          const outHeaders = {
+            'Content-Type':        originRes.headers['content-type'] || 'video/mp4',
+            'Accept-Ranges':       'bytes',
+            'Content-Disposition': 'inline',
+          };
+          if (originRes.headers['content-length'])
+            outHeaders['Content-Length'] = originRes.headers['content-length'];
+          if (originRes.headers['content-range'])
+            outHeaders['Content-Range'] = originRes.headers['content-range'];
 
-      // Usamos once en vez de on donde solo necesitamos un disparo
-      proxyRes.once("end", () => {
-        if (!res.writableEnded) res.end();
-      });
-
-      proxyRes.once("error", () => {
-        if (destroyed) return;
-        if (reconnectAttempts < MAX_RECONNECTS) {
-          setTimeout(() => requestChunk(start), reconnectAttempts * 500);
-        } else if (!res.headersSent) {
-          res.status(502).end("Error streaming video");
+          res.writeHead(originRes.statusCode === 206 ? 206 : 200, outHeaders);
         }
+
+        // ---- Escritura manual (sin .pipe) ----
+        // .pipe() registra listeners permanentes en `res` que se acumulan
+        // con cada reconexión. Escribimos chunk a chunk y manejamos
+        // back-pressure manualmente.
+        originRes.on('data', (chunk) => {
+          if (done) { originRes.destroy(); return; }
+
+          byteOffset += chunk.length;
+
+          const ok = res.write(chunk);
+          if (!ok) {
+            // El buffer de salida está lleno: pausar el origen
+            originRes.pause();
+            res.once('drain', () => {
+              if (!done) originRes.resume();
+            });
+          }
+        });
+
+        originRes.once('end', () => {
+          terminate(200, null);
+        });
+
+        originRes.once('error', (err) => {
+          if (done) return;
+          // 'aborted' puede ser: (a) cliente cerró, (b) servidor cortó
+          // Solo reintentamos si el cliente sigue conectado
+          retry(byteOffset, `originRes: ${err.message}`);
+        });
       });
 
-      proxyRes.on("data", c => start += c.length);
+      originReq.setTimeout(25000, () => {
+        originReq.destroy(new Error('timeout'));
+      });
 
-      // Destruimos proxyRes si res se cierra
-      res.once("close", () => proxyRes.destroy());
+      originReq.once('error', (err) => {
+        if (done) return;
+        retry(byteOffset, `originReq: ${err.message}`);
+      });
 
-      proxyRes.pipe(res);
-    });
+      originReq.end();
+    }
 
-    activeReq.setTimeout(20000);
+    function retry(fromByte, reason) {
+      if (done) return;
 
-    activeReq.once("timeout", () => {
-      activeReq.abort();
-      if (!destroyed && reconnectAttempts < MAX_RECONNECTS) {
-        setTimeout(() => requestChunk(start), reconnectAttempts * 500);
+      retries++;
+      if (retries > MAX_RETRIES) {
+        console.error(`[streamVideo] sin más reintentos — ${reason}`);
+        return terminate(502, 'Error al conectar con el origen del video');
       }
-    });
 
-    activeReq.once("error", () => {
-      if (destroyed) return;
-      if (reconnectAttempts < MAX_RECONNECTS) {
-        setTimeout(() => requestChunk(start), reconnectAttempts * 500);
-      } else if (!res.headersSent) {
-        res.status(502).end("Error en conexión al origen");
-      }
-    });
+      const delay = RETRY_BASE_MS * retries;
+      console.warn(`[streamVideo] reintento ${retries}/${MAX_RETRIES} en ${delay}ms — ${reason}`);
+      setTimeout(() => connect(fromByte), delay);
+    }
 
-    activeReq.end();
+    connect(byteOffset);
   }
-
-  requestChunk(start);
-}
-
 
   return { validateVideoUrl, proxyImage, streamVideo };
 })();
@@ -525,10 +399,8 @@ function streamVideo(videoUrl, req, res) {
 // ============================================================================
 async function getEpisodes(url) {
   const { data } = await HttpModule.axiosInstance.get(url);
-
   if (url.includes('animeflv')) return ScraperModule.extractAnimeFLV(data);
   if (url.includes('tioanime')) return ScraperModule.extractTio(data);
-
   return ScraperModule.extractAnimeYTX(data) || { success: false };
 }
 
@@ -536,26 +408,23 @@ async function getDescription(url) {
   try {
     const { data } = await HttpModule.axiosInstance.get(url);
     const $ = cheerio.load(data);
-
     return (
       $('section.WdgtCn .Description p').text().trim() ||
       $('aside p.sinopsis').text().trim() ||
       $('meta[name="description"]').attr('content') ||
       ''
     );
-  } catch {
-    return '';
-  }
+  } catch { return ''; }
 }
 
 // ============================================================================
-// EXPORTS (SIN CAMBIOS)
+// EXPORTS
 // ============================================================================
 module.exports = {
   getEpisodes,
   getDescription,
-  proxyImage: StreamModule.proxyImage,
-  streamVideo: StreamModule.streamVideo,
+  proxyImage:       StreamModule.proxyImage,
+  streamVideo:      StreamModule.streamVideo,
   validateVideoUrl: StreamModule.validateVideoUrl,
-  downloadVideo: () => false
+  downloadVideo:    () => false
 };

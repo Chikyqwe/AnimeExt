@@ -174,15 +174,33 @@ const Loader = {
   /** Wait for all matching images to load or error */
   async waitForImages(selector = '.anime-card img') {
     const images = Utils.qsa(selector);
+
     await Promise.all(
-      images.map(
-        (img) =>
-          img.complete && img.naturalHeight !== 0
-            ? Promise.resolve()
-            : new Promise((res) => { img.onload = img.onerror = res; })
-      )
+      images.map((img) => {
+        if (img.complete && img.naturalHeight !== 0) {
+          return Promise.resolve(); // ya cargada
+        }
+
+        return new Promise((resolve) => {
+          const done = () => {
+            cleanup();
+            resolve(); // SIEMPRE resolve (éxito lógico)
+          };
+
+          const cleanup = () => {
+            img.onload = null;
+            img.onerror = null;
+            clearTimeout(timer);
+          };
+
+          img.onload = done;
+          img.onerror = done;
+
+          const timer = setTimeout(done, 3000); // 3s máximo
+        });
+      })
     );
-  },
+  }
 };
 
 /* ============================================================
@@ -1239,7 +1257,7 @@ const Modal = {
     const isFinished  = /finaliz|finished|completed/i.test(status ?? '');
     const badgeColor  = isOngoing ? '#28a745' : isFinished ? '#fb3447' : '#343a40';
     const badgeText   = isOngoing ? `Próxima emisión: ${nextEpDate ?? 'Desconocida'}` : (status ?? 'Desconocido');
-
+    statusDiv.className = 'episode-card';
     statusDiv.innerHTML = `
       <div style="display:flex;align-items:center;width:100%;gap:10px;">
         <button type="button" class="episode-status" style="
@@ -1251,7 +1269,7 @@ const Modal = {
     container.appendChild(statusDiv);
 
     // Adjust container height
-    container.style.height = episodes.length > 0 && episodes.length < 12 ? 'auto' : '645px';
+    container.style.height = 'auto';
 
     // Episode cards
     episodes.forEach((ep) => {
@@ -1261,7 +1279,7 @@ const Modal = {
       btn.innerHTML = `
         <div class="ep-thumb">
           <img src="${ep.img}" alt="Episodio ${ep.number}" loading="lazy" />
-          <span class="ep-number">Ep. ${ep.number}</span>
+          <span class="ep-number">Ep. ${ep.number}</span> 
         </div>
       `;
       btn.addEventListener('click', () => {
