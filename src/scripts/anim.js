@@ -12,7 +12,6 @@ const { last } = require("./lastep");
 const CONFIG = {
   FLV_BASE_URL: "https://www4.animeflv.net",
   TIO_BASE_URL: "https://tioanime.com",
-  ANIMEYTX_BASE_URL: "https://animeytx.com/tv/?page=",
   FLV_MAX_PAGES: 173,
   TIO_TOTAL_PAGES: 209,
   ANIMEYTX_TOTAL_PAGES: 34,
@@ -65,7 +64,7 @@ const slugSimplificado = (slugOrTitle) => {
 // --------------------------------------------
 // Función principal para combinar datos
 // --------------------------------------------
-const UnityJsonsV4 = (datosTio, datosFlv, datosAnimeYTX, outputPath, log = console.log) => {
+const UnityJsonsV4 = (datosTio, datosFlv, outputPath, log = console.log) => {
   log("🔗 Combinando datos de directorios...");
 
   const unitIDPath = path.join(__dirname, "..", "..", "data", "UnitID.json");
@@ -108,7 +107,7 @@ const UnityJsonsV4 = (datosTio, datosFlv, datosAnimeYTX, outputPath, log = conso
     }
   };
 
-  [datosFlv, datosTio, datosAnimeYTX].forEach((dataset, i) => {
+  [datosFlv, datosTio].forEach((dataset, i) => {
     const fuente = i === 0 ? "FLV" : i === 1 ? "TIO" : "ANIMEYTX";
     dataset.forEach(a => agregarDatos(a, fuente));
   });
@@ -155,25 +154,6 @@ const extraerPagina = async (url, selector, mapFn, log, timeout = 10000) => {
     registrarError("Scraper", url, err.message, url);
     return [];
   }
-};
-
-const scrapeAnimeYTX = async (log = console.log) => {
-  const queue = new PQueue({ concurrency: CONFIG.CONCURRENT_ANIMEYTX });
-  const pages = Array.from({ length: CONFIG.ANIMEYTX_TOTAL_PAGES }, (_, i) =>
-    queue.add(async () => {
-      const url = `${CONFIG.ANIMEYTX_BASE_URL}${i + 1}`;
-      log(`[AnimeYTX] Procesando página ${i + 1}`);
-      return extraerPagina(url, '.listupd article.bs', el => {
-        const titulo = el.find('.tt').text().trim().split('\t').map(t => t.trim()).filter(Boolean)[0] || '';
-        const enlace = el.find('a').attr('href') || '';
-        const slug = enlace ? enlace.split('/').filter(Boolean).pop() : '';
-        const imagen = el.find('img').attr('data-src') || el.find('img').attr('src') || '';
-        return titulo && slug ? { title: titulo, slug, url: enlace, image: imagen } : null;
-      }, log);
-    })
-  );
-  const resultados = await Promise.allSettled(pages);
-  return resultados.filter(p => p.status === "fulfilled").flatMap(p => p.value).filter(Boolean);
 };
 
 const scrapeAnimeFLV = async (log = console.log) => {
@@ -241,11 +221,7 @@ const main = async ({ log = console.log } = {}) => {
   const flv = await scrapeAnimeFLV(log);
   log(`AnimeFLV: obtenidos ${flv.length} animes.`);
 
-  const animeYTXRaw = await scrapeAnimeYTX(log);
-  const animeYTX = filtrarAnimesValidos(animeYTXRaw);
-  log(`AnimeYTX: obtenidos ${animeYTX.length} animes.`);
-
-  UnityJsonsV4(tio, flv, animeYTX, outputPath, log);
+  UnityJsonsV4(tio, flv, outputPath, log);
 
   const outReporte = path.join(__dirname, "..", "..", "data", "report_error.json");
   if (erroresReportados.length > 0) {
@@ -261,3 +237,4 @@ const main = async ({ log = console.log } = {}) => {
 };
 
 module.exports = { main };
+if (require.main === module) main();
