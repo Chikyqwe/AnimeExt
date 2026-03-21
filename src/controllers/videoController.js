@@ -8,7 +8,7 @@ const { TextCache } = require('../core/cache/cache');
 const { Transform } = require('stream');
 const { v7: uuidv7 } = require('uuid');
 const apiQueue = require('../core/queue/queueService');
-const supabase = require("../services/supabaseService");
+const supabase = require("../services/supabase/supabase");
 const { default: axios } = require('axios');
 
 const { extractAllVideoLinks, getExtractor } = require('../core/core');

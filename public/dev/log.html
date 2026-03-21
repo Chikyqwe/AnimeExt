@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnimeEXT</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: rgba(255,255,255,0.07);
+    --accent: #e84545;
+    --accent2: #ff7043;
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --success: #2ecc71;
+    --error: #e84545;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  /* bg grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,69,69,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,69,69,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; width: 100%; max-width: 420px; padding: 24px 16px; }
+
+  /* logo */
+  .logo {
+    text-align: center;
+    margin-bottom: 36px;
+    animation: fadeDown .5s ease both;
+  }
+  .logo h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    letter-spacing: .08em;
+    background: linear-gradient(135deg, #e84545, #ff7043);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .logo p { font-size: 12px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 4px; }
+
+  /* card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    animation: fadeUp .5s ease .1s both;
+  }
+
+  /* tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+  .tab {
+    flex: 1;
+    padding: 9px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .tab.active { background: var(--accent); color: #fff; }
+
+  /* form */
+  .form { display: none; flex-direction: column; gap: 14px; }
+  .form.active { display: flex; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+  .field input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .field input::placeholder { color: var(--muted); }
+
+  /* captcha row */
+  .captcha-row { display: flex; gap: 8px; align-items: flex-end; }
+  .captcha-row .field { flex: 1; }
+  .btn-captcha {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color .2s, color .2s;
+    font-family: 'DM Sans', sans-serif;
+    flex-shrink: 0;
+  }
+  .btn-captcha:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-captcha:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* submit */
+  .btn-submit {
+    margin-top: 6px;
+    padding: 13px;
+    background: var(--accent);
+    border: none;
+    border-radius: 9px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    letter-spacing: .02em;
+  }
+  .btn-submit:hover { opacity: .88; }
+  .btn-submit:active { transform: scale(.98); }
+  .btn-submit:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.ok { border-color: var(--success); color: var(--success); }
+  .toast.err { border-color: var(--error); color: var(--error); }
+
+  /* dashboard */
+  #dashboard { display: none; animation: fadeUp .4s ease both; }
+  .dash-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .dash-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: .06em; }
+  .btn-logout {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color .2s, color .2s;
+  }
+  .btn-logout:hover { border-color: var(--accent); color: var(--accent); }
+
+  .section-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    margin-top: 22px;
+  }
+
+  /* subscribe row */
+  .sub-row { display: flex; gap: 8px; }
+  .sub-row input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color .2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .sub-row input:focus { border-color: var(--accent); }
+  .sub-row input::placeholder { color: var(--muted); }
+  .btn-add {
+    background: var(--accent);
+    border: none;
+    border-radius: 9px;
+    color: #fff;
+    font-size: 20px;
+    width: 42px;
+    cursor: pointer;
+    transition: opacity .2s;
+    flex-shrink: 0;
+  }
+  .btn-add:hover { opacity: .85; }
+
+  /* anime list */
+  .anime-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .anime-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 14px;
+    animation: fadeUp .3s ease both;
+  }
+  .anime-item .name { font-size: 13px; font-weight: 500; }
+  .anime-item .ep { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .btn-unsub {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 16px;
+    cursor: pointer;
+    transition: color .2s;
+    padding: 2px 6px;
+  }
+  .btn-unsub:hover { color: var(--accent); }
+  .empty-state { font-size: 13px; color: var(--muted); text-align: center; padding: 20px 0; }
+
+  /* send notification */
+  .notif-form { display: flex; flex-direction: column; gap: 10px; }
+  .notif-form input, .notif-form textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color .2s;
+    resize: none;
+  }
+  .notif-form input:focus, .notif-form textarea:focus { border-color: var(--accent); }
+  .notif-form input::placeholder, .notif-form textarea::placeholder { color: var(--muted); }
+
+  /* divider */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* spinner */
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  /* animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Logo -->
+  <div class="logo">
+    <h1>AnimeEXT</h1>
+    <p>Sistema de autenticación</p>
+  </div>
+
+  <!-- Auth card -->
+  <div class="card" id="auth-card">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Iniciar sesión</button>
+      <button class="tab" onclick="switchTab('signup')">Crear cuenta</button>
+    </div>
+
+    <!-- LOGIN -->
+    <form class="form active" id="form-login" onsubmit="handleLogin(event)">
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input type="email" id="l-email" placeholder="tu@correo.com" required/>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="l-pass" placeholder="••••••••" required/>
+      </div>
+      <button class="btn-submit" type="submit" id="btn-login">Entrar</button>
+    </form>
+
+    <!-- SIGNUP -->
+    <form class="form" id="form-signup" onsubmit="handleSignup(event)">
+      <div class="field">
+        <label>Nombre de usuario</label>
+        <input type="text" id="s-user" placeholder="Goku123" required/>
+      </div>
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input type="email" id="s-email" placeholder="tu@correo.com" required/>
+      </div>
+      <div class="captcha-row">
+        <div class="field">
+          <label>Código de verificación</label>
+          <input type="text" id="s-captcha" placeholder="123456" maxlength="6" required/>
+        </div>
+        <button type="button" class="btn-captcha" id="btn-captcha" onclick="sendCaptcha()">Enviar código</button>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="s-pass" placeholder="••••••••" required/>
+      </div>
+      <button class="btn-submit" type="submit" id="btn-signup">Crear cuenta</button>
+    </form>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard">
+    <div class="card">
+      <div class="dash-header">
+        <h2 id="dash-title">Hola, —</h2>
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+
+      <p class="section-label">Mis animes suscritos</p>
+      <div class="sub-row">
+        <input type="text" id="anime-input" placeholder="ID del anime (ej: one-piece)"/>
+        <button class="btn-add" onclick="subscribeAnime()">+</button>
+      </div>
+      <div class="anime-list" id="anime-list">
+        <p class="empty-state">Sin suscripciones aún.</p>
+      </div>
+
+      <hr class="divider"/>
+
+      <p class="section-label">Enviar notificación de prueba</p>
+      <div class="notif-form">
+        <input type="text" id="n-uuid" placeholder="UUID del usuario destino"/>
+        <input type="text" id="n-title" placeholder="Título"/>
+        <textarea id="n-body" rows="2" placeholder="Mensaje..."></textarea>
+        <button class="btn-submit" onclick="sendNotif()">Enviar push</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'http://localhost:2022'; // Cambia esto si tu backend corre en otra URL
+  let sessionToken = localStorage.getItem('animeext_token');
+  let currentUser  = JSON.parse(localStorage.getItem('animeext_user') || 'null');
+
+  // ── Inicializar ──────────────────────────────────────────────────────────
+  if (sessionToken && currentUser) showDashboard();
+
+  // ── Tabs ─────────────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) =>
+      t.classList.toggle('active', (tab === 'login' ? 0 : 1) === i));
+    document.getElementById('form-login').classList.toggle('active', tab === 'login');
+    document.getElementById('form-signup').classList.toggle('active', tab === 'signup');
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function toast(msg, type = 'ok') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `toast show ${type}`;
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (loading) {
+      btn._orig = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner"></span> Cargando...';
+      btn.disabled = true;
+    } else {
+      btn.innerHTML = btn._orig || btn.innerHTML;
+      btn.disabled = false;
+    }
+  }
+
+  // ── Captcha ───────────────────────────────────────────────────────────────
+  async function sendCaptcha() {
+    const email = document.getElementById('s-email').value.trim();
+    if (!email) return toast('Ingresa tu email primero.', 'err');
+
+    setLoading('btn-captcha', true);
+    try {
+      const r = await fetch(`${API}/api/auth/captcha`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      toast(d.message || 'Código enviado.');
+
+      // countdown
+      let s = 60;
+      const btn = document.getElementById('btn-captcha');
+      btn.disabled = true;
+      const iv = setInterval(() => {
+        btn.textContent = `Reenviar (${--s}s)`;
+        if (s <= 0) { clearInterval(iv); btn.textContent = 'Enviar código'; btn.disabled = false; }
+      }, 1000);
+    } catch(e) { toast(e.message, 'err'); }
+    finally { document.getElementById('btn-captcha').disabled || setLoading('btn-captcha', false); }
+  }
+
+  // ── Signup ────────────────────────────────────────────────────────────────
+  async function handleSignup(e) {
+    e.preventDefault();
+    setLoading('btn-signup', true);
+    try {
+      const r = await fetch(`${API}/api/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('s-user').value.trim(),
+          email: document.getElementById('s-email').value.trim(),
+          password: document.getElementById('s-pass').value,
+          captchaToken: document.getElementById('s-captcha').value.trim()
+        })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      toast('¡Cuenta creada! Inicia sesión.');
+      switchTab('login');
+      document.getElementById('form-signup').reset();
+    } catch(e) { toast(e.message, 'err'); }
+    finally { setLoading('btn-signup', false); }
+  }
+
+  // ── Login ─────────────────────────────────────────────────────────────────
+  async function handleLogin(e) {
+    e.preventDefault();
+    setLoading('btn-login', true);
+    try {
+      const r = await fetch(`${API}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('l-email').value.trim(),
+          password: document.getElementById('l-pass').value
+        })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+
+      sessionToken = d.token;
+      currentUser  = d.user;
+      localStorage.setItem('animeext_token', sessionToken);
+      localStorage.setItem('animeext_user', JSON.stringify(currentUser));
+
+      showDashboard();
+      toast(`Bienvenido, ${currentUser.username}.`);
+    } catch(e) { toast(e.message, 'err'); }
+    finally { setLoading('btn-login', false); }
+  }
+
+  // ── Dashboard ─────────────────────────────────────────────────────────────
+  function showDashboard() {
+    document.getElementById('auth-card').style.display = 'none';
+    document.querySelector('.logo').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('dash-title').textContent = `Hola, ${currentUser?.username || ''}`;
+    loadSubscriptions();
+  }
+
+  function logout() {
+    localStorage.removeItem('animeext_token');
+    localStorage.removeItem('animeext_user');
+    sessionToken = null; currentUser = null;
+    document.getElementById('auth-card').style.display = 'block';
+    document.querySelector('.logo').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'none';
+  }
+
+  // ── Suscripciones ─────────────────────────────────────────────────────────
+  async function loadSubscriptions() {
+    try {
+      const r = await fetch(`${API}/api/notifications/subscriptions`, {
+        headers: { 'Authorization': `Bearer ${sessionToken}` }
+      });
+      const d = await r.json();
+      renderAnimeList(d.anime_uids || {});
+    } catch { renderAnimeList({}); }
+  }
+
+  function renderAnimeList(uids) {
+    const list = document.getElementById('anime-list');
+    const entries = Object.entries(uids);
+    if (!entries.length) {
+      list.innerHTML = '<p class="empty-state">Sin suscripciones aún.</p>';
+      return;
+    }
+    list.innerHTML = entries.map(([id, ep]) => `
+      <div class="anime-item" id="item-${id}">
+        <div>
+          <div class="name">${id}</div>
+          <div class="ep">Último ep visto: ${ep}</div>
+        </div>
+        <button class="btn-unsub" onclick="unsubscribe('${id}')" title="Desuscribir">×</button>
+      </div>
+    `).join('');
+  }
+
+  async function subscribeAnime() {
+    const animeId = document.getElementById('anime-input').value.trim();
+    if (!animeId) return toast('Ingresa un ID de anime.', 'err');
+    try {
+      const r = await fetch(`${API}/api/notifications/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+        body: JSON.stringify({ animeId })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      toast(`Suscrito a ${animeId}.`);
+      document.getElementById('anime-input').value = '';
+      renderAnimeList(d.anime_uids);
+    } catch(e) { toast(e.message, 'err'); }
+  }
+
+  async function unsubscribe(animeId) {
+    try {
+      const r = await fetch(`${API}/api/notifications/unsubscribe`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+        body: JSON.stringify({ animeId })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      toast(`Desuscrito de ${animeId}.`);
+      renderAnimeList(d.anime_uids);
+    } catch(e) { toast(e.message, 'err'); }
+  }
+
+  // ── Notificación de prueba ────────────────────────────────────────────────
+  async function sendNotif() {
+    const uuid  = document.getElementById('n-uuid').value.trim();
+    const title = document.getElementById('n-title').value.trim();
+    const body  = document.getElementById('n-body').value.trim();
+    if (!uuid || !title || !body) return toast('Completa todos los campos.', 'err');
+    try {
+      const r = await fetch(`${API}/api/notifications/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+        body: JSON.stringify({ uuid, title, body })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      toast('Notificación enviada.');
+      document.getElementById('n-uuid').value = '';
+      document.getElementById('n-title').value = '';
+      document.getElementById('n-body').value = '';
+    } catch(e) { toast(e.message, 'err'); }
+  }
+</script>
+</body>
+</html>

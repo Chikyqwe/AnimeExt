@@ -1,129 +1,136 @@
-const { saveUser, checkUserLogin, checkUserLoginByUUID } = require('../services/postgresqlbaseService');
+const { supabase } = require('../services/supabase/supabase');
+const SupaInterface = require('../services/supabase/supabaseInt');
+const supa = new SupaInterface(supabase);
 const bcrypt = require('bcryptjs');
-
 const crypto = require('crypto');
 const SendEmail = require('../services/emailService');
-const pendingTokens = new Map(); // email -> { token, expiresMs }
+const { getSubscriptions } = require('./notificationController');
 
-async function requestRegisterToken(req, res) {
-    try {
-        const { email } = req.body;
-        if (!email) return res.status(400).json({ error: 'Email requerido' });
+// email -> { token, expiresMs }
+const pendingTokens = new Map();
 
-        const token = crypto.randomBytes(6).toString('hex');
-        const expiresMs = Date.now() + 31 * 60 * 1000; // 3 minutos
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-        pendingTokens.set(email, { token, expiresMs });
-
-        // usa el servicio de email provisto por el proyecto
-        await SendEmail(email, token);
-
-        return res.status(200).json({ message: 'Token enviado por email' });
-    } catch (err) {
-        console.error('requestRegisterToken', err);
-        return res.status(500).json({ error: 'Error interno' });
-    }
+function generateToken(length = 6) {
+  return crypto.randomInt(100000, 999999).toString();
 }
 
-async function confirmRegistration(req, res) {
-    console.log(pendingTokens)
-    try {
-        const { email, token, password, username, tokenFCM } = req.body;
-        if (!email || !token || !password || !tokenFCM) return res.status(400).json({ error: 'Faltan campos' });
-        console.log(email, token, password, username, Date.now());
-        // Primero intentar verificar token en memoria
-        const record = pendingTokens.get(email);
-        console.log("Record obtenido:", record);
-        let valid = false;
-        if (record && record.token === token && record.expiresMs > Date.now()) {
-            valid = true;
-            pendingTokens.delete(email);
-        }
-        console.log("Validación token en memoria:", valid);
-        if (!valid) return res.status(400).json({ error: 'Token inválido o expirado' });
-
-        // hashear la contraseña con bcrypt
-        const hashed = bcrypt.hashSync(password, 10); // 10 = salt rounds
-        const newUuid = crypto.randomUUID();
-        const user = {
-            uuid: newUuid,
-            email,
-            token: tokenFCM || null,
-            user_name: username || null,
-            password_hash: hashed,
-            timestamp: Date.now()
-        };
-
-        await saveUser(user);
-
-        return res.status(201).json({ message: 'Usuario registrado' });
-    } catch (err) {
-        console.error('confirmRegistration', err);
-        return res.status(500).json({ error: 'Error interno' });
-    }
+function isExpired(expiresMs) {
+  return Date.now() > expiresMs;
 }
+
+// ─── CAPTCHA: envía código al email antes de continuar ───────────────────────
+
+async function sendCaptcha(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email requerido.' });
+
+    const token = generateToken();
+    const expiresMs = Date.now() + 10 * 60 * 1000; // 10 minutos
+
+    pendingTokens.set(email, { token, expiresMs });
+
+    const sent = await SendEmail(email, token);
+    if (!sent) return res.status(500).json({ error: 'No se pudo enviar el correo.' });
+
+    return res.json({ message: 'Código enviado. Revisa tu correo.' });
+  } catch (err) {
+    console.error('[captcha]', err);
+    return res.status(500).json({ error: 'Error interno.' });
+  }
+}
+
+// ─── SIGNUP ──────────────────────────────────────────────────────────────────
+
+async function signup(req, res) {
+  try {
+    const { email, password, username, captchaToken } = req.body;
+    let usrname = username; // Para evitar shadowing con el campo de la DB
+    if (!email || !password || !usrname || !captchaToken) {
+      return res.status(400).json({ error: 'Todos los campos son requeridos.' });
+    }
+
+    // Verificar captcha
+    const pending = pendingTokens.get(email);
+    if (!pending) return res.status(400).json({ error: 'Solicita primero un código de verificación.' });
+    if (isExpired(pending.expiresMs)) {
+      pendingTokens.delete(email);
+      return res.status(400).json({ error: 'El código ha expirado. Solicita uno nuevo.' });
+    }
+    if (pending.token !== captchaToken) {
+      return res.status(400).json({ error: 'Código incorrecto.' });
+    }
+    pendingTokens.delete(email);
+
+    // Verificar si ya existe
+    const existing = await supa.search.users.email(email);
+    if (existing && existing.length > 0) {
+      return res.status(409).json({ error: 'Ya existe una cuenta con ese email.' });
+    }
+
+    // Hashear contraseña y crear usuario
+    const passwordHash = await bcrypt.hash(password, 12);
+    const uuid = crypto.randomUUID();
+
+    const created = await supa.create.users({
+      uuid,
+      email,
+      usrname,
+      password: passwordHash,
+      token: null,
+      subscriptions: {},
+    });
+
+    return res.status(201).json({
+      message: 'Cuenta creada exitosamente.',
+      user: { uuid, email, usrname }
+    });
+  } catch (err) {
+    console.error('[signup]', err);
+    return res.status(500).json({ error: 'Error interno.' });
+  }
+}
+
+// ─── LOGIN ───────────────────────────────────────────────────────────────────
+
 async function login(req, res) {
-    try {
-        const { type, email, password, uuid } = req.body;
-
-        if (!type) {
-            return res.status(400).json({ error: 'Tipo de login requerido' });
-        }
-
-        // 🔹 LOGIN POR UUID
-        if (type === 'uuid') {
-
-            if (!uuid) {
-                return res.status(400).json({ error: 'UUID requerido' });
-            }
-
-            const loginResult = await checkUserLoginByUUID(uuid);
-
-            if (loginResult.status !== "ok") {
-                return res.status(401).json({ error: 'UUID inválido' });
-            }
-
-            return res.status(200).json({
-                message: 'Autenticado',
-                type: 'uuid',
-                user: loginResult.user
-            });
-        }
-
-        // 🔹 LOGIN POR PASSWORD
-        if (type === 'password') {
-
-            if (!email || !password) {
-                return res.status(400).json({ error: 'Email y password requeridos' });
-            }
-
-            const loginResult = await checkUserLogin({ email, password });
-
-            if (loginResult.status !== "ok") {
-                return res.status(401).json({ error: 'Credenciales inválidas' });
-            }
-
-            return res.status(200).json({
-                message: 'Autenticado',
-                type: 'password',
-                user: loginResult.user
-            });
-        }
-
-        // ❌ Tipo desconocido
-        return res.status(400).json({
-            error: 'Tipo de login inválido'
-        });
-
-    } catch (err) {
-        console.error('login', err);
-        return res.status(500).json({ error: 'Error interno' });
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email y contraseña requeridos.' });
     }
+
+    // Buscar usuario
+    const results = await supa.search.users.email(email);
+    if (!results || results.length === 0) {
+      return res.status(401).json({ error: 'Credenciales incorrectas.' });
+    }
+    const user = results[0];
+
+    // Verificar contraseña
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ error: 'Credenciales incorrectas.' });
+    }
+
+    // Generar session token y guardarlo
+    const sessionToken = crypto.randomBytes(32).toString('hex');
+    await supa.write.users.token(user.id, {sessionToken});
+
+    return res.json({
+      message: 'Login exitoso.',
+      token: sessionToken,
+      user: {
+        uuid: user.uuid,
+        email: user.email,
+        usrname: user.usrname
+      }
+    });
+  } catch (err) {
+    console.error('[login]', err);
+    return res.status(500).json({ error: 'Error interno.' });
+  }
 }
 
-
-module.exports = {
-    requestRegisterToken,
-    confirmRegistration,
-    login
-};
+module.exports = { sendCaptcha, signup, login };

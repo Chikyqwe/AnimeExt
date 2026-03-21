@@ -45,4 +45,3 @@ function buildComplexToken(key1, key2) {
 }
 
 module.exports = { randomKey, buildComplexToken };
-

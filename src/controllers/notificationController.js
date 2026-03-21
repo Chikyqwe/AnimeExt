@@ -1,120 +1,131 @@
-const { saveUser, getAllUsers, addAnimeUIDs, getAnimeUIDs, checkToken, anulatedNotification } = require('../services/postgresqlbaseService');
+const { supabase } = require('../services/supabase/supabase');
+const SupaInterface = require('../services/supabase/supabaseInt');
+const supa = new SupaInterface(supabase);
+const { sendNotification } = require('../services/fcmServicesNotification');
 const crypto = require('crypto');
 
-async function getUUID(req, res) {
-    try {
-        const { token, timestamp } = req.body.parameters;
-        if (!token || !timestamp) {
-            return res.status(400).json({ error: "Faltan parámetros obligatorios" });
-        }
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-        // Generar UUID
-        const uuid = crypto.randomUUID();
-
-        // Verificar token
-        const verification = await checkToken(token);
-        if (verification.status === false) {
-            return res.status(409).json({ error: "Token ya registrado", uuid: verification.uuid });
-        }
-
-        // Guardar usuario
-        await saveUser({ uuid, token, timestamp });
-
-        return res.status(200).json({ uuid });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Error interno del servidor" });
-    }
-}
-async function registeranime(req, res) {
-    try {
-        const { uuid, uids } = req.body.parameters;
-
-        // Validar que uids sea un array de objetos
-        if (!uuid || !Array.isArray(uids)) {
-            return res.status(400).json({
-                error: "Formato incorrecto: uids debe ser un array de objetos [{ uid, ep }]"
-            });
-        }
-
-        // Convertir array de objetos → JSON tipo diccionario
-        const mapped = {};
-        for (const item of uids) {
-            if (!item.uid || item.ep === undefined) continue;
-            mapped[item.uid] = item.ep;
-        }
-
-        // Guardar en base de datos como JSONB fusionado
-        const updated = await addAnimeUIDs(uuid, mapped);
-
-        if (!updated) {
-            return res.status(404).json({ error: "UUID no encontrado" });
-        }
-
-        return res.status(200).json({
-            message: "Animelist actualizada.",
-            uids: updated
-        });
-
-    } catch (err) {
-        console.error("registeranime error:", err);
-        return res.status(500).json({ error: "Error interno del servidor" });
-    }
-}
-async function getUsers(req, res) {
-    try {
-        const users = await getAllUsers();
-        return res.status(200).json({ users });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Error interno del servidor" });
-    }
+async function getUserByToken(authHeader) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  const token = authHeader.replace('Bearer ', '').trim();
+  const results = await supa.search.users.token(token);
+  return results && results.length > 0 ? results[0] : null;
 }
 
-async function getanimes(req, res) {
-    try {
-        const { uuid } = req.body.parameters;
-        if (!uuid) {
-            return res.status(400).json({ error: "Faltan parámetros obligatorios" });
-        }
+// ─── Registrar / actualizar FCM token del dispositivo ───────────────────────
 
-        // Obtener UIDs
-        const uids = await getAnimeUIDs(uuid);
-        return res.status(200).json({ uids });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Error interno del servidor" });
-    }
+async function registerFcmToken(req, res) {
+  try {
+    const user = await getUserByToken(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'No autorizado.' });
+
+    const { fcmToken } = req.body;
+    if (!fcmToken) return res.status(400).json({ error: 'fcmToken requerido.' });
+
+    await supa.write.users.token(user.id, fcmToken);
+
+    return res.json({ message: 'Token FCM registrado correctamente.' });
+  } catch (err) {
+    console.error('[registerFcmToken]', err);
+    return res.status(500).json({ error: 'Error interno.' });
+  }
 }
 
-async function anulNot(req, res) {
-    try {
-        const { uuid, uid } = req.body.parameters;
-        if (!uuid || !uid) {
-            return res.status(400).json({ error: "Faltan parámetros obligatorios" });
-        }
+// ─── Enviar notificación a un usuario específico (admin / sistema) ───────────
 
-        // Anular notificación
-        const result = await anulatedNotification(uuid, uid);
-        if (!result) {
-            return res.status(404).json({ error: "UUID no encontrado" });
-        }
-
-        return res.status(200).json({ message: "Notificación anulada." });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Error interno del servidor" });
+async function sendToUser(req, res) {
+  try {
+    const { uuid, title, body, image } = req.body;
+    if (!uuid || !title || !body) {
+      return res.status(400).json({ error: 'uuid, title y body son requeridos.' });
     }
-}
-async function getUsers(req, res) {
-    try {
-        const users = await getAllUsers();
-        return res.status(200).json({ users });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Error interno del servidor" });
+
+    const results = await supa.search.users.uuid(uuid);
+    if (!results || results.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
     }
+
+    const user = results[0];
+    if (!user.token) {
+      return res.status(400).json({ error: 'El usuario no tiene token FCM registrado.' });
+    }
+
+    await sendNotification(user.token, { title, body, image, uid: user.uuid });
+
+    return res.json({ message: 'Notificación enviada.' });
+  } catch (err) {
+    console.error('[sendToUser]', err);
+    return res.status(500).json({ error: 'Error interno.' });
+  }
 }
 
+// ─── Suscribir / desuscribir anime para notificaciones ──────────────────────
 
-module.exports = { getUUID, registeranime, getanimes, getUsers, anulNot };
+async function subscribeAnime(req, res) {
+  try {
+    const user = await getUserByToken(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'No autorizado.' });
+
+    const { animeId } = req.body;
+    if (!animeId) return res.status(400).json({ error: 'animeId requerido.' });
+
+    const currentUids = user.subscriptions || {};
+    if (currentUids[animeId] !== undefined) {
+      return res.status(409).json({ error: 'Ya estás suscrito a ese anime.' });
+    }
+
+    const updatedUids = { ...currentUids, [animeId]: 0 };
+    await supa.write.users.subscriptions(user.id, updatedUids);
+
+    return res.json({ message: `Suscrito a anime ${animeId}.`, subscriptions: updatedUids });
+  } catch (err) {
+    console.error('[subscribeAnime]', err);
+    return res.status(500).json({ error: 'Error interno.' });
+  }
+}
+
+async function unsubscribeAnime(req, res) {
+  try {
+    const user = await getUserByToken(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'No autorizado.' });
+
+    const { animeId } = req.body;
+    if (!animeId) return res.status(400).json({ error: 'animeId requerido.' });
+
+    const currentUids = user.subscriptions || {};
+    if (currentUids[animeId] === undefined) {
+      return res.status(404).json({ error: 'No estás suscrito a ese anime.' });
+    }
+
+    delete currentUids[animeId];
+    await supa.write.users.subscriptions(user.id, currentUids);
+
+    return res.json({ message: `Desuscrito de anime ${animeId}.`, subscriptions: currentUids });
+  } catch (err) {
+    console.error('[unsubscribeAnime]', err);
+    return res.status(500).json({ error: 'Error interno.' });
+  }
+}
+
+// ─── Obtener lista de animes suscritos ───────────────────────────────────────
+
+async function getSubscriptions(req, res) {
+  try {
+    const user = await getUserByToken(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'No autorizado.' });
+
+    return res.json({ subscriptions: user.subscriptions || {} });
+  } catch (err) {
+    console.error('[getSubscriptions]', err);
+    return res.status(500).json({ error: 'Error interno.' });
+  }
+}
+
+module.exports = {
+  registerFcmToken,
+  sendToUser,
+  subscribeAnime,
+  unsubscribeAnime,
+  getSubscriptions
+};

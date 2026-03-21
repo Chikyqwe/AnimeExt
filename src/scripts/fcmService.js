@@ -2,8 +2,10 @@ const path = require('path');
 const { parentPort } = require('worker_threads');
 const pLimit = require('p-limit').default;
 
-const { getAllUsers, addAnimeUIDs } =
-  require(path.join(__dirname, '../services/postgresqlbaseService'));
+const { supabase } = require(path.join(__dirname, '../services/supabase/supabase'));
+const SupaInterface = require(path.join(__dirname, '../services/supabase/supabaseInt'));
+const supa = new SupaInterface(supabase);
+
 const { getEpisodes } =
   require(path.join(__dirname, '../utils/helpers'));
 const { getAnimeByUnitId } =
@@ -11,13 +13,30 @@ const { getAnimeByUnitId } =
 const { sendNotification } =
   require(path.join(__dirname, '../services/fcmServicesNotification'));
 
-const limitAnime = pLimit(5);
+const limitAnime  = pLimit(5);
 const limitSource = pLimit(3);
 
 const log = (msg) => parentPort?.postMessage({ type: 'log', msg });
 
+// ─── Reemplaza getAllUsers (antes PostgreSQL) ─────────────────────────────────
+async function getAllUsers() {
+  const users = await supa.get.users();
+  // Solo usuarios que tienen token FCM y al menos un anime suscrito
+  return users.filter(u => u.token && u.anime_uids && Object.keys(u.anime_uids).length > 0);
+}
+
+// ─── Reemplaza addAnimeUIDs (antes PostgreSQL) ────────────────────────────────
+async function updateAnimeUID(userId, animeId, episodeCount) {
+  const user = await supa.get.users.anime_uids(userId);
+  const current = user || {};
+  const updated = { ...current, [animeId]: episodeCount };
+  await supa.write.users.anime_uids(userId, updated);
+}
+
+// ─── Worker principal ─────────────────────────────────────────────────────────
 async function checkUserEpisodes() {
   const users = await getAllUsers();
+  log(`Usuarios a revisar: ${users.length}`);
 
   for (const user of users) {
     const animeUIDs = Object.keys(user.anime_uids || {});
@@ -50,36 +69,37 @@ async function checkUserEpisodes() {
           );
 
           const lastSeen = user.anime_uids[animeId] || 0;
-          const total = best.epData.episodes_count;
+          const total    = best.epData.episodes_count;
 
           if (total > lastSeen && user.token) {
             await sendNotification(user.token, {
               title: animeData.title,
-              body: `Episodio ${total} ya disponible`,
+              body:  `Episodio ${total} ya disponible`,
               image: animeData.image || '',
-              uid: animeData.unit_id
+              uid:   animeData.unit_id
             });
 
-            await addAnimeUIDs(user.uuid, { [animeId]: total });
+            // Actualiza el contador en Supabase
+            await updateAnimeUID(user.id, animeId, total);
+            log(`[OK] ${animeData.title} → ep ${total} notificado a ${user.uuid}`);
           }
 
         } catch (e) {
-          log(`Error anime ${animeId} user ${user.uuid}: ${e.message}`);
+          log(`[ERR] anime ${animeId} user ${user.uuid}: ${e.message}`);
         }
       })
     ));
   }
 }
 
+// ─── Entry point ──────────────────────────────────────────────────────────────
 (async () => {
   try {
     log('Revisión de episodios iniciada');
     await checkUserEpisodes();
-
-    if (global.gc) global.gc(); // opcional
-
+    if (global.gc) global.gc();
     log('Revisión finalizada');
-    process.exit(0); // 🔥 CLAVE
+    process.exit(0);
   } catch (e) {
     log(`Error fatal: ${e.message}`);
     process.exit(1);
