@@ -1,0 +1,119 @@
+# FLUJO COMPLETO: DESDE LA BÚSQUEDA HASTA LA REPRODUCCIÓN
+
+# =========================================================================
+# 1. BÚSQUEDA DEL ANIME
+# Obtenemos los posibles animes buscando la palabra clave
+# =========================================================================
+
+POST http://localhost:2022/anime/search
+Content-Type: application/json
+
+{
+    "Did": "device_identifier_123",
+    "query": "nouka"
+}
+
+# Respuesta Esperada:
+# {
+#     "results": [
+#         {
+#             "title": "Isekai Nonbiri Nouka",
+#             "slug": "isekai-nonbiri-nouka",
+#             "unit_id": 2932
+#         }
+#     ]
+# }
+
+###
+
+# =========================================================================
+# 2. OBTENER INFORMACIÓN DEL ANIME ELEGIDO
+# Le pasamos el uid sacado de la búsqueda (ej. 2932)
+# =========================================================================
+
+GET http://localhost:2022/api/info?uid=2932
+
+# Respuesta Esperada:
+# {
+#     "type": "anime",
+#     "title": "Isekai Nonbiri Nouka",
+#     "episodes": [
+#         { "num": 1, "url": "/player/2932/1" },
+#         { "num": 2, "url": "/player/2932/2" }
+#     ],
+#     "uid": 2932
+# }
+
+###
+
+# =========================================================================
+# 3. SOLICITAR LOS METADATOS Y ESPEJOS (MIRRORS) PARA UN EPISODIO
+# Elegimos el episodio 1 y pedimos resolución automática del mirror principal
+# =========================================================================
+
+POST http://localhost:2022/api/play
+Content-Type: application/json
+
+{
+    "type": "anime",
+    "Did": "device_identifier_123",
+    "uid": 2932,
+    "ep": 1,
+    "s": "auto",
+    "m": "auto"
+}
+
+# Respuesta Esperada:
+# Nota: Nos devueve nuestro 'mid' especial cifrado de 15 minutos en 'url'.
+# {
+#     "type": "anime",
+#     "mirror": 1,
+#     "servers": ["sw", "yu", "voe"],
+#     "Sserver": "sw",
+#     "url": "/api/getMedia/abcdef1231238910hash",
+#     "mid": "abcdef1231238910hash",
+#     "mtype": "hls"
+# }
+
+###
+
+# =========================================================================
+# 4. SOLICITAR LA DATA (MEDIA)
+# Hacemos GET a la URL final que nos entregó el paso anterior
+# =========================================================================
+
+GET http://localhost:2022/api/getMedia/abcdef1231238910hash
+
+# POSIBILIDAD A (SI EL ARCHIVO ES UN M3U8 REESCRITO AL VUELO):
+# El servidor nos devuelve el archivo m3u8 con las URLs de los chunks ocultas:
+#
+# #EXTM3U
+# #EXT-X-VERSION:3
+# #EXT-X-STREAM-INF:BANDWIDTH=1920000,RESOLUTION=1280x720
+# http://localhost:2022/api/hls?gid=aHR0cDsiZmFrZQ==&f=b2JmdXNjYXRpb24=&Did=1
+#
+# (En caso de M3U8, el reproductor de tu TV/App internamente seguirá llamando a las 
+# rutas proxy de tu servidor de la siguiente manera paso 5).
+
+# POSIBILIDAD B (SI EL ARCHIVO ES UN MP4 REDIRECT):
+# {
+#     "url": "http://localhost:2022/api/stream?gid=abcdef1231238910hash"
+# }
+
+###
+
+# =========================================================================
+# 5. REPRODUCCIÓN (PROXY INVISIBLE)
+# =========================================================================
+
+# ---> SI LA CADENA ENCONTRADA ERA M3U8:
+# El player del Frontend lee el archivo manifest modificado y automáticamente 
+# comienza a pedirle los pedazos de video a nuestro proxy oculto:
+GET http://localhost:2022/api/hls?gid=aHR0cHM6Ly9zdH...&f=aHR0cHM6Ly9...&Did=1
+
+# ---> SI LA CADENA ENCONTRADA ERA UN ARCHIVO MP4 PLANO CUBIERTO POR EL HASH:
+# El frontend reproducirá directamente esta ruta apuntándola a su tag <video src="...">
+GET http://localhost:2022/api/stream?gid=abcdef1231238910hash
+
+# ¡Listo! Cualquiera de las dos rutas conectará en vivo con el servidor origen
+# enviando pedazos de byte streams de video a tu reproductor.

@@ -124,8 +124,7 @@ async function last() {
           });
         }
       });
-
-      console.log(`🔗 ${urlToUnitIdMap.size} URLs cargadas desde anime_list.json`);
+      ;
     } catch (e) {
       console.error("[ERROR] Leyendo anime_list.json:", e.message);
     }
@@ -166,7 +165,6 @@ async function last() {
   // Cerrar stream correctamente
   await new Promise(resolve => writeStream.end('\n]', resolve));
 
-  console.log(`\n✅ Archivo reescrito correctamente → ${OUT_LASTEP_PATH}`);
 }
 
 // Ejecutar solo si se corre directamente

@@ -1,6 +1,8 @@
 // src/services/jsonService.js
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
+const cheerio = require('cheerio');
 const { JSON_FOLDER, ANIME_FILE } = require('../config');
 
 // Importamos las nuevas clases de caché
@@ -11,7 +13,7 @@ const { KeyCache, MemoryCache } = require('../core/cache/cache');
  * Usamos MemoryCache para el JSON bruto (acceso ultra rápido).
  * Usamos KeyCache para los animes individuales por ID (persisten comprimidos).
  */
-const rawCache = new MemoryCache({ maxEntries: 10 }); 
+const rawCache = new MemoryCache({ maxEntries: 10 });
 const itemCache = new KeyCache({ ttlMs: 10 * 60 * 1000 }); // 10 min persistentes
 
 if (!fs.existsSync(JSON_FOLDER)) fs.mkdirSync(JSON_FOLDER, { recursive: true });
@@ -31,7 +33,7 @@ function readRawJson() {
       data = JSON.parse(fs.readFileSync(ANIME_FILE, 'utf8'));
     }
     // Guardamos en RAM por 5 segundos para no saturar el disco en peticiones concurrentes
-    rawCache.save(cacheKey, data, 5000); 
+    rawCache.save(cacheKey, data, 5000);
     return data;
   } catch (err) {
     console.error('[JSON SERVICE] Error leyendo JSON:', err);
@@ -88,11 +90,13 @@ function getAnimeByUnitId(unitId) {
 /**
  * Construye URL de episodio según mirror
  */
+async function extractAniyae(url, ep) {
+
+}
 async function buildEpisodeUrl(anime, ep, mirror = 1) {
-  // Convertimos a números para evitar el error de "1" vs 1
   const m = parseInt(mirror, 10);
   const e = parseInt(ep, 10);
-  
+
   console.log(`[buildEpisodeUrl] Procesando: Mirror ${m}, Ep ${e}`);
 
   if (!anime?.sources) {
@@ -101,25 +105,86 @@ async function buildEpisodeUrl(anime, ep, mirror = 1) {
   }
 
   switch (m) {
+    // 🔵 FLV
     case 1:
       if (anime.sources.FLV) {
         return anime.sources.FLV.replace('/anime/', '/ver/') + `-${e}`;
       }
       break;
     case 2:
+      if (anime.sources.ONE) {
+        return anime.sources.ONE.replace('/anime/', '/ver/') + `-${e}`;
+      }
+      break;
+    // 🟣 TIOANIME / TIOHENTAI
+    case 3:
       if (anime.sources.TIO) {
         let url = anime.sources.TIO;
 
         if (url.includes('tioanime.com')) {
           return url.replace('/anime/', '/ver/') + `-${e}`;
         } else if (url.includes('tiohentai.com')) {
-          return url.replace('/hentai/', '/ver/') + `-${e}`;
+          // ⚠️ ya viene con número al final
+          return url.replace(/-\d+$/, `-${e}`);
         }
       }
       break;
-    case 3:
-      if (anime.sources.ANIMEYTX) {
-        return anime.sources.ANIMEYTX.replace('/tv/', '/anime/').replace(/\/$/, '') + `-capitulo-${e}`;
+
+    // 🟡 JKANIME
+    case 4:
+      if (anime.sources.JK) {
+        return anime.sources.JK + `${e}/`;
+      }
+      break;
+
+    // 🔴 ANIYAE
+    case 5:
+      if (anime.sources.ANIYAE) {
+        const { data: html } = await axios.get(anime.sources.ANIYAE);
+        const $ = cheerio.load(html);
+
+        // ===============================
+        // 1️⃣ EXTRAER animeId DESDE SCRIPT
+        // ===============================
+        let animeId = null;
+
+        $('script').each((i, el) => {
+          const text = $(el).html();
+          if (!text) return;
+
+          const match = text.match(/animeId\s*=\s*(\d+)/);
+          if (match) {
+            animeId = match[1];
+          }
+        });
+
+        if (!animeId) throw new Error("❌ No se encontró animeId");
+
+        // ===============================
+        // 6️⃣ API EPISODIOS
+        // ===============================
+        const api = `https://open.aniyae.net/wp-json/kiranime/v1/anime/${animeId}/episodes?page=1&per_page=999999999&order=asc`;
+
+        const res = await axios.get(api);
+        const epsArray = res.data.episodes || [];
+        // ===============================
+        // 9️⃣ RESULTADO FINAL
+        // ===============================
+        return epsArray[e - 1].url;
+      }
+      break;
+
+    // 🟠 HENTAILA
+    case 6:
+      if (anime.sources.HENTAILA) {
+        return anime.sources.HENTAILA + `/${e}`;
+      }
+      break;
+
+    // ⚫ TIOHENTAI directo
+    case 7:
+      if (anime.sources.TIOHENTAI) {
+        return anime.sources.TIOHENTAI.replace('/hentai/', '/ver/') + `-${e}`;
       }
       break;
   }

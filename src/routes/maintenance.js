@@ -2,19 +2,14 @@
 const express = require('express');
 const path = require('path');
 const { iniciarMantenimiento } = require('../services/maintenanceService');
-const { MAINTENANCE_PASSWORD } = require('../config');
+
 const { getUpdatingStatus, setUpdatingStatus } = require('../middlewares/maintenanceBlock');
 
 const router = express.Router();
 
 router.get('/up', async (req, res) => {
-  const { pass } = req.query;
-  console.log(`[UP] Solicitud de mantenimiento con pass: ${pass || 'ausente'}`);
+  console.log(`[UP] Solicitud de mantenimiento`);
 
-  if (pass !== MAINTENANCE_PASSWORD) {
-    console.warn(`[UP] Contraseña incorrecta o ausente`);
-    return res.status(401).sendFile(path.join(__dirname,'..','..', 'public/pass.html'));
-  }
 
   // Evita lanzar mantenimiento si ya está en ejecución
   if (getUpdatingStatus()) {

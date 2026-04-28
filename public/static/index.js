@@ -14,19 +14,20 @@
  * ============================================================ */
 const CONFIG = {
   API: {
-    LAST:        '/anime/last',
-    LIST:        '/anime/list',
-    DESCRIPTION: '/api/description',
-    EPISODES:    '/api/episodes',
+    LAST: '/anime/last',
+    LIST: '/anime/list',
+    INFO: '/api/info',
+    IMAGE: '/anime/img',
+    SEARCH: '/anime/search',
     IMAGE_PROXY: (url) => `/image?url=${encodeURIComponent(url)}`,
   },
   DB: {
-    FAVORITES: { name: 'FavoritosDB',   version: 1, store: 'favoritos' },
-    CACHE:     { name: 'AnimeCacheDB',   version: 3, store: 'precached' },
+    FAVORITES: { name: 'FavoritosDB', version: 1, store: 'favoritos' },
+    CACHE: { name: 'AnimeCacheDB', version: 3, store: 'precached' },
   },
-  EPISODE_SOURCES:   ['FLV', 'TIO', 'ANIMEYTX'],
-  PER_PAGE:          24,
-  MIN_LOAD_MS:       3000,
+  EPISODE_SOURCES: ['FLV', 'TIO', 'ANIMEYTX'],
+  PER_PAGE: 24,
+  MIN_LOAD_MS: 3000,
   SEARCH_DEBOUNCE_MS: 250,
   LOGO_EASTER_EGG_CLICKS: 21,
   LOGO_EASTER_EGG_RESET_MS: 8000,
@@ -37,7 +38,7 @@ const CONFIG = {
  * ============================================================ */
 const State = {
   fullAnimeList: [],   // [{id, unit_id, title, image, slug, sources, …}]
-  loadedCards:   new Map(),
+  loadedCards: new Map(),
   lastSearchTerm: '',
   dbCache: null,       // singleton IndexedDB connection for cache/history/progress
   currentAnime: null,
@@ -125,7 +126,7 @@ const Theme = {
 
     const icon = Utils.el('themeIcon');
     if (icon) {
-      icon.classList.toggle('fa-sun',  mode === 'light');
+      icon.classList.toggle('fa-sun', mode === 'light');
       icon.classList.toggle('fa-moon', mode === 'dark');
     }
 
@@ -231,11 +232,11 @@ const Progress = {
  * ============================================================ */
 const MobileMenu = {
   _menu: null,
-  _btn:  null,
+  _btn: null,
 
   init() {
     this._menu = Utils.el('mobileDropdownMenu');
-    this._btn  = Utils.el('hamburgerBtn');
+    this._btn = Utils.el('hamburgerBtn');
     if (!this._menu || !this._btn) return;
 
     this._btn.addEventListener('click', () => this.toggle());
@@ -265,10 +266,10 @@ const MobileMenu = {
  * ============================================================ */
 const MobileSearch = {
   init() {
-    const form   = Utils.qs('.search-form');
+    const form = Utils.qs('.search-form');
     const toggle = Utils.el('search-toggle-btn');
-    const input  = Utils.el('searchInput');
-    const close  = Utils.el('search-close-btn');
+    const input = Utils.el('searchInput');
+    const close = Utils.el('search-close-btn');
     if (!form || !toggle || !input) return;
 
     toggle.addEventListener('click', () => this._open(form, input));
@@ -315,14 +316,14 @@ const MobileSearch = {
  * ============================================================ */
 const Nav = {
   SECTIONS: ['anime', 'directory', 'historial', 'favoritos', 'search'],
-  NAV_IDS:  ['navInicio', 'navDirectorio', 'navHistorial', 'navFavoritos'],
+  NAV_IDS: ['navInicio', 'navDirectorio', 'navHistorial', 'navFavoritos'],
 
   init() {
     const bindings = [
-      ['navInicio',      'mobileNavInicio',     1],
-      ['navDirectorio',  'mobileNavDirectorio',  2],
-      ['navHistorial',   'mobileNavHistorial',   3],
-      ['navFavoritos',   'mobileNavFavoritos',   4],
+      ['navInicio', 'mobileNavInicio', 1],
+      ['navDirectorio', 'mobileNavDirectorio', 2],
+      ['navHistorial', 'mobileNavHistorial', 3],
+      ['navFavoritos', 'mobileNavFavoritos', 4],
     ];
 
     bindings.forEach(([desktopId, mobileId, num]) => {
@@ -341,7 +342,7 @@ const Nav = {
   /** Highlight the active nav item (1-indexed matching NAV_IDS) */
   setActive(num) {
     const activeDesktopId = this.NAV_IDS[num - 1];
-    const activeMobileId  = 'mobile' + activeDesktopId.charAt(0).toUpperCase() + activeDesktopId.slice(1);
+    const activeMobileId = 'mobile' + activeDesktopId.charAt(0).toUpperCase() + activeDesktopId.slice(1);
 
     Utils.qsa('nav.main-nav a.nav-item, #mobileDropdownMenu a').forEach((link) => {
       link.classList.toggle(
@@ -357,8 +358,8 @@ const Nav = {
  * ============================================================ */
 const Layout = {
   _sectionIds: {
-    search:    'search-section',
-    anime:     'anime-section',
+    search: 'search-section',
+    anime: 'anime-section',
     directory: 'directory-section',
     historial: 'historial-section',
     favoritos: 'favoritos-section',
@@ -397,10 +398,10 @@ const Layout = {
   async _showDirectory() {
     Utils.el('directory-section')?.classList.remove('d-none');
     Utils.el('pagination-controls')?.classList.remove('d-none');
-    const page      = Utils.getPageParam();
-    const paginated = Utils.paginate(State.fullAnimeList, page);
-    Cards.render(paginated, 'card-container');
-    Pagination.create(State.fullAnimeList.length, page);
+    const page = Utils.getPageParam();
+    const listData = await fetchAnimeList(page);
+    Cards.render(listData.items, 'card-container');
+    Pagination.create(listData.totalPages, page);
     setTimeout(() => Loader.hide(), 1000);
   },
 
@@ -420,12 +421,17 @@ const Layout = {
       }
 
       container.innerHTML = '';
-      history.forEach((item) => {
-        const anime = State.fullAnimeList.find((a) => a.unit_id === item.uid || a.id === item.uid);
-        if (!anime) return;
-        container.appendChild(Cards.createHistory(anime));
-      });
-    } catch {
+      for (const item of history) {
+        let anime = State.fullAnimeList.find((a) => a.unit_id === item.uid || a.id === item.uid);
+        if (!anime) {
+          // Fallback basic info if not found in cache
+          anime = { unit_id: item.uid, title: item.title || 'Anime' };
+        }
+        const card = await Cards.createHistory(anime);
+        container.appendChild(card);
+      }
+    } catch (err) {
+      console.error('[Layout._showHistory]', err);
       container.innerHTML = '<p class="text-danger">Error al cargar historial.</p>';
     }
 
@@ -441,7 +447,7 @@ const Layout = {
 
     try {
       const favTitles = await Favorites.loadAll();
-      const animes    = State.fullAnimeList.filter((a) => favTitles.includes(a.title));
+      const animes = State.fullAnimeList.filter((a) => favTitles.includes(a.title));
 
       if (!animes.length) {
         container.innerHTML = '<p class="text-muted">Aún no has agregado animes a favoritos.</p>';
@@ -450,8 +456,12 @@ const Layout = {
       }
 
       container.innerHTML = '';
-      animes.forEach((anime) => container.appendChild(Cards.createFavorite(anime)));
-    } catch {
+      for (const anime of animes) {
+        const card = await Cards.createFavorite(anime);
+        container.appendChild(card);
+      }
+    } catch (err) {
+      console.error('[Layout._showFavorites]', err);
       container.innerHTML = '<p class="text-danger">Error al mostrar favoritos.</p>';
     }
 
@@ -464,28 +474,39 @@ const Layout = {
  * ============================================================ */
 const Cards = {
   /** Render a list of animes into a container by id */
-  render(animes, containerId) {
+  async render(animes, containerId) {
     const container = Utils.el(containerId);
     if (!container) return;
 
     container.innerHTML = '';
     State.loadedCards.clear();
 
-    animes.forEach((anime) => {
-      const card = this._createBasic(anime);
+    animes.forEach(async (anime) => {
+      const card = await this._createBasic(anime);
       container.appendChild(card);
       State.loadedCards.set(anime.title, card);
     });
   },
 
   /** Basic card for directory / search */
-  _createBasic(anime) {
+  async _createBasic(anime) {
     const card = document.createElement('div');
-    card.className  = 'anime-card';
-    card.tabIndex   = 0;
+    card.className = 'anime-card';
+    card.tabIndex = 0;
     card.setAttribute('role', 'button');
+    // post a img binary
+    const res = await fetch(CONFIG.API.IMAGE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ type: "cover", uid: anime.unit_id }),
+    });
+
+    const blob = await res.blob();
+    const imgUrl = URL.createObjectURL(blob);
     card.innerHTML = `
-      <img src="${CONFIG.API.IMAGE_PROXY(anime.image)}"
+      <img src="${imgUrl}"
            alt="${Utils.cleanTitle(anime.title)}"
            class="anime-image" loading="lazy" />
       <div class="anime-title">${Utils.cleanTitle(anime.title)}</div>
@@ -495,21 +516,42 @@ const Cards = {
   },
 
   /** Card for the history section (with remove / playlist buttons) */
-  createHistory(anime) {
+  async createHistory(anime) {
     const card = document.createElement('div');
     card.className = 'anime-card';
-    card.tabIndex  = 0;
+    card.tabIndex = 0;
     card.setAttribute('role', 'button');
-    card.innerHTML = `
-      <img src="${CONFIG.API.IMAGE_PROXY(anime.image)}"
-           alt="${Utils.cleanTitle(anime.title)}"
-           class="anime-image" loading="lazy" />
-      <div class="anime-title">${Utils.cleanTitle(anime.title)}</div>
-      <div class="anime-overlay">
-        <button class="btn-remove"><i class="bi bi-trash"></i> Quitar del historial</button>
-        <button class="btn-playlist"><i class="bi bi-plus-circle"></i> Añadir a playlist</button>
-      </div>
-    `;
+
+    try {
+      const res = await fetch(CONFIG.API.IMAGE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: "cover", uid: anime.unit_id || anime.id }),
+      });
+      const blob = await res.blob();
+      const imgUrl = URL.createObjectURL(blob);
+      card.innerHTML = `
+        <img src="${imgUrl}"
+             alt="${Utils.cleanTitle(anime.title)}"
+             class="anime-image" loading="lazy" />
+        <div class="anime-title">${Utils.cleanTitle(anime.title)}</div>
+        <div class="anime-overlay">
+          <button class="btn-remove"><i class="bi bi-trash"></i> Quitar del historial</button>
+          <button class="btn-playlist"><i class="bi bi-plus-circle"></i> Añadir a playlist</button>
+        </div>
+      `;
+    } catch {
+      card.innerHTML = `
+        <img src="static/default-poster.jpg"
+             alt="${Utils.cleanTitle(anime.title)}"
+             class="anime-image" loading="lazy" />
+        <div class="anime-title">${Utils.cleanTitle(anime.title)}</div>
+        <div class="anime-overlay">
+          <button class="btn-remove"><i class="bi bi-trash"></i> Quitar del historial</button>
+          <button class="btn-playlist"><i class="bi bi-plus-circle"></i> Añadir a playlist</button>
+        </div>
+      `;
+    }
 
     // Click → open info (unless in overlay mode)
     card.addEventListener('click', () => {
@@ -521,7 +563,7 @@ const Cards = {
     card.addEventListener('touchstart', () => {
       pressTimer = setTimeout(() => card.classList.add('show-options'), 500);
     }, { passive: true });
-    card.addEventListener('touchend',   () => clearTimeout(pressTimer));
+    card.addEventListener('touchend', () => clearTimeout(pressTimer));
 
     // Right-click on desktop
     card.addEventListener('contextmenu', (e) => {
@@ -554,18 +596,35 @@ const Cards = {
   },
 
   /** Card for the favorites section */
-  createFavorite(anime) {
+  async createFavorite(anime) {
     const card = document.createElement('div');
-    card.className      = 'anime-card';
-    card.dataset.anime  = anime.title ?? '';
+    card.className = 'anime-card';
+    card.dataset.anime = anime.title ?? '';
     if (anime.unit_id) card.dataset.uid = anime.unit_id;
-    if (anime.id)      card.dataset.id  = anime.id;
-    card.innerHTML = `
-      <img src="${CONFIG.API.IMAGE_PROXY(anime.image)}"
-           alt="${Utils.cleanTitle(anime.title)}"
-           class="anime-image" loading="lazy" />
-      <div class="anime-title">${Utils.cleanTitle(anime.title)}</div>
-    `;
+    if (anime.id) card.dataset.id = anime.id;
+
+    try {
+      const res = await fetch(CONFIG.API.IMAGE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: "cover", uid: anime.unit_id || anime.id }),
+      });
+      const blob = await res.blob();
+      const imgUrl = URL.createObjectURL(blob);
+      card.innerHTML = `
+        <img src="${imgUrl}"
+             alt="${Utils.cleanTitle(anime.title)}"
+             class="anime-image" loading="lazy" />
+        <div class="anime-title">${Utils.cleanTitle(anime.title)}</div>
+      `;
+    } catch {
+      card.innerHTML = `
+        <img src="static/default-poster.jpg"
+             alt="${Utils.cleanTitle(anime.title)}"
+             class="anime-image" loading="lazy" />
+        <div class="anime-title">${Utils.cleanTitle(anime.title)}</div>
+      `;
+    }
     card.addEventListener('click', () => Modal.open(anime.unit_id));
     return card;
   },
@@ -579,7 +638,7 @@ const Cards = {
 
     const showBar = () => {
       progressBar = document.createElement('div');
-      progressBar.className  = 'longpress-bar';
+      progressBar.className = 'longpress-bar';
       progressBar.style.cssText = 'width:0%;transition:none;';
       card.appendChild(progressBar);
       void progressBar.offsetWidth;
@@ -631,17 +690,17 @@ const Cards = {
  * PAGINATION
  * ============================================================ */
 const Pagination = {
-  create(totalItems, currentPage) {
+  create(totalPages, currentPage) {
     const container = Utils.el('pagination-controls');
     if (!container) return;
     container.innerHTML = '';
 
-    const totalPages = Math.ceil(totalItems / CONFIG.PER_PAGE);
+    console.log('[Pagination.create] totalPages:', totalPages);
     if (totalPages <= 1) return;
 
-    const groupSize    = this._groupSize();
-    const groupStart   = Math.floor((currentPage - 1) / groupSize) * groupSize + 1;
-    const groupEnd     = Math.min(groupStart + groupSize - 1, totalPages);
+    const groupSize = this._groupSize();
+    const groupStart = Math.floor((currentPage - 1) / groupSize) * groupSize + 1;
+    const groupEnd = Math.min(groupStart + groupSize - 1, totalPages);
 
     const wrap = document.createElement('div');
     wrap.id = 'pagination';
@@ -649,14 +708,14 @@ const Pagination = {
     const btn = (page, label, isNav = false) => {
       const b = document.createElement('button');
       b.textContent = label ?? String(page);
-      b.className   = `pagination-btn${isNav ? ' nav' : ''}${page === currentPage ? ' active' : ''}`;
+      b.className = `pagination-btn${isNav ? ' nav' : ''}${page === currentPage ? ' active' : ''}`;
       b.addEventListener('click', () => this._changePage(page));
       return b;
     };
 
-    if (groupStart > 1)         wrap.appendChild(btn(currentPage - 1, '«', true));
+    if (groupStart > 1) wrap.appendChild(btn(currentPage - 1, '«', true));
     for (let i = groupStart; i <= groupEnd; i++) wrap.appendChild(btn(i));
-    if (groupEnd < totalPages)  wrap.appendChild(btn(currentPage + 1, '»', true));
+    if (groupEnd < totalPages) wrap.appendChild(btn(currentPage + 1, '»', true));
 
     container.appendChild(wrap);
   },
@@ -677,9 +736,10 @@ const Pagination = {
     params.set('page', page);
     window.history.pushState({ page }, '', `${window.location.pathname}?${params}`);
 
-    const paginated = Utils.paginate(State.fullAnimeList, page);
-    Cards.render(paginated, 'card-container');
-    this.create(State.fullAnimeList.length, page);
+    const listData = await fetchAnimeList(page);
+    Cards.render(listData.items, 'card-container');
+    this.create(listData.totalPages, page);
+
     await Loader.waitForImages();
     localStorage.setItem('lastPage', page);
     Loader.hide();
@@ -704,7 +764,7 @@ const Search = {
       const box = Utils.el('search-suggestions');
       if (box && !box.contains(e.target) && e.target !== input) {
         box.style.display = 'none';
-        box.innerHTML     = '';
+        box.innerHTML = '';
       }
     });
   },
@@ -713,7 +773,7 @@ const Search = {
   async run(event = null, term = null) {
     event?.preventDefault();
 
-    const raw       = term ?? Utils.el('searchInput')?.value ?? '';
+    const raw = term ?? Utils.el('searchInput')?.value ?? '';
     const normalized = Utils.normalize(raw);
 
     // Update URL
@@ -728,17 +788,30 @@ const Search = {
       return;
     }
 
-    const terms        = normalized.split(' ').filter(Boolean);
-    const localResults = this._filterLocal(terms);
-    const kitsuResults = await this._fetchKitsu(normalized, terms);
+    const terms = normalized.split(' ').filter(Boolean);
 
-    // Merge without duplicates (local takes priority)
-    const seen    = new Set(localResults.map((a) => Utils.normalize(a.title)));
-    const merged  = [...localResults];
+    // Llamada a la API de búsqueda del backend
+    let merged = [];
+    try {
+      const res = await fetch(CONFIG.API.SEARCH, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: normalized })
+      });
+      const apiResults = await res.json();
 
-    for (const k of kitsuResults) {
-      const n = Utils.normalize(k.title);
-      if (!seen.has(n)) { seen.add(n); merged.push(k); }
+      // Registramos los resultados en la lista global para que el modal los encuentre
+      apiResults.forEach(item => {
+        if (!State.fullAnimeList.find(a => a.unit_id === item.unit_id)) {
+          State.fullAnimeList.push({ ...item, image: item.image || '' });
+        }
+      });
+
+      merged = apiResults;
+    } catch (err) {
+      console.error('[Search API Error]', err);
+      // Fallback a búsqueda local si falla la API
+      merged = this._filterLocal(terms);
     }
 
     this._renderResults(merged, normalized);
@@ -752,7 +825,7 @@ const Search = {
 
   async _fetchKitsu(query, terms) {
     try {
-      const res  = await fetch(`https://kitsu.io/api/edge/anime?filter[text]=${encodeURIComponent(query)}`);
+      const res = await fetch(`https://kitsu.io/api/edge/anime?filter[text]=${encodeURIComponent(query)}`);
       const json = await res.json();
 
       return json.data
@@ -809,17 +882,17 @@ const Search = {
     }
 
     container.innerHTML = '';
-    results.forEach((anime) => container.appendChild(Cards._createBasic(anime)));
+    results.forEach(async (anime) => container.appendChild(await Cards._createBasic(anime)));
     setTimeout(() => Loader.hide(), 1000);
   },
 
   /** Live suggestions dropdown */
   async suggest() {
-    const input   = Utils.el('searchInput');
-    const box     = Utils.el('search-suggestions');
+    const input = Utils.el('searchInput');
+    const box = Utils.el('search-suggestions');
     if (!input || !box) return;
 
-    const value   = Utils.normalize(input.value);
+    const value = Utils.normalize(input.value);
     box.innerHTML = '';
 
     if (!value || !State.fullAnimeList.length) {
@@ -828,42 +901,35 @@ const Search = {
     }
 
     State.lastSearchTerm = value;
-    const terms          = value.split(' ').filter(Boolean);
 
-    let local = State.fullAnimeList
-      .filter((a) => {
-        const titles = [a.title, a.en_jp, a.ja_jp].filter(Boolean).map(Utils.normalize);
-        return titles.some((t) => terms.every((term) => t.includes(term)));
-      })
-      .slice(0, 4);
-
-    this._renderSuggestions(local, box);
-
-    // Enhance with Kitsu (only if still the same query)
     try {
-      const res   = await fetch(`https://kitsu.io/api/edge/anime?filter[text]=${encodeURIComponent(value)}`);
-      const json  = await res.json();
+      const res = await fetch(CONFIG.API.SEARCH, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: value })
+      });
+      const results = await res.json();
       if (State.lastSearchTerm !== value) return;
 
-      const remote = json.data
-        .map((item) => {
-          const apiTitles = [
-            item.attributes.canonicalTitle,
-            item.attributes.titles?.en,
-            item.attributes.titles?.en_jp,
-            item.attributes.titles?.ja_jp,
-          ].filter(Boolean).map(Utils.normalize);
+      // Registramos resultados para el Modal
+      results.forEach(item => {
+        if (!State.fullAnimeList.find(a => a.unit_id === item.unit_id)) {
+          State.fullAnimeList.push(item);
+        }
+      });
 
-          return State.fullAnimeList.find((a) =>
-            [a.title, a.en_jp, a.ja_jp].filter(Boolean).map(Utils.normalize)
-              .some((t) => apiTitles.includes(t))
-          );
+      this._renderSuggestions(results.slice(0, 5), box);
+    } catch (err) {
+      // Fallback local
+      const terms = value.split(' ').filter(Boolean);
+      let local = State.fullAnimeList
+        .filter((a) => {
+          const titles = [a.title, a.en_jp, a.ja_jp].filter(Boolean).map(Utils.normalize);
+          return titles.some((t) => terms.every((term) => t.includes(term)));
         })
-        .filter(Boolean);
-
-      const combined = [...local, ...remote.filter((a) => !local.includes(a))].slice(0, 4);
-      this._renderSuggestions(combined, box);
-    } catch { /* silent */ }
+        .slice(0, 4);
+      this._renderSuggestions(local, box);
+    }
   },
 
   _renderSuggestions(list, box) {
@@ -879,7 +945,7 @@ const Search = {
       `;
       item.addEventListener('click', () => {
         Modal.open(anime.unit_id);
-        box.innerHTML     = '';
+        box.innerHTML = '';
         box.style.display = 'none';
       });
       box.appendChild(item);
@@ -899,8 +965,8 @@ const DB = {
   _openFavorites() {
     return new Promise((resolve, reject) => {
       const req = indexedDB.open(CONFIG.DB.FAVORITES.name, CONFIG.DB.FAVORITES.version);
-      req.onerror         = () => reject('Error abriendo FavoritosDB');
-      req.onsuccess       = () => resolve(req.result);
+      req.onerror = () => reject('Error abriendo FavoritosDB');
+      req.onsuccess = () => resolve(req.result);
       req.onupgradeneeded = (e) => {
         const db = e.target.result;
         if (!db.objectStoreNames.contains(CONFIG.DB.FAVORITES.store)) {
@@ -911,8 +977,8 @@ const DB = {
   },
 
   async _favTx(mode) {
-    const db    = await this._openFavorites();
-    const tx    = db.transaction(CONFIG.DB.FAVORITES.store, mode);
+    const db = await this._openFavorites();
+    const tx = db.transaction(CONFIG.DB.FAVORITES.store, mode);
     const store = tx.objectStore(CONFIG.DB.FAVORITES.store);
     return store;
   },
@@ -922,7 +988,7 @@ const DB = {
     return new Promise((res, rej) => {
       const r = store.add({ title });
       r.onsuccess = () => res(true);
-      r.onerror   = () => rej('Error al agregar favorito');
+      r.onerror = () => rej('Error al agregar favorito');
     });
   },
 
@@ -931,7 +997,7 @@ const DB = {
     return new Promise((res, rej) => {
       const r = store.delete(title);
       r.onsuccess = () => res(true);
-      r.onerror   = () => rej('Error al eliminar favorito');
+      r.onerror = () => rej('Error al eliminar favorito');
     });
   },
 
@@ -940,7 +1006,7 @@ const DB = {
     return new Promise((res, rej) => {
       const r = store.get(title);
       r.onsuccess = () => res(!!r.result);
-      r.onerror   = () => rej('Error al verificar favorito');
+      r.onerror = () => rej('Error al verificar favorito');
     });
   },
 
@@ -949,7 +1015,7 @@ const DB = {
     return new Promise((res, rej) => {
       const r = store.getAll();
       r.onsuccess = () => res(r.result.map((i) => i.title));
-      r.onerror   = () => rej('Error al cargar favoritos');
+      r.onerror = () => rej('Error al cargar favoritos');
     });
   },
 
@@ -958,7 +1024,7 @@ const DB = {
     if (State.dbCache) return Promise.resolve(State.dbCache);
     return new Promise((resolve, reject) => {
       const req = indexedDB.open(CONFIG.DB.CACHE.name, CONFIG.DB.CACHE.version);
-      req.onerror   = () => reject(req.error);
+      req.onerror = () => reject(req.error);
       req.onsuccess = () => { State.dbCache = req.result; resolve(req.result); };
       req.onupgradeneeded = (e) => {
         const db = e.target.result;
@@ -976,7 +1042,7 @@ const DB = {
     return new Promise((res, rej) => {
       const r = db.transaction('history', 'readonly').objectStore('history').getAll();
       r.onsuccess = () => res(r.result ?? []);
-      r.onerror   = () => rej(r.error);
+      r.onerror = () => rej(r.error);
     });
   },
 
@@ -991,10 +1057,10 @@ const DB = {
  * FAVORITES  (facade over DB)
  * ============================================================ */
 const Favorites = {
-  loadAll: ()              => DB.favoriteLoadAll(),
-  exists:  (title)         => DB.favoriteExists(title),
-  add:     (title)         => DB.favoriteAdd(title),
-  remove:  (title)         => DB.favoriteRemove(title),
+  loadAll: () => DB.favoriteLoadAll(),
+  exists: (title) => DB.favoriteExists(title),
+  add: (title) => DB.favoriteAdd(title),
+  remove: (title) => DB.favoriteRemove(title),
 
   async toggle(title, btn) {
     try {
@@ -1015,7 +1081,7 @@ const Favorites = {
 
       if (btn) {
         btn.innerHTML = `<i class="fa fa-heart me-1"></i> ${nowFav ? 'Quitar de Favoritos' : 'Agregar a Favoritos'}`;
-        btn.classList.toggle('btn-dark',         nowFav);
+        btn.classList.toggle('btn-dark', nowFav);
         btn.classList.toggle('btn-outline-light', !nowFav);
       }
     } catch (err) {
@@ -1031,159 +1097,331 @@ const Modal = {
   _bsInstance: null,
 
   async open(uid) {
-    const anime = Utils.findByUId(uid);
+    let anime = Utils.findByUId(uid);
+
     if (!anime) {
-      console.warn(`[Modal.open] Anime UID ${uid} no encontrado.`);
-      return;
+      anime = { unit_id: uid, title: 'Cargando...', image: '' };
     }
 
-    State.currentAnime = anime;
+    const el = Utils.el('animeModal');
+    if (!el) return;
 
-    // Elements
-    const titleEl    = Utils.el('modalTitle');
-    const descEl     = Utils.el('modalDescription');
-    const episodesEl = Utils.el('episodes-list');
-
-    if (titleEl)    titleEl.textContent  = Utils.cleanTitle(anime.title);
-    if (episodesEl) episodesEl.innerHTML = '';
-
-    // Show Bootstrap modal
-    const modalEl = Utils.el('animeModal');
-    if (modalEl) {
-      this._bsInstance = new bootstrap.Modal(modalEl);
-      this._bsInstance.show();
-    }
-
-    // Image (placeholder while fetching)
-    const proxyUrl = CONFIG.API.IMAGE_PROXY(anime.image);
-    this._setImage(proxyUrl);
-
-    // Buttons
+    this._bsInstance = bootstrap.Modal.getOrCreateInstance(el);
+    this._bsInstance.show();
+    this._setImage("https://placehold.co/260x370")
     this._initFavoriteBtn(anime.title);
-    this._initShareBtn(anime.unit_id);
+    this._initShareBtn(uid);
 
-    // Description (async, non-blocking)
-    this._loadDescription(anime.unit_id, descEl);
+    // Imagen inicial rápida
+    try {
+      const res = await fetch(CONFIG.API.IMAGE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: anime.unit_id, type: 'cover' }),
+      });
 
-    // Rating + image validation (async, non-blocking)
-    this._loadRatingAndImage(anime, proxyUrl);
+      if (res.ok) {
+        const blob = await res.blob();
+        const imageUrl = URL.createObjectURL(blob);
+        this._setImage(imageUrl);
+      }
+    } catch (e) {
+      console.warn('[Modal.open image]', e);
+    }
 
-    // Episodes (async, non-blocking)
-    this._loadEpisodes(anime, episodesEl);
+    await this._loadInfo(anime);
+  },
+
+  async _loadInfo(anime) {
+    const titleEl = Utils.el('modalTitle');
+    const descEl = Utils.el('modalDescription');
+    const containerEl = Utils.el('episodes-list');
+
+    if (titleEl) titleEl.textContent = anime.title;
+
+    let dots = 0;
+    const interval = setInterval(() => {
+      if (descEl) {
+        descEl.textContent = `Cargando${'.'.repeat((dots++ % 5) + 1)}`;
+      }
+    }, 400);
+
+    try {
+      const res = await fetch(
+        `${CONFIG.API.INFO}?uid=${encodeURIComponent(anime.unit_id)}`
+      );
+
+      const data = await res.json();
+      clearInterval(interval);
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Error en /api/info');
+      }
+
+      if (titleEl) titleEl.textContent = data.title;
+
+      this._initFavoriteBtn(data.title);
+
+      if (descEl) {
+        descEl.textContent = data.desc || 'Sin descripción disponible.';
+      }
+
+      // STATUS
+      const statusEl = Utils.el('modalStatus');
+      if (statusEl) {
+        const isOngoing = /emisi[oó]n|ongoing/i.test(data.status ?? '');
+        const isFinished = /finaliz|finished|completed/i.test(data.status ?? '');
+
+        statusEl.textContent = data.status || 'Desconocido';
+        statusEl.style.background =
+          isOngoing ? '#28a745' :
+            isFinished ? '#fb3447' :
+              '#343a40';
+      }
+
+      // TAGS
+      const tagsEl = Utils.el('modalTags');
+      if (tagsEl && data.tags?.length) {
+        tagsEl.innerHTML = data.tags
+          .map(t => `<span class="badge bg-secondary me-1">${t}</span>`)
+          .join('');
+      }
+
+      this._renderEpisodes(data, containerEl);
+
+      await this._loadRatingAndImage(data, anime.image);
+
+    } catch (err) {
+      clearInterval(interval);
+      console.error('[Modal._loadInfo]', err);
+      if (descEl) descEl.textContent = 'Error al cargar la información.';
+    }
+  },
+
+  _renderEpisodes(data, container) {
+    if (!container) return;
+    container.innerHTML = '';
+
+    const isOngoing = /emisi[oó]n|ongoing/i.test(data.status ?? '');
+    const isFinished = /finaliz|finished|completed/i.test(data.status ?? '');
+
+    const badgeColor = isOngoing
+      ? '#28a745'
+      : isFinished
+        ? '#fb3447'
+        : '#343a40';
+
+    const badgeText = isOngoing
+      ? `Próxima emisión: ${data.isNewEP ?? 'Desconocida'}`
+      : (data.status ?? 'Desconocido');
+
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'episode-card';
+    statusDiv.innerHTML = `
+      <div style="display:flex;align-items:center;width:100%;gap:10px;">
+        <button type="button" class="episode-status" style="
+          flex:1;
+          background-color:${badgeColor} !important;
+          cursor:default;
+          font-weight:600;
+          color:#fff;
+        ">${badgeText}</button>
+      </div>
+    `;
+
+    container.appendChild(statusDiv);
+
+    if (!data.episodes?.length) return;
+
+    const list = data.episodes.length < 50
+      ? [...data.episodes].reverse()
+      : data.episodes;
+
+    list.forEach(ep => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'episode-card';
+
+      btn.innerHTML = `
+        <div class="ep-thumb">
+          <img
+            src="https://placehold.co/240x135"
+            data-uid="${data.uid}"
+            data-ep="${ep.num}"
+            alt="Ep. ${ep.num}"
+            loading="lazy"
+          />
+          <span class="ep-number">Ep. ${ep.num}</span>
+        </div>
+      `;
+
+      const img = btn.querySelector('img');
+
+      const observer = new IntersectionObserver(([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+
+        const uid = data.unit_id ?? data.uid;
+        this._loadEpThumb(img, uid, ep.num);
+      }, { rootMargin: '100px' });
+
+      observer.observe(img);
+
+      btn.addEventListener('click', () => {
+        window.location.href = ep.url;
+      });
+
+      container.appendChild(btn);
+    });
+  },
+
+  async _loadEpThumb(imgEl, uid, epNum) {
+    try {
+      const res = await fetch(CONFIG.API.IMAGE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, type: 'ep', ep: epNum }),
+      });
+
+      if (!res.ok) return;
+
+      const blob = await res.blob();
+      imgEl.src = URL.createObjectURL(blob);
+    } catch {
+      // fallback silencioso
+    }
   },
 
   close() {
     const el = Utils.el('animeModal');
     if (!el) return;
+
     (bootstrap.Modal.getInstance(el) ?? new bootstrap.Modal(el)).hide();
   },
 
   _setImage(url) {
-    const img     = Utils.el('modalImage');
+    const img = Utils.el('modalImage');
     const wrapper = Utils.el('modalImgWrapper');
+
     if (!img) return;
+
     img.src = url;
-    img.onload = () => wrapper?.style.setProperty('--blur-bg', `url(${url})`);
+
+    img.onload = () => {
+      wrapper?.style.setProperty('--blur-bg', `url(${url})`);
+    };
   },
 
   async _initFavoriteBtn(title) {
     const btn = Utils.el('favoriteBtn');
     if (!btn) return;
+
     const isFav = await Favorites.exists(title);
-    btn.innerHTML = `<i class="fa fa-heart me-1"></i> ${isFav ? 'Quitar de Favoritos' : 'Agregar a Favoritos'}`;
-    btn.classList.toggle('btn-dark',         isFav);
+
+    btn.innerHTML = `
+      <i class="fa fa-heart me-1"></i>
+      ${isFav ? 'Quitar de Favoritos' : 'Agregar a Favoritos'}
+    `;
+
+    btn.classList.toggle('btn-dark', isFav);
     btn.classList.toggle('btn-outline-light', !isFav);
-    btn.onclick = (e) => { e.stopPropagation(); Favorites.toggle(title, btn); };
+
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      Favorites.toggle(title, btn);
+    };
   },
 
   _initShareBtn(uid) {
     const btn = Utils.el('shareBtn');
     if (!btn) return;
+
     btn.onclick = async (e) => {
       e.stopPropagation();
-      const url   = `/app/share?uid=${encodeURIComponent(uid)}`;
+
+      const url = `/app/share?uid=${encodeURIComponent(uid)}`;
       const anime = Utils.findByUId(uid);
+
       if (navigator.share) {
-        try { await navigator.share({ title: anime?.title, url }); } catch { /* cancelled */ }
+        try {
+          await navigator.share({
+            title: anime?.title,
+            url
+          });
+        } catch { }
       } else {
         Share.open('', url);
       }
     };
   },
 
-  async _loadDescription(uid, el) {
-    if (!el) return;
-
-    // Animated loading dots
-    let dots = 0;
-    const interval = setInterval(() => {
-      el.textContent = `Cargando descripción${'.'.repeat((dots++ % 5) + 1)}`;
-    }, 400);
-
-    try {
-      const res  = await fetch(CONFIG.API.DESCRIPTION, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid }),
-      });
-      const json = await res.json();
-      el.textContent = res.ok ? (json.description || 'Sin descripción disponible.') : 'No se pudo cargar la descripción.';
-    } catch {
-      el.textContent = 'Error al cargar la descripción.';
-    } finally {
-      clearInterval(interval);
-    }
-  },
-
   async _loadRatingAndImage(anime, fallbackUrl) {
     try {
-      const res  = await fetch(`https://kitsu.app/api/edge/anime?filter%5Btext%5D=${anime.slug}`);
+      const res = await fetch(
+        `https://kitsu.app/api/edge/anime?filter%5Btext%5D=${anime.slug}`
+      );
+
       const json = await res.json();
       if (!json.data?.length) return;
 
       const attrs = json.data[0].attributes;
 
-      // Rating
       let rating = attrs.averageRating;
+
       if (rating == null) {
         const freqs = attrs.ratingFrequencies ?? {};
         let total = 0, count = 0;
+
         for (const [r, f] of Object.entries(freqs)) {
           total += parseInt(r, 10) * parseInt(f, 10);
           count += parseInt(f, 10);
         }
+
         if (count > 0) {
           const max = Math.max(...Object.keys(freqs).map(Number));
           rating = Math.round(((total / count) / max) * 100) / 10;
         }
       }
+
       this._renderStars(rating);
 
-      // Image — only switch if the proxy image is mostly black
       const isBlack = await this._isImageBlack(fallbackUrl);
+
       if (isBlack && attrs.posterImage) {
-        const betterUrl = attrs.posterImage.original ?? attrs.posterImage.large ?? fallbackUrl;
+        const betterUrl =
+          attrs.posterImage.original ||
+          attrs.posterImage.large ||
+          fallbackUrl;
+
         this._setImage(betterUrl);
       }
+
     } catch (err) {
-      console.warn('[Modal rating]', err);
+      console.warn('[Modal._loadRatingAndImage]', err);
     }
   },
 
   _renderStars(rating) {
     const scoreEl = Utils.el('ratingScore');
     const starsEl = Utils.el('ratingStars');
+
     if (!scoreEl || !starsEl) return;
 
     const score = parseFloat(rating);
-    scoreEl.textContent = isNaN(score) ? '—' : (score / 10).toFixed(1);
 
-    if (isNaN(score)) { starsEl.innerHTML = ''; return; }
+    scoreEl.textContent = isNaN(score)
+      ? '—'
+      : (score / 10).toFixed(1);
 
-    const value     = Math.round((score / 100) * 10 * 2) / 2; // 0–10 in 0.5 steps
-    const full      = Math.floor(value);
-    const half      = value % 1 !== 0;
-    const empty     = 10 - full - (half ? 1 : 0);
+    if (isNaN(score)) {
+      starsEl.innerHTML = '';
+      return;
+    }
+
+    const value = Math.round((score / 100) * 10 * 2) / 2;
+    const full = Math.floor(value);
+    const half = value % 1 !== 0;
+    const empty = 10 - full - (half ? 1 : 0);
 
     starsEl.innerHTML =
       '<i class="fa fa-star"></i>'.repeat(full) +
@@ -1191,125 +1429,71 @@ const Modal = {
       '<i class="fa fa-star inactive"></i>'.repeat(empty);
   },
 
-  /** Returns true if >90% of the image pixels are very dark */
   _isImageBlack(url) {
     return new Promise((resolve) => {
-      const img    = new Image();
+      const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.onload  = () => {
-        const scale  = Math.min(100 / img.width, 100 / img.height);
+
+      img.onload = () => {
+        const scale = Math.min(100 / img.width, 100 / img.height);
+
         const canvas = Object.assign(document.createElement('canvas'), {
-          width:  img.width  * scale,
+          width: img.width * scale,
           height: img.height * scale,
         });
+
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
         let data;
-        try { data = ctx.getImageData(0, 0, canvas.width, canvas.height).data; }
-        catch { return resolve(false); }
+        try {
+          data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        } catch {
+          return resolve(false);
+        }
 
         let dark = 0, total = 0;
+
         for (let i = 0; i < data.length; i += 4) {
           if (data[i + 3] < 10) continue;
-          const lum = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+
+          const lum =
+            0.2126 * data[i] +
+            0.7152 * data[i + 1] +
+            0.0722 * data[i + 2];
+
           if (lum < 45) dark++;
           total++;
         }
+
         resolve(dark / total > 0.9);
       };
+
       img.onerror = () => resolve(false);
-      img.src     = url;
-    });
-  },
-
-  async _loadEpisodes(anime, container) {
-    if (!container) return;
-
-    let episodes = [], status = null, nextEpDate = null;
-
-    for (const src of CONFIG.EPISODE_SOURCES) {
-      if (!anime.sources?.[src]) continue;
-      try {
-        const res  = await fetch(CONFIG.API.EPISODES, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ src, Uid: anime.unit_id }),
-        });
-        if (!res.ok) continue;
-        const json = await res.json();
-        const eps  = json.episodes;
-
-        status      = eps.isEnd ? 'Finalizado' : 'En emisión';
-        nextEpDate  = eps.isNewEP;
-
-        if (Array.isArray(eps.episodes) && eps.episodes.length) {
-          episodes = eps.episodes.length < 50 ? [...eps.episodes].reverse() : eps.episodes;
-          break;
-        }
-      } catch (err) {
-        console.error(`[Episodes src=${src}]`, err);
-      }
-    }
-
-    // Status badge
-    const statusDiv   = document.createElement('div');
-    const isOngoing   = /emisi[oó]n|ongoing/i.test(status ?? '');
-    const isFinished  = /finaliz|finished|completed/i.test(status ?? '');
-    const badgeColor  = isOngoing ? '#28a745' : isFinished ? '#fb3447' : '#343a40';
-    const badgeText   = isOngoing ? `Próxima emisión: ${nextEpDate ?? 'Desconocida'}` : (status ?? 'Desconocido');
-    statusDiv.className = 'episode-card';
-    statusDiv.innerHTML = `
-      <div style="display:flex;align-items:center;width:100%;gap:10px;">
-        <button type="button" class="episode-status" style="
-          flex:1; background-color:${badgeColor} !important;
-          cursor:default; font-weight:600; color:#fff;
-        ">${badgeText}</button>
-      </div>
-    `;
-    container.appendChild(statusDiv);
-
-    // Adjust container height
-    container.style.height = 'auto';
-
-    // Episode cards
-    episodes.forEach((ep) => {
-      const btn = document.createElement('button');
-      btn.type      = 'button';
-      btn.className = 'episode-card';
-      btn.innerHTML = `
-        <div class="ep-thumb">
-          <img src="${ep.img}" alt="Episodio ${ep.number}" loading="lazy" />
-          <span class="ep-number">Ep. ${ep.number}</span> 
-        </div>
-      `;
-      btn.addEventListener('click', () => {
-        window.location.href = `./player?uid=${encodeURIComponent(anime.unit_id)}&ep=${ep.number}`;
-      });
-      container.appendChild(btn);
+      img.src = url;
     });
   },
 };
-
 /* ============================================================
  * SHARE MODAL
  * ============================================================ */
 const Share = {
   PLATFORMS: {
-    whatsapp:  (text, url) => `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`,
-    facebook:  (_,    url) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-    telegram:  (text, url) => `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
-    correo:    (text, url) => `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}`,
+    whatsapp: (text, url) => `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`,
+    facebook: (_, url) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+    telegram: (text, url) => `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+    correo: (text, url) => `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}`,
     pinterest: (text, url) => `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`,
-    x:         (text, url) => `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${text} ${url}`)}`,
-    reddit:    (text, url) => `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`,
+    x: (text, url) => `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${text} ${url}`)}`,
+    reddit: (text, url) => `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`,
   },
 
   open(text = '', url = window.location.href) {
-    const modal    = Utils.el('modalShare');
-    const input    = Utils.el('shareLink');
-    const copyBtn  = Utils.el('copyBtn');
+    const modal = Utils.el('modalShare');
+    const input = Utils.el('shareLink');
+    const copyBtn = Utils.el('copyBtn');
     const closeBtn = Utils.el('closeModal');
-    const options  = Utils.el('shareOptions');
+    const options = Utils.el('shareOptions');
     const scrollBtn = Utils.el('scrollRight');
     if (!modal || !input) return;
 
@@ -1318,7 +1502,7 @@ const Share = {
 
     const close = () => modal.classList.remove('active');
     closeBtn.onclick = close;
-    modal.onclick    = (e) => { if (e.target === modal) close(); };
+    modal.onclick = (e) => { if (e.target === modal) close(); };
 
     copyBtn.onclick = async () => {
       try {
@@ -1345,7 +1529,7 @@ const Share = {
       btn.onclick = (e) => {
         e.preventDefault();
         const platform = btn.querySelector('div')?.classList[1];
-        const builder  = this.PLATFORMS[platform];
+        const builder = this.PLATFORMS[platform];
         if (builder) window.open(builder(text, url), '_blank');
       };
     });
@@ -1380,12 +1564,12 @@ const Settings = {
 };
 
 // Expose globally (used by HTML onclick attributes)
-window.cerrarOverlay    = (id) => Settings.closeOverlay(id);
-window.abrirMenuOpciones = ()  => Settings.openMenu();
-window.verPolitica      = ()   => Settings.showPolicy();
-window.verAds           = ()   => Settings.showAds();
-window.toggleTheme      = ()   => Theme.toggle();
-window.setAdsPreference = (v)  => {
+window.cerrarOverlay = (id) => Settings.closeOverlay(id);
+window.abrirMenuOpciones = () => Settings.openMenu();
+window.verPolitica = () => Settings.showPolicy();
+window.verAds = () => Settings.showAds();
+window.toggleTheme = () => Theme.toggle();
+window.setAdsPreference = (v) => {
   localStorage.setItem('ads', v ? 'true' : 'false');
   Utils.el('adsOverlay')?.classList.add('d-none');
 };
@@ -1402,7 +1586,7 @@ const Policy = {
       document.body.insertAdjacentHTML('beforeend', Policy._html());
       overlay = Utils.el('policyOverlay');
     }
-    const iframe    = Utils.el('policyIframe');
+    const iframe = Utils.el('policyIframe');
     const acceptBtn = Utils.el('policyAcceptBtn');
     if (!overlay || !iframe || !acceptBtn) return;
 
@@ -1455,28 +1639,47 @@ const Ads = {
 /* ============================================================
  * CONTINUE WATCHING
  * ============================================================ */
+
 const ContinueWatching = {
-  show() {
-    const data  = this._getLast();
-    if (!data) return;
-    const anime = Utils.findByUId(data.uid);
-    if (!anime) return;
-
-    const titleEl  = Utils.el('continue-watching-title');
-    const imgEl    = Utils.el('continue-watching-img');
-    const btnEl    = Utils.el('continue-watching-btn');
-    if (!titleEl || !imgEl || !btnEl) return;
-
-    titleEl.textContent = `${anime.title} — Episodio ${data.ep}`;
-    imgEl.src           = anime.image || 'static/default-poster.jpg';
-    btnEl.onclick       = () => { window.location.href = `player?uid=${data.uid}&ep=${data.ep}`; };
-
-    new bootstrap.Modal(Utils.el('continueWatchingModal')).show();
-  },
 
   _getLast() {
     try { return JSON.parse(localStorage.getItem('lasted')); }
     catch { return null; }
+  },
+
+  show: async () => {
+    const data = ContinueWatching._getLast();
+    if (!data) return;
+    const anime = Utils.findByUId(data.uid);
+    if (!anime) return;
+
+    const titleEl = Utils.el('continue-watching-title');
+    const imgEl = Utils.el('continue-watching-img');
+    const btnEl = Utils.el('continue-watching-btn');
+    if (!titleEl || !imgEl || !btnEl) return;
+
+    titleEl.textContent = `${anime.title} — Episodio ${data.ep}`;
+    try {
+      const res = await fetch(CONFIG.API.IMAGE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: anime.unit_id, type: 'cover' }),
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const imageUrl = URL.createObjectURL(blob);
+        imgEl.src = imageUrl;
+      } else {
+        imgEl.src = anime.image || 'static/default-poster.jpg';
+      }
+    } catch (e) {
+      console.error(e);
+      imgEl.src = 'static/default-poster.jpg';
+    }
+    btnEl.onclick = () => { window.location.href = `player?uid=${data.uid}&ep=${data.ep}`; };
+
+    new bootstrap.Modal(Utils.el('continueWatchingModal')).show();
   },
 };
 
@@ -1531,7 +1734,7 @@ const EasterEgg = {
       </div>
     `);
 
-    const modal    = Utils.el('chikiModal');
+    const modal = Utils.el('chikiModal');
     const closeBtn = Utils.el('chikiModalClose');
 
     logo.addEventListener('click', (e) => {
@@ -1560,11 +1763,11 @@ const EasterEgg = {
 const HomeFeed = {
   async load() {
     try {
-      const res  = await fetch(CONFIG.API.LAST);
+      const res = await fetch(CONFIG.API.LAST);
       const data = await res.json();
       if (!Array.isArray(data)) return;
 
-      const list    = Utils.el('anime-list');
+      const list = Utils.el('anime-list');
       const sidebar = Utils.qs('.sidebar-menu');
       if (!list || !sidebar) return;
 
@@ -1588,11 +1791,38 @@ const HomeFeed = {
   },
 };
 
+/**
+ * Carga la lista de animes desde el servidor usando paginación.
+ */
+async function fetchAnimeList(page = 1) {
+  try {
+    const res = await fetch(`${CONFIG.API.LIST}?p=${page}`);
+    if (!res.ok) throw new Error('Error al cargar lista de animes');
+    const data = await res.json();
+
+    // Sincronizamos State.fullAnimeList para que Utils.findByUId funcione
+    if (data.items) {
+      data.items.forEach(item => {
+        if (!State.fullAnimeList.find(a => a.unit_id === item.unit_id)) {
+          State.fullAnimeList.push(item);
+        }
+      });
+    }
+
+    return {
+      items: data.items || [],
+      totalPages: data.totalpages || 0
+    };
+  } catch (err) {
+    console.error('[fetchAnimeList]', err);
+    return { items: [], totalPages: 0 };
+  }
+}
+
 /* ============================================================
  * MAIN INIT
  * ============================================================ */
 async function main() {
-  // Boot
   Theme.init();
   BottomBar.init();
   MobileMenu.init();
@@ -1601,7 +1831,6 @@ async function main() {
   Search.init();
   EasterEgg.init();
 
-  // Policy gates
   if (!Policy.isAccepted()) {
     Policy.init();
     Policy.monitor();
@@ -1609,39 +1838,37 @@ async function main() {
     Ads.init();
   }
 
-  // Fetch full anime list + home feed in parallel
   const startTime = performance.now();
+  Progress.set(10);
 
-  Progress.set(10); // arrancó
-
-  const [, ] = await Promise.allSettled([
+  const [,] = await Promise.allSettled([
     (async () => {
       try {
-        Progress.set(20); // iniciando fetch lista
-        const res  = await fetch(CONFIG.API.LIST);
-        Progress.set(45); // lista descargada
-        const json = await res.json();
-        State.fullAnimeList = Array.isArray(json.animes) ? json.animes : [];
-        Progress.set(55); // lista parseada
+        Progress.set(20);
+        const page = Utils.getPageParam();
+
+        // ← Nuevo: usa fetchAnimeList con paginación
+        const listData = await fetchAnimeList(page);
+        Progress.set(45);
+
+        // State.fullAnimeList ya fue seteado dentro de fetchAnimeList
+        Progress.set(55);
         ContinueWatching.show();
 
-        // Handle search in URL params
-        const searchTerm  = new URLSearchParams(window.location.search).get('s');
+        const searchTerm = new URLSearchParams(window.location.search).get('s');
         const searchInput = Utils.el('searchInput');
 
         if (searchTerm && searchInput) {
           searchInput.value = searchTerm;
           await Search.run(null, searchTerm);
         } else {
-          const page      = Utils.getPageParam();
-          const paginated = Utils.paginate(State.fullAnimeList, page);
-          Cards.render(paginated, 'card-container');
-          Pagination.create(State.fullAnimeList.length, page);
+          Cards.render(listData.items, 'card-container');
+          Pagination.create(listData.totalPages, page);
         }
-        Progress.set(70); // cards renderizadas
 
+        Progress.set(70);
         await Loader.waitForImages('.anime-card img');
-        Progress.set(88); // imágenes cargadas
+        Progress.set(88);
       } catch (err) {
         console.error('[main fetchList]', err);
         Progress.set(88);
@@ -1649,27 +1876,29 @@ async function main() {
     })(),
     (async () => {
       await HomeFeed.load();
-      Progress.advance(5); // feed cargado
+      Progress.advance(5);
     })(),
   ]);
 
-  // Enforce minimum loading time for polish
-  const elapsed   = performance.now() - startTime;
+  const elapsed = performance.now() - startTime;
   const remaining = Math.max(0, CONFIG.MIN_LOAD_MS - elapsed);
   setTimeout(() => Loader.hide(), remaining);
 
-  // Browser navigation (back/forward)
-  window.addEventListener('popstate', () => {
-    const page      = Utils.getPageParam();
-    const paginated = Utils.paginate(State.fullAnimeList, page);
-    Cards.render(paginated, 'card-container');
-    Pagination.create(State.fullAnimeList.length, page);
+  window.addEventListener('popstate', async () => {
+    const page = Utils.getPageParam();
+    const listData = await fetchAnimeList(page);
+    Cards.render(listData.items, 'card-container');
+    Pagination.create(listData.totalPages, page);
   });
 
   window.addEventListener('resize', () => {
-    Pagination.create(State.fullAnimeList.length, Utils.getPageParam());
+    // Nota: Aquí Pagination.create necesita totalPages, pero resize no lo tiene fácil.
+    // Podríamos guardar lastTotalPages en State si fuera necesario.
+    // Por ahora, asumimos que no cambia en resize o lo ignoramos.
   });
 }
+
+document.addEventListener('DOMContentLoaded', main);
 
 // Run after DOM is ready
 document.addEventListener('DOMContentLoaded', main);

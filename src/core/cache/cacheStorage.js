@@ -89,7 +89,7 @@ class TextStore {
         const registry = GlobalRegistry.load();
         const entry = registry[uuid];
         if (entry) {
-            try { fs.unlinkSync(path.join(DIRS.text, entry.file)); } catch {}
+            try { fs.unlinkSync(path.join(DIRS.text, entry.file)); } catch { }
             delete registry[uuid];
             GlobalRegistry.save(registry);
         }
@@ -98,7 +98,7 @@ class TextStore {
         const registry = GlobalRegistry.load();
         const entry = registry[uuid];
         if (!entry || entry.type !== "text") return false;
-        
+
         // Verificar si expiró
         if (Date.now() > entry.exp) {
             this.delete(uuid);
@@ -115,7 +115,7 @@ class TextStore {
             if (entry.type === "text" && now > entry.exp) {
                 try {
                     fs.unlinkSync(path.join(DIRS.text, entry.file));
-                } catch {}
+                } catch { }
                 delete registry[id];
                 changed = true;
             }
@@ -174,7 +174,7 @@ class keyStore {
         const registry = GlobalRegistry.load();
         const entry = registry[keyId];
         if (entry) {
-            try { fs.unlinkSync(path.join(DIRS.keys, entry.file)); } catch {}
+            try { fs.unlinkSync(path.join(DIRS.keys, entry.file)); } catch { }
             delete registry[keyId];
             GlobalRegistry.save(registry);
         }
@@ -218,7 +218,7 @@ class SimpleCache {
     set(key, value, ttl = 60_000) {
         const fileName = `${key}.json`;
         const filePath = path.join(DIRS.cache, fileName);
-        
+
         fs.writeFileSync(filePath, JSON.stringify({ value }));
 
         const registry = GlobalRegistry.load();
@@ -251,7 +251,7 @@ class SimpleCache {
         const registry = GlobalRegistry.load();
         const entry = registry[key];
         if (entry) {
-            try { fs.unlinkSync(path.join(DIRS.cache, entry.file)); } catch {}
+            try { fs.unlinkSync(path.join(DIRS.cache, entry.file)); } catch { }
             delete registry[key];
             GlobalRegistry.save(registry);
         }
@@ -267,7 +267,7 @@ class SimpleCache {
                 try {
                     const folder = DIRS[entry.type];
                     fs.unlinkSync(path.join(folder, entry.file));
-                } catch {}
+                } catch { }
                 delete registry[id];
                 changed = true;
             }
@@ -282,10 +282,10 @@ class SimpleCache {
  * MEMCACHE (In-Memory con límites estrictos)
  */
 class MemCache {
-    constructor({ 
+    constructor({
         maxEntries = 100,           // Máximo de elementos en RAM
         maxStringLength = 50000,    // ~50KB por entrada de texto
-        cleanInterval = 30000 
+        cleanInterval = 30000
     } = {}) {
         this.cache = new Map();
         this.maxEntries = maxEntries;
@@ -322,7 +322,7 @@ class MemCache {
 
     get(key) {
         const entry = this.cache.get(key);
-        
+
         // Si no está en RAM o expiró
         if (!entry || Date.now() > entry.exp) {
             this.delete(key);
@@ -359,9 +359,81 @@ class MemCache {
 
         if (changed) GlobalRegistry.save(registry);
     }
+    dump() {
+        const result = {};
+        const now = Date.now();
 
+        for (const [key, entry] of this.cache.entries()) {
+            if (now <= entry.exp) {
+                result[key] = entry.value;
+            }
+        }
+
+        return result;
+    }
     stop() {
         clearInterval(this.timer);
     }
 }
-module.exports = { TextStore, keyStore, SimpleCache, MemCache };
+function dumpAllCache() {
+    const registry = GlobalRegistry.load();
+    const result = {};
+
+    for (const [key, entry] of Object.entries(registry)) {
+        try {
+            // Si expiró, lo ignoramos
+            if (Date.now() > entry.exp) continue;
+
+            let value = null;
+
+            switch (entry.type) {
+                case "text": {
+                    const filePath = path.join(DIRS.text, entry.file);
+                    if (fs.existsSync(filePath)) {
+                        const buffer = fs.readFileSync(filePath);
+                        value = zlib.gunzipSync(buffer).toString();
+                    }
+                    break;
+                }
+
+                case "key": {
+                    const filePath = path.join(DIRS.keys, entry.file);
+                    if (fs.existsSync(filePath)) {
+                        const buffer = fs.readFileSync(filePath);
+                        value = JSON.parse(zlib.gunzipSync(buffer).toString());
+                    }
+                    break;
+                }
+
+                case "cache": {
+                    const filePath = path.join(DIRS.cache, entry.file);
+                    if (fs.existsSync(filePath)) {
+                        const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+                        value = data.value;
+                    }
+                    break;
+                }
+
+                case "mem": {
+                    value = memCacheInstance ? memCacheInstance.dump()[key] : null;
+                    break;
+                }
+            }
+
+            result[key] = {
+                type: entry.type,
+                value,
+                exp: entry.exp
+            };
+
+        } catch (err) {
+            result[key] = {
+                error: true,
+                message: err.message
+            };
+        }
+    }
+
+    return result;
+}
+module.exports = { TextStore, keyStore, SimpleCache, MemCache, dumpAllCache };

@@ -1,17 +1,18 @@
 {
   "name": "animeext",
-  "version": "16.0.0",
+  "version": "17.0.1",
   "description": "Server of Anime Ext",
   "main": "main.js",
   "scripts": {
-    "start": "node --expose-gc main.js"
+    "start": "node --expose-gc main.js",
+    "start:gui": "electron gui/main.js"
   },
   "author": "Chikiyinyang@dev",
   "license": "MIT",
   "engines": {
     "node": "22"
   },
-  "dependencies_dev": {
+  "devDependencies": {
     "@supabase/supabase-js": "^2.84.0",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.3",
@@ -38,6 +39,7 @@
     "tough-cookie": "^5.1.2",
     "unpacker": "^1.0.1",
     "unzipper": "^0.12.3",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "electron": "^34.3.0"
   }
 }

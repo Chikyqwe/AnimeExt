@@ -11,7 +11,6 @@ const favicon = require('serve-favicon');
 // Servicios y Utilidades
 const { isMetadataStale } = require('./utils/CheckAnimeList');
 const { iniciarMantenimiento } = require('./services/maintenanceService');
-const { startEpisodeWorker } = require('./jobs/fcmWorker');
 
 // Inicialización de Express y WebSocket
 const app = express();
@@ -60,15 +59,15 @@ function loadRoutes(directory) {
             // 3. Leemos el archivo ANTES de cargarlo para decidir qué hacer
             const fileContent = fs.readFileSync(fullPath, 'utf8');
             const hasWsSupport = fileContent.includes('// ws.support=true');
-            
+
             // Si el archivo no menciona "express" o "Router" y no tiene la etiqueta de WS, 
             // probablemente no es una ruta y lo saltamos para evitar errores.
             if (!fileContent.includes('express') && !hasWsSupport) {
-                return; 
+                return;
             }
 
             const routeModule = require(fullPath);
-            console.log('[R]: '+fullPath)
+            console.log('[R]: ' + fullPath)
             let router = null;
 
             // 4. Lógica de carga según el tipo
@@ -110,8 +109,6 @@ loadRoutes(path.join(__dirname));
 // ===================================================
 // INICIALIZACIÓN DE SERVICIOS
 // ===================================================
-
-startEpisodeWorker();
 
 if (isMetadataStale()) {
     console.log('[MANTENIMIENTO] Metadata expirada, iniciando...');

@@ -10,19 +10,31 @@ async function iniciarMantenimiento({ timeoutMs = 8 * 60 * 1000 } = {}) {
   }
 
   const workerPath = path.join(__dirname, "..", "jobs", "maintenimanceWorker.js");
-  const worker = new Worker(workerPath);
-
   let cleaned = false;
   let timeoutHandle;
+  let worker = new Worker(workerPath);
 
-  const cleanUp = () => {
+  const cleanUp = async () => {
     if (cleaned) return;
     cleaned = true;
 
     if (timeoutHandle) clearTimeout(timeoutHandle);
-    worker.removeAllListeners();
+    
+    if (worker) {
+      worker.removeAllListeners();
+      await worker.terminate();
+      worker = null;
+    }
+    
     setUpdatingStatus(false);
+
+    // 🔥 Forzar GC si está disponible
+    if (global.gc) {
+      console.log("[MANTENIMIENTO] Ejecutando GC post-mantenimiento...");
+      global.gc();
+    }
   };
+
 
   timeoutHandle = setTimeout(() => {
     console.warn("[MANTENIMIENTO] Timeout alcanzado, matando worker");

@@ -1,6 +1,7 @@
 const { axiosGet } = require('../helpersCore');
 const { unpack, detect } = require('unpacker');
 const { URL } = require('url');
+const { HTTPS } = require('../../config');
 
 // ---------- getRedirectUrl----------
 function best(master, base) {
@@ -27,8 +28,8 @@ function best(master, base) {
 async function redir(pageUrl) {
   try {
     const dmca = ["playnixes.com", "niramirus.com", "medixiru.com", "hgplaycdn.com", "hglamioz.com"];
-    const main = ["kravaxxa.com","davioad.com","haxloppd.com","tryzendm.com","dumbalag.com"];
-    const rules = ["dhcplay.com","hglink.to","test.hglink.to","wish-redirect.aiavh.com"];
+    const main = ["kravaxxa.com", "davioad.com", "haxloppd.com", "tryzendm.com", "dumbalag.com"];
+    const rules = ["dhcplay.com", "hglink.to", "test.hglink.to", "wish-redirect.aiavh.com"];
 
     const url = new URL(pageUrl);
     const destination = rules.includes(url.hostname)
@@ -63,9 +64,9 @@ function rewriteM3U8(m3u8, playlistUrl, referer) {
         }
       }
 
-      return `https://animeext-m5lt.onrender.com/proxy/hls?url=${encodeURIComponent(
-        absoluteUrl
-      )}&ref=${encodeURIComponent(referer)}`;
+      const gid = Buffer.from(absoluteUrl).toString('base64url');
+      const f = Buffer.from(referer).toString('base64url');
+      return `${HTTPS ? 'https' : 'http'}://${HTTPS ? 'animeext-m5lt.onrender.com' : 'localhost:2022'}/api/hls?gid=${gid}&f=${f}&Did=1`;
     })
     .join('\n');
 
@@ -73,18 +74,18 @@ function rewriteM3U8(m3u8, playlistUrl, referer) {
 }
 
 async function extractM3u8(pageUrl) {
-  const fail = () => ({ status: 701, mjs:'general error', server: 'sw' });
+  const fail = () => ({ status: 701, mjs: 'general error', server: 'sw' });
 
   try {
     const finalUrl = await redir(pageUrl);
     console.log(`[M3U8 EXTRACTOR] URL redirigida: ${finalUrl}`);
 
-    const html = (await axiosGet(finalUrl,{
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-          'Accept': '*/*',
-          'Referer': finalUrl
-        }
+    const html = (await axiosGet(finalUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': '*/*',
+        'Referer': finalUrl
+      }
     })).data;
     const scriptMatch = html.match(
       /<script[^>]*type=['"]text\/javascript['"][^>]*>\s*(eval\(function\(p,a,c,k,e,d\)[\s\S]*?)<\/script>/i

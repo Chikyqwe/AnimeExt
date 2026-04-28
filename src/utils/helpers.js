@@ -35,8 +35,8 @@ const HttpModule = (() => {
 // ============================================================================
 const ParseModule = (() => {
   const ANIME_INFO = /var\s+anime_info\s*=\s*(\[[^\]]+\])/;
-  const EPISODES   = /var\s+episodes\s*=\s*(\[[\s\S]*?\]);/;
-  const safeEval   = code => vm.runInNewContext(code, {}, { timeout: 100 });
+  const EPISODES = /var\s+episodes\s*=\s*(\[[\s\S]*?\]);/;
+  const safeEval = code => vm.runInNewContext(code, {}, { timeout: 100 });
   return { ANIME_INFO, EPISODES, safeEval };
 })();
 
@@ -57,7 +57,7 @@ const PatternModule = (() => {
   async function getTioPattern() {
     if (cache.tio.data && Date.now() - cache.tio.ts < TTL) return cache.tio.data;
     cache.tio.data = {
-      episode:   (slug, ep) => `https://tioanime.com/ver/${slug}-${ep}`,
+      episode: (slug, ep) => `https://tioanime.com/ver/${slug}-${ep}`,
       thumbnail: id => `https://tioanime.com/uploads/thumbs/${id}.jpg`
     };
     cache.tio.ts = Date.now();
@@ -71,14 +71,25 @@ const PatternModule = (() => {
 // MÓDULO: SCRAPERS
 // ============================================================================
 const ScraperModule = (() => {
+  function slugify(text) {
+    return text
+      .toString()
+      .normalize("NFD")                   // separar acentos
+      .replace(/[\u0300-\u036f]/g, "")    // quitar acentos
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")        // reemplazar todo lo raro por "-"
+      .replace(/^-+|-+$/g, "")            // quitar "-" al inicio/final
+      .replace(/-{2,}/g, "-");            // evitar "--"
+  }
   async function extractAnimeFLV(data) {
     const info = data.match(ParseModule.ANIME_INFO);
-    const eps  = data.match(ParseModule.EPISODES);
+    const eps = data.match(ParseModule.EPISODES);
     if (!info || !eps) return null;
 
-    const anime_info  = ParseModule.safeEval(info[1]);
+    const anime_info = ParseModule.safeEval(info[1]);
     const episodesRaw = ParseModule.safeEval(eps[1]);
-    const pattern     = await PatternModule.getAnimeFLVPattern();
+    const pattern = await PatternModule.getAnimeFLVPattern();
 
     const episodes = episodesRaw.map(e => {
       const num = Array.isArray(e) ? e[0] : e;
@@ -91,15 +102,14 @@ const ScraperModule = (() => {
       isEnd: anime_info.length === 3, episodes_count: episodes.length, episodes
     };
   }
-
   async function extractTio(data) {
     const info = data.match(ParseModule.ANIME_INFO);
-    const eps  = data.match(ParseModule.EPISODES);
+    const eps = data.match(ParseModule.EPISODES);
     if (!info || !eps) return null;
 
-    const anime_info  = ParseModule.safeEval(info[1]);
+    const anime_info = ParseModule.safeEval(info[1]);
     const episodesRaw = ParseModule.safeEval(eps[1]);
-    const pattern     = await PatternModule.getTioPattern();
+    const pattern = await PatternModule.getTioPattern();
 
     const episodes = episodesRaw.map(e => {
       const num = Array.isArray(e) ? e[0] : e;
@@ -112,25 +122,391 @@ const ScraperModule = (() => {
       isEnd: anime_info.length === 3, episodes_count: episodes.length, episodes
     };
   }
+  async function extractone(data) {
+    const $ = cheerio.load(data);
 
-  function extractAnimeYTX(data) {
-    try {
-      const $ = cheerio.load(data);
-      const eps = [];
-      $('li[data-index]').each((_, el) => {
-        const n = parseInt($(el).find('.epl-num').text(), 10);
-        if (!isNaN(n)) eps.push({ number: n });
-      });
-      if (!eps.length) return null;
-      return {
-        source: 'AnimeYTX',
-        title: $('title').text().replace(' - AnimeYT', '').trim(),
-        isEnd: false, episodes_count: eps.length, episodes: eps
-      };
-    } catch { return null; }
+    // 1️⃣ Detectar si el anime está finalizado
+    const statusText = $('.st.c-f span').text().trim();
+    const isEnd = statusText.toLowerCase() === 'finalizado';
+
+    // 2️⃣ Extraer la variable eps del <script>
+    const scriptText = $('script')
+      .map((i, el) => $(el).html())
+      .get()
+      .find(t => t.includes('var eps ='));
+
+    let episodes = [];
+    const animeId = $('#r .info-r').attr('data-ai'); // ID para thumbnails
+    const title = $('.info-l figure img').attr('alt') || '';
+    const slug = slugify(title);
+    if (scriptText) {
+      const match = scriptText.match(/var eps = (\[.*?\]);/s);
+      if (match) {
+        const epsArray = JSON.parse(match[1]);
+        episodes = epsArray.map(e => ({
+          number: e[0],
+          url: `https://vww.animeflv.one/ver/${slug}-${e[0]}`, // puedes cambiar a la URL real del episodio
+          img: `https://vww.animeflv.one/cdn/img/episodios/${animeId}-${e[0]}.webp?t=0.1`
+        }));
+      }
+    }
+
+    // 3️⃣ Extraer título, portada y slug
+
+
+    // 4️⃣ Extraer fecha del próximo episodio si existe
+    let isNewEP = null;
+    const nextEpEl = $('ul.ep.prox li div span strong');
+    if (nextEpEl.length) {
+      isNewEP = nextEpEl.text().trim();
+    }
+
+    // 5️⃣ Devolver JSON completo
+    return {
+      source: "one",
+      title,
+      slug,
+      isNewEP,
+      isEnd,
+      episodes_count: episodes.length,
+      episodes
+    };
   }
 
-  return { extractAnimeFLV, extractTio, extractAnimeYTX };
+  async function extractJK(url) {
+    const client = axios.create({
+      withCredentials: true,
+      headers: {
+        "User-Agent": "Mozilla/5.0"
+      }
+    });
+
+    // 1️⃣ GET inicial
+    const { data: html, headers } = await client.get(url);
+    const $ = cheerio.load(html);
+
+    const token = $('meta[name="csrf-token"]').attr("content");
+    const cookies = headers["set-cookie"]?.join("; ") || "";
+
+    const ogUrl = $('meta[property="og:url"]').attr("content") || url;
+    const slug = ogUrl.split("/").filter(Boolean).pop();
+
+    const animeId = $("#guardar-anime").attr("data-anime");
+
+    const thumbnail =
+      $(".anime_pic img").attr("src") ||
+      $('meta[property="og:image"]').attr("content") ||
+      null;
+
+    const statusText = $(".enemision").text().trim().toLowerCase();
+    const isEnd = statusText.includes("concluido") || statusText.includes("finalizado");
+    const isNewEP = statusText.includes("emision") ? true : null;
+
+    // 🔥 2️⃣ PRIMERA REQUEST (para saber cuántas páginas hay)
+    const { data: firstRes } = await client.post(
+      `https://jkanime.net/ajax/episodes/${animeId}/1`,
+      new URLSearchParams({ _token: token }),
+      {
+        headers: {
+          "Cookie": cookies,
+          "Referer": url,
+          "Origin": "https://jkanime.net",
+          "X-Requested-With": "XMLHttpRequest"
+        }
+      }
+    );
+
+    const totalPages = firstRes.last_page;
+    console.log(totalPages);
+
+    // 🔥 3️⃣ CREAR TODAS LAS REQUESTS EN PARALELO
+    const requests = [];
+
+    for (let page = 1; page <= totalPages; page++) {
+      requests.push(
+        client.post(
+          `https://jkanime.net/ajax/episodes/${animeId}/${page}`,
+          new URLSearchParams({ _token: token }),
+          {
+            headers: {
+              "Cookie": cookies,
+              "Referer": url,
+              "Origin": "https://jkanime.net",
+              "X-Requested-With": "XMLHttpRequest"
+            }
+          }
+        )
+      );
+    }
+
+    const responses = await Promise.all(requests);
+
+    // 🔥 4️⃣ MAPEAR TODO
+    const allEpisodes = responses.flatMap(r =>
+      r.data.data.map(ep => ({
+        number: ep.number,
+        url: `https://jkanime.net/${slug}/${ep.number}/`,
+        img: ep.image
+          ? `https://cdn.jkdesa.com/assets/images/animes/video/image_thumb/${ep.image}`
+          : thumbnail
+      }))
+    );
+
+    // ordenar
+    allEpisodes.sort((a, b) => a.number - b.number);
+
+    const title = $('.anime_info h3').first().text();
+
+    return {
+      source: "jk",
+      title,
+      slug,
+      isNewEP,
+      isEnd,
+      episodes_count: allEpisodes.length,
+      episodes: allEpisodes
+    };
+  }
+
+  async function extractAniyae(html) {
+    const $ = cheerio.load(html);
+
+    // ===============================
+    // 1️⃣ EXTRAER animeId DESDE SCRIPT
+    // ===============================
+    let animeId = null;
+
+    $('script').each((i, el) => {
+      const text = $(el).html();
+      if (!text) return;
+
+      const match = text.match(/animeId\s*=\s*(\d+)/);
+      if (match) {
+        animeId = match[1];
+      }
+    });
+
+    if (!animeId) throw new Error("❌ No se encontró animeId");
+
+    // ===============================
+    // 2️⃣ TITLE
+    // ===============================
+    const title = $('.stack span').first().text().trim();
+
+    // ===============================
+    // 3️⃣ SLUG
+    // ===============================
+    const slug = slugify(title);
+
+    // ===============================
+    // 4️⃣ STATUS
+    // ===============================
+    const statusText = $('body').text().toLowerCase();
+    const isEnd = statusText.includes("finalizado");
+
+    // ===============================
+    // 5️⃣ THUMBNAIL
+    // ===============================
+    const thumbnail = $('img').first().attr('src') || '';
+
+    // ===============================
+    // 6️⃣ API EPISODIOS
+    // ===============================
+    const api = `https://open.aniyae.net/wp-json/kiranime/v1/anime/${animeId}/episodes?page=1&per_page=999999999&order=asc`;
+
+    const res = await axios.get(api);
+    const epsArray = res.data.episodes || [];
+
+    // ===============================
+    // 7️⃣ MAPEAR EPISODIOS
+    // ===============================
+    const episodes = epsArray.map(ep => ({
+      number: Number(ep.number),
+      url: ep.url,
+      img: ep.image || thumbnail
+    }));
+
+    // ===============================
+    // 8️⃣ NUEVO EP
+    // ===============================
+    let isNewEP = null;
+    if (!isEnd && episodes.length) {
+      isNewEP = episodes[episodes.length - 1].number;
+    }
+
+    // ===============================
+    // 9️⃣ RESULTADO FINAL
+    // ===============================
+    console.log({
+      source: "aniyae",
+      title,
+      slug,
+      isNewEP,
+      isEnd,
+      episodes_count: episodes.length,
+      episodes
+    })
+    return {
+      source: "aniyae",
+      title,
+      slug,
+      isNewEP,
+      isEnd,
+      episodes_count: episodes.length,
+      episodes
+    };
+  }
+  async function extractTioHentai(html) {
+    const $ = cheerio.load(html);
+
+    // ===============================
+    // 1️⃣ TITLE
+    // ===============================
+    const title = $('h1.title').first().text().trim();
+
+    // ===============================
+    // 2️⃣ SLUG + ID (desde JS)
+    // ===============================
+    const animeInfoMatch = html.match(/var\s+anime_info\s*=\s*(\[[^\]]+\])/);
+
+    let animeID = null;
+    let slug = null;
+
+    if (animeInfoMatch) {
+      try {
+        const animeInfo = JSON.parse(animeInfoMatch[1]);
+        animeID = animeInfo[0];
+        slug = animeInfo[1];
+      } catch { }
+    }
+
+    // ===============================
+    // 3️⃣ ESTADO
+    // ===============================
+    const statusText = $('.status').text().toLowerCase();
+
+    const isEnd = statusText.includes('finalizado');
+
+    // ===============================
+    // 4️⃣ IMAGEN (fallback para episodios)
+    // ===============================
+    let cover = $('.thumb img').attr('src');
+
+    if (cover && cover.startsWith('/')) {
+      cover = 'https://tiohentai.com' + cover;
+    }
+
+    // ===============================
+    // 5️⃣ EPISODIOS (desde JS)
+    // ===============================
+    const episodesMatch = html.match(/var\s+episodes\s*=\s*(\[[^\]]+\])/);
+
+    let episodes = [];
+
+    if (episodesMatch) {
+      try {
+        const epsArray = JSON.parse(episodesMatch[1]);
+
+        episodes = epsArray.map(num => ({
+          number: num,
+          url: `/ver/${slug}/${num}`,
+          img: cover // 👈 fallback
+        }));
+      } catch { }
+    }
+
+    // ordenar (por si vienen invertidos)
+    episodes.sort((a, b) => a.number - b.number);
+
+    // ===============================
+    // 6️⃣ NUEVO EP
+    // ===============================
+    let isNewEP = null;
+
+    if (!isEnd && episodes.length) {
+      isNewEP = episodes[episodes.length - 1].number;
+    }
+
+    // ===============================
+    // 7️⃣ RESULTADO
+    // ===============================
+    return {
+      source: "tiohentai",
+      title,
+      slug,
+      isEnd,
+      isNewEP,
+      episodes_count: episodes.length,
+      episodes
+    };
+  }
+  async function extractHentaila(html) {
+    const $ = cheerio.load(html);
+
+    // ===============================
+    // 1️⃣ TITLE (desde sr-only)
+    // ===============================
+    const rawTitle = $('article a span.sr-only').first().text().trim();
+
+    // Ej: "Ver Showtime! Uta no Onee-san Datte Shitai 2 1"
+    const title = $('h1.text-lead').first().text().trim();
+    const slug = slugify(title);
+
+    // ===============================
+    // 2️⃣ ESTADO (Finalizado / En emisión)
+    // ===============================
+    const metaText = $('.flex.flex-wrap.items-center').text().toLowerCase();
+
+    const isEnd = metaText.includes('finalizado');
+
+    // ===============================
+    // 3️⃣ EPISODIOS
+    // ===============================
+    const episodes = [];
+
+    $('article.group\\/item').each((i, el) => {
+      const ep = $(el);
+
+      // número
+      const number = Number(
+        ep.find('.text-lead').text().trim()
+      );
+
+      // url
+      const url = "https://hentaila.com" + ep.find('a').attr('href');
+
+      // imagen
+      const img = ep.find('img').attr('src');
+
+      episodes.push({
+        number,
+        url,
+        img
+      });
+    });
+
+    // ===============================
+    // 4️⃣ NUEVO EP
+    // ===============================
+    let isNewEP = null;
+    if (!isEnd && episodes.length) {
+      isNewEP = episodes[episodes.length - 1].number;
+    }
+
+    // ===============================
+    // 5️⃣ RESULTADO FINAL
+    // ===============================
+    return {
+      source: "hentaila",
+      title,
+      slug,
+      isNewEP,
+      isEnd,
+      episodes_count: episodes.length,
+      episodes
+    };
+  }
+  return { extractAnimeFLV, extractTio, extractone, extractJK, extractAniyae, extractTioHentai, extractHentaila };
 })();
 
 // ============================================================================
@@ -141,7 +517,8 @@ const StreamModule = (() => {
   function getRefererForHost(host) {
     if (!host) return 'https://www.mp4upload.com/';
     if (host.includes('burstcloud')) return 'https://burstcloud.co/';
-    if (host.includes('vidcache'))   return 'https://www.yourupload.com/';
+    if (host.includes('vidcache')) return 'https://www.yourupload.com/';
+    if (host.includes('mp4upload')) return 'https://www.mp4upload.com/';
     return 'https://www.mp4upload.com/';
   }
 
@@ -153,7 +530,7 @@ const StreamModule = (() => {
       const logs = [];
 
       const pushLog = (type, data) => logs.push({ time: new Date().toISOString(), type, data });
-      const finish  = (data) => { if (resolved) return; resolved = true; resolve({ ...data, log: logs }); };
+      const finish = (data) => { if (resolved) return; resolved = true; resolve({ ...data, log: logs }); };
 
       const doRequest = (currentUrl, method = 'HEAD') => {
         pushLog('request', { url: currentUrl, method });
@@ -184,15 +561,15 @@ const StreamModule = (() => {
             return doRequest(nextUrl, method);
           }
 
-          const contentType   = res.headers['content-type'] || '';
+          const contentType = res.headers['content-type'] || '';
           const contentLength = Number(res.headers['content-length'] || 0);
           const isVideo = contentType.startsWith('video/') || contentType.includes('octet-stream');
 
           let reason;
           if (![200, 206].includes(res.statusCode)) reason = 'bad_status_code';
-          else if (!isVideo)                         reason = 'not_video_mime';
-          else if (contentLength <= 0)               reason = 'empty_or_unknown_size';
-          else                                       reason = 'ok';
+          else if (!isVideo) reason = 'not_video_mime';
+          else if (contentLength <= 0) reason = 'empty_or_unknown_size';
+          else reason = 'ok';
 
           finish({ ok: reason === 'ok', statusCode: res.statusCode, contentType, contentLength, finalUrl: currentUrl, reason });
         });
@@ -252,9 +629,9 @@ const StreamModule = (() => {
     res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length');
 
     const parsedUrl = urlLib.parse(videoUrl);
-    const isHttps   = parsedUrl.protocol === 'https:';
-    const protocol  = isHttps ? https : http;
-    const referer   = getRefererForHost(parsedUrl.hostname);
+    const isHttps = parsedUrl.protocol === 'https:';
+    const protocol = isHttps ? https : http;
+    const referer = getRefererForHost(parsedUrl.hostname);
 
     // Offset inicial desde el header Range del cliente
     let byteOffset = 0;
@@ -265,9 +642,9 @@ const StreamModule = (() => {
     }
 
     // ---- Ciclo de vida ----
-    let done    = false;
+    let done = false;
     let retries = 0;
-    const MAX_RETRIES   = 3;
+    const MAX_RETRIES = 3;
     const RETRY_BASE_MS = 800;
 
     // Termina definitivamente. Solo se ejecuta una vez.
@@ -289,18 +666,18 @@ const StreamModule = (() => {
       if (done) return;
 
       const reqHeaders = {
-        'Referer':    referer,
-        'Origin':     referer,
+        'Referer': referer,
+        'Origin': referer,
         'User-Agent': 'Mozilla/5.0',
       };
       if (fromByte > 0) reqHeaders['Range'] = `bytes=${fromByte}-`;
 
       const options = {
         hostname: parsedUrl.hostname,
-        port:     parsedUrl.port || (isHttps ? 443 : 80),
-        path:     (parsedUrl.pathname || '/') + (parsedUrl.search || ''),
-        method:   'GET',
-        headers:  reqHeaders,
+        port: parsedUrl.port || (isHttps ? 443 : 80),
+        path: (parsedUrl.pathname || '/') + (parsedUrl.search || ''),
+        method: 'GET',
+        headers: reqHeaders,
         rejectUnauthorized: false,
       };
 
@@ -319,8 +696,8 @@ const StreamModule = (() => {
         // Enviar cabeceras al cliente (solo la primera vez)
         if (!res.headersSent) {
           const outHeaders = {
-            'Content-Type':        originRes.headers['content-type'] || 'video/mp4',
-            'Accept-Ranges':       'bytes',
+            'Content-Type': 'video/mp4',
+            'Accept-Ranges': 'bytes',
             'Content-Disposition': 'inline',
           };
           if (originRes.headers['content-length'])
@@ -398,33 +775,106 @@ const StreamModule = (() => {
 // FUNCIONES PÚBLICAS
 // ============================================================================
 async function getEpisodes(url) {
-  const { data } = await HttpModule.axiosInstance.get(url);
-  if (url.includes('animeflv')) return ScraperModule.extractAnimeFLV(data);
-  if (url.includes('tioanime')) return ScraperModule.extractTio(data);
-  return ScraperModule.extractAnimeYTX(data) || { success: false };
-}
+  if (!url) {
+    return { success: false, error: 'URL vacía' };
+  }
 
-async function getDescription(url) {
+  console.log('[getEpisodes] URL:', url);
+
   try {
     const { data } = await HttpModule.axiosInstance.get(url);
+    const host = new URL(url).hostname;
+
+    // 🔥 Regex exactos (sin colisiones)
+
+    if (/animeflv\.one$/.test(host)) {
+      return ScraperModule.extractone(data);
+    }
+
+    if (/animeflv\.net$/.test(host)) {
+      return ScraperModule.extractAnimeFLV(data);
+    }
+
+    if (/tioanime\./.test(host)) {
+      return ScraperModule.extractTio(data);
+    }
+
+    if (/hentaila\./.test(host)) {
+      return ScraperModule.extractHentaila(data);
+    }
+
+    if (/jkanime\./.test(host)) {
+      console.log("[JKAnime]");
+      return ScraperModule.extractJK(url);
+    }
+
+    if (/aniyae\./.test(host)) {
+      console.log("[Aniyae]");
+      return ScraperModule.extractAniyae(data);
+    }
+
+    if (/tiohentai\./.test(host)) {
+      console.log("[TioHentai]");
+      return ScraperModule.extractTioHentai(data);
+    }
+
+    return {
+      success: false,
+      error: `No hay extractor para host: ${host}`
+    };
+
+  } catch (err) {
+    console.error('[getEpisodes ERROR]', err.message);
+
+    return {
+      success: false,
+      error: 'Error haciendo fetch o parsing',
+      detail: err.message
+    };
+  }
+}
+async function getDescription(url) {
+  try {
+    const { data } = await HttpModule.axiosInstance.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "es-ES,es;q=0.9",
+      },
+      timeout: 10000
+    });
+
     const $ = cheerio.load(data);
+    $('script, style, noscript').remove();
+
+    const esBasura = (t) =>
+      t.length < 80 ||
+      ['ningún vídeo', 'alojado', 'nuestros servidores', 'correo',
+        'plataforma', 'indexer', 'menores de edad', "ver online"].some(w => t.toLowerCase().includes(w));
+
     return (
-      $('section.WdgtCn .Description p').text().trim() ||
-      $('aside p.sinopsis').text().trim() ||
-      $('meta[name="description"]').attr('content') ||
+      $('section.WdgtCn .Description p').first().text().trim() ||  // FLV
+      $('aside p.sinopsis').first().text().trim() ||  // TIO, TIOHENTAI
+      $('[class*="sinopsis"] p').first().text().trim() ||
+      $('[class*="sinopsis"]').first().text().trim() ||
+      $('div.border-l-2.pl-4').first().text().trim() ||  // ANIYAE
+      $('div.entry p').first().text().trim() ||  // HENTAILA ✅
+      $('p').map((_, el) => $(el).text().trim()).get().find(t => !esBasura(t)) ||  // JK, fallback
       ''
     );
-  } catch { return ''; }
-}
 
+  } catch (e) {
+    return '';
+  }
+}
 // ============================================================================
 // EXPORTS
 // ============================================================================
 module.exports = {
   getEpisodes,
   getDescription,
-  proxyImage:       StreamModule.proxyImage,
-  streamVideo:      StreamModule.streamVideo,
+  proxyImage: StreamModule.proxyImage,
+  streamVideo: StreamModule.streamVideo,
   validateVideoUrl: StreamModule.validateVideoUrl,
-  downloadVideo:    () => false
+  downloadVideo: () => false
 };

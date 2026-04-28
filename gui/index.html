@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeExt Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <span class="pulse"></span>
+                <h1>AnimeExt 控制台</h1>
+            </div>
+            <div class="system-status">
+                <span id="status-text">ONLINE</span>
+            </div>
+        </header>
+
+        <main>
+            <section class="stats-grid">
+                <div class="stat-card glass">
+                    <h3>Memoria RSS</h3>
+                    <div class="stat-value" id="rss-value">0 MB</div>
+                    <div class="stat-meta">Límite: 430 MB</div>
+                </div>
+                <div class="stat-card glass">
+                    <h3>Heap Usage</h3>
+                    <div class="stat-value" id="heap-value">0 MB</div>
+                    <div class="progress-bar">
+                        <div id="heap-progress" class="progress-fill"></div>
+                    </div>
+                </div>
+                <div class="stat-card glass">
+                    <h3>Uptime</h3>
+                    <div class="stat-value" id="uptime-value">0s</div>
+                    <div class="stat-meta" id="mantenimiento-last">Nunca</div>
+                </div>
+            </section>
+
+            <section class="controls glass">
+                <h2>Controles de Servidor</h2>
+                <div class="button-group">
+                    <button id="btn-mantenimiento" class="btn-primary">
+                        <span class="icon">⚙️</span> Iniciar Mantenimiento
+                    </button>
+                    <button id="btn-clear" class="btn-secondary">
+                        <span class="icon">🧹</span> Limpiar Logs
+                    </button>
+                    <button id="btn-restart" class="btn-danger">
+                        <span class="icon">🔄</span> Reiniciar
+                    </button>
+                </div>
+            </section>
+
+            <section class="log-viewer glass">
+                <div class="log-header">
+                    <h2>Live Logs</h2>
+                    <span id="log-count">0 lineas</span>
+                </div>
+                <div id="log-content" class="log-content">
+                    <div class="log-line info">Iniciando Dashboard...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+
+    <script src="renderer.js"></script>
+</body>
+</html>

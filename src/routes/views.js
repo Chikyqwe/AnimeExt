@@ -2,7 +2,6 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const router = express.Router();
-const { randomKey } = require('../utils/token');
 const { getAnimeByUnitId } = require('../services/jsonService');
 const imgs = require('../controllers/imageController');
 
@@ -29,19 +28,10 @@ function sendHtml(res, filename) {
   res.send(html);
 }
 
-function setRandomCookies(res) {
-  const key1 = randomKey(8);
-  const key2 = randomKey(8);
-  res.cookie('_K0x1FLVTA0xAA1', key1, { httpOnly: false, path: '/', sameSite: "None", secure: true });
-  res.cookie('_K0x2FLVTA0xFF2', key2, { httpOnly: false, path: '/', sameSite: "None", secure: true });
-  res.setHeader('Cache-Control', 'no-store');
-}
-
 // -------------------- RUTAS --------------------
 
 // Raíz
 router.get('/', (req, res) => {
-  setRandomCookies(res);
   sendHtml(res, 'index.html');
 });
 
@@ -50,7 +40,7 @@ router.get('/app/screenshots', imgs.listImages);
 router.get('/app/images/:imageName', imgs.serveImage);
 
 // Player y App
-router.get('/player', (req, res) => sendHtml(res, 'player.html'));
+router.get('/player/:id/:ep', (req, res) => sendHtml(res, 'player.html'));
 router.get('/app', (req, res) => sendHtml(res, 'app.html'));
 
 // Privacy policy

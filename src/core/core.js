@@ -61,16 +61,385 @@ function safeBase64Decode(str) {
 }
 
 // ================== PAGE VIDEO EXTRACTOR ==================
+// -----------------------------
+// Extractor AY
+// ------------------------------
+function decodeBase64(str) {
+  try {
+    return Buffer.from(str, 'base64').toString('utf-8');
+  } catch {
+    return null;
+  }
+}
+function getServerInfo(url) {
+  try {
+    const hostname = new URL(url).hostname;
+    const clean = hostname.replace('www.', '').split('.')[0];
+
+    return {
+      host: hostname,      // uqload.io
+      servidor: clean      // uqload
+    };
+  } catch {
+    return {
+      host: null,
+      servidor: 'unknown'
+    };
+  }
+}
+async function extractAniyae($) {
+  const videos = [];
+
+  try {
+    const scripts = $('script').map((_, el) => $(el).html()).get();
+    const targetScript = scripts.find(s => s && s.includes('episodeId'));
+
+    if (!targetScript) {
+      console.log('[ANIYAE] ❌ No se encontró episodeId');
+      return videos;
+    }
+
+    const match = targetScript.match(/episodeId\s*=\s*(\d+)/i);
+
+    if (!match) {
+      console.log('[ANIYAE] ❌ No se pudo extraer episodeId');
+      return videos;
+    }
+
+    const episodeId = match[1];
+
+    const apiUrl = `https://open.aniyae.net/wp-json/kiranime/v1/episode/players?id=${episodeId}`;
+    console.log(apiUrl)
+    const res = await axios.get(apiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'application/json'
+      },
+      timeout: 10000
+    });
+
+    const players = res.data?.players;
+
+    if (!Array.isArray(players)) {
+      console.log('[ANIYAE] ⚠️ players inválido');
+      return videos;
+    }
+
+    players.forEach(v => {
+      if (!v?.url) return;
+
+      const decodedUrl = decodeBase64(v.url);
+
+      if (!decodedUrl || !decodedUrl.startsWith('http')) return;
+
+      videos.push({
+        servidor: getServerInfo(decodedUrl).servidor,
+        url: decodedUrl
+      });
+    });
+
+  } catch (e) {
+    console.error('[ANIYAE] ❌ Error:', e.message);
+  }
+
+  return videos;
+}
+
+// ------------------------------
+// Extractor HL
+// ------------------------------
+async function extractHL($) {
+  const videos = [];
+
+  try {
+    // Buscar el script que contiene "kit.start"
+    const scripts = $('script').map((_, el) => $(el).html()).get();
+
+    const targetScript = scripts.find(s => s && s.includes('kit.start'));
+
+    if (!targetScript) {
+      console.log('[SUB] ❌ No se encontró el script con kit.start');
+      return videos;
+    }
+
+    // Extraer el bloque donde está "embeds"
+    const embedsMatch = targetScript.match(/embeds:\s*(\{[\s\S]*?\})\s*,\s*downloads:/);
+
+    if (!embedsMatch) {
+      console.log('[SUB] ❌ No se encontró embeds');
+      return videos;
+    }
+
+    let embeds;
+
+    try {
+      embeds = eval('(' + embedsMatch[1] + ')'); // parseo rápido tipo objeto JS
+    } catch (e) {
+      console.log('[SUB] ❌ Error parseando embeds:', e.message);
+      return videos;
+    }
+
+    if (!embeds.SUB || !Array.isArray(embeds.SUB)) {
+      console.log('[SUB] ⚠️ No hay SUB');
+      return videos;
+    }
+
+    embeds.SUB.forEach(v => {
+      if (!v.url) return;
+
+      videos.push({
+        servidor: v.server.toLowerCase(),
+        url: v.url
+      });
+    });
+
+  } catch (e) {
+    console.error('[SUB] ❌ Error general:', e.message);
+  }
+
+  return videos;
+}
+
+// ------------------------------
+// Extractor ONE
+// ------------------------------
+function hex2a(hex) {
+  let str = '';
+  for (let i = 0; i < hex.length; i += 2) {
+    str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+  }
+  return str;
+}
+
+function getServerName(url) {
+  try {
+    const host = new URL(url).hostname.replace('www.', '');
+    const parts = host.split('.');
+    return parts[parts.length - 2] || host;
+  } catch {
+    return 'unknown';
+  }
+}
+async function extractONE($, pageUrl) {
+  console.log("extractONE", pageUrl);
+  const videos = [];
+
+  const enc = $('.opt').first().data('encrypt') || $('.opt').attr('data-encrypt');
+  if (!enc) {
+    console.log('[ONE] ❌ No se encontró data-encrypt');
+    return videos;
+  }
+
+  try {
+    const origin = new URL(pageUrl).origin;
+    const endpoint = `${origin}/flv`;
+
+    const res = await axios.post(
+      endpoint,
+      new URLSearchParams({ acc: 'opt', i: enc }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Referer': pageUrl,
+          'Origin': origin,
+          'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0',
+          'Accept': '*/*',
+          'Accept-Language': 'es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3',
+          'Sec-Fetch-Dest': 'empty',
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'same-origin',
+        },
+        responseType: 'text',
+        timeout: 10000
+      }
+    );
+
+    const html = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+
+    if (!html || html.trim() === '') {
+      console.log('[ONE] ⚠️ Respuesta vacía');
+      return videos;
+    }
+
+    const $$ = cheerio.load(html);
+
+    $$('li[encrypt]').each((_, el) => {
+      const encrypt = $$(el).attr('encrypt');
+      if (!encrypt) return;
+
+      let url;
+      try {
+        url = hex2a(encrypt);
+      } catch (e) {
+        console.warn('[ONE] hex2a falló:', e.message);
+        return;
+      }
+
+      if (!url || !url.startsWith('http')) {
+        console.warn('[ONE] URL inválida:', url);
+        return;
+      }
+
+      const servidor = $$(el).attr('title')?.replace('Opción ', '').toLowerCase()
+        || getServerName(url);
+
+      videos.push({ servidor, url });
+    });
+
+  } catch (e) {
+    console.error('[ONE] ❌ Error:', e.message);
+    if (e.response) {
+      console.error('[ONE] Status:', e.response.status);
+      console.error('[ONE] Body:', String(e.response.data).slice(0, 300));
+    }
+  }
+
+  return videos;
+}
+// ------------------------------
+// Extractor FLV/TIO/TIOH
+// ------------------------------
+function extractGeneric($, pageUrl) {
+  console.log("extractGeneric", pageUrl);
+  const videos = [];
+
+  $('script').each((_, el) => {
+    const scr = $(el).html();
+    if (!scr) return;
+
+    const match = scr.match(/var\s+videos\s*=\s*(\[.*?\]|\{[\s\S]*?\});/s);
+    if (!match) return;
+
+    try {
+      const parsed = JSON.parse(match[1].replace(/\\\//g, '/'));
+
+      // Formato tipo { SUB: [...] }
+      if (parsed?.SUB) {
+        parsed.SUB.forEach(v => {
+          const url = transformObeywish(v.code || v[1]);
+          if (!url) return;
+
+          videos.push({
+            servidor: (v.server || v[0] || '').toLowerCase(),
+            url
+          });
+        });
+      }
+
+      // Formato array simple
+      else if (Array.isArray(parsed)) {
+        parsed.forEach(v => {
+          if (!v[1]) return;
+
+          videos.push({
+            servidor: (v[0] || '').toLowerCase(),
+            url: transformObeywish(v[1])
+          });
+        });
+      }
+
+    } catch (e) {
+      console.error('[GENERIC] error:', e.message);
+    }
+  });
+
+  return videos;
+}
+// ------------------------------
+// JK
+// ------------------------------
+async function extractJK($) {
+  const videos = [];
+
+  try {
+    // 1. Obtener todos los scripts
+    const scripts = $('script').map((_, el) => $(el).html()).get();
+
+    // 2. Buscar el script que contiene "var servers"
+    const targetScript = scripts.find(s => s && s.includes('var servers'));
+
+    if (!targetScript) {
+      console.log('[JK] ❌ No se encontró el script');
+      return videos;
+    }
+
+    // =========================
+    // 🔹 EXTRAER SERVERS (BASE64)
+    // =========================
+    const serversMatch = targetScript.match(/var\s+servers\s*=\s*(\[[\s\S]*?\]);/);
+
+    if (serversMatch) {
+      let servers;
+
+      try {
+        servers = eval(serversMatch[1]);
+      } catch (e) {
+        console.log('[JK] ❌ Error parseando servers:', e.message);
+        servers = [];
+      }
+
+      servers.forEach(s => {
+        if (!s.remote) return;
+
+        let url = '';
+
+        try {
+          url = Buffer.from(s.remote, 'base64').toString('utf-8').trim();
+        } catch { }
+
+        if (!url) return;
+
+        videos.push({
+          servidor: (s.server || 'unknown').toLowerCase(),
+          url
+        });
+      });
+    }
+
+    // =========================
+    // 🔹 EXTRAER IFRAMES (video[])
+    // =========================
+    const videoMatches = [...targetScript.matchAll(/video\[\d+\]\s*=\s*'(.*?)';/g)];
+
+    videoMatches.forEach(match => {
+      const iframe = match[1];
+
+      const srcMatch = iframe.match(/src="(.*?)"/);
+
+      if (!srcMatch) return;
+
+      let url = srcMatch[1];
+
+      // corregir rutas relativas
+      if (url.startsWith('/')) {
+        url = 'https://jkanime.net' + url;
+      }
+
+      videos.push({
+        servidor: getServerName(url),
+        url
+      });
+    });
+
+  } catch (e) {
+    console.error('[JK] ❌ Error general:', e.message);
+  }
+
+  return videos;
+}
+// ------------------------------
+// MAIN
+// ------------------------------
 async function extractAllVideoLinks(pageUrl) {
-  // 1. Generar llave única para la URL de la página
   const pageKey = crypto.createHash('md5').update(pageUrl).digest('hex');
 
-  // 2. Verificar si ya tenemos los links de esta página en caché
+  // Cache
   if (linksCache.exists(pageKey)) {
     console.log(`[CACHE-LINKS] Reusando lista de videos para: ${pageUrl}`);
     try {
       return JSON.parse(linksCache.load(pageKey));
-    } catch (e) {
+    } catch {
       console.error("[CACHE-LINKS] Error parseando caché, re-extrayendo...");
     }
   }
@@ -87,63 +456,25 @@ async function extractAllVideoLinks(pageUrl) {
   }
 
   const $ = cheerio.load(html);
-  const videos = [];
-
-  // --- Lógica de extracción (animeid, animeytx, genérico) ---
-  if (/animeid/i.test(pageUrl)) {
-    $('#partes .parte').each((_, el) => {
-      let raw = $(el).attr('data');
-      if (!raw) return;
-      try {
-        raw = raw.replace(/'/g, '"');
-        const parsed = JSON.parse(raw);
-        if (!parsed?.v) return;
-        const iframeHtml = parsed.v.replace(/\\u003C/g, '<').replace(/\\u003E/g, '>').replace(/\\u002F/g, '/');
-        const m = iframeHtml.match(/src="([^"]+)"/i);
-        if (!m) return;
-        const finalUrl = transformObeywish(m[1]);
-        videos.push({ servidor: new URL(finalUrl).hostname.toLowerCase(), url: finalUrl });
-      } catch (e) { console.error('[EXTRACTOR] animeid error:', e.message); }
-    });
-  } else if (/animeytx/i.test(pageUrl)) {
-    $('select.mirror option').each((_, el) => {
-      const encoded = $(el).attr('value');
-      if (!encoded) return;
-      const decoded = safeBase64Decode(encoded);
-      if (!decoded) return;
-      try {
-        const $dec = cheerio.load(decoded);
-        const src = $dec('iframe').attr('src');
-        if (!src) return;
-        const finalUrl = transformObeywish(src);
-        videos.push({ servidor: new URL(finalUrl).hostname.toLowerCase(), url: finalUrl });
-      } catch (e) { console.error('[EXTRACTOR] animeytx error:', e.message); }
-    });
-  } else {
-    $('script').each((_, el) => {
-      const scr = $(el).html();
-      if (!scr) return;
-      const match = scr.match(/var\s+videos\s*=\s*(\[.*?\]|\{[\s\S]*?\});/s);
-      if (!match) return;
-      try {
-        const parsed = JSON.parse(match[1].replace(/\\\//g, '/'));
-        if (parsed?.SUB) {
-          parsed.SUB.forEach(v => {
-            const url = transformObeywish(v.code || v[1]);
-            if (!url) return;
-            videos.push({ servidor: (v.server || v[0] || '').toLowerCase(), url });
-          });
-        } else if (Array.isArray(parsed)) {
-          parsed.forEach(v => {
-            if (!v[1]) return;
-            videos.push({ servidor: (v[0] || '').toLowerCase(), url: transformObeywish(v[1]) });
-          });
-        }
-      } catch (e) { console.error('[EXTRACTOR] genérico error:', e.message); }
-    });
+  let videos = [];
+  // Selección de extractor
+  if (/hentaila.com/i.test(pageUrl)) {
+    videos = await extractHL($, pageUrl);
+  }
+  else if (/open.aniyae.net/i.test(pageUrl)) {
+    videos = await extractAniyae($, pageUrl);
+  }
+  else if (/animeflv.one/i.test(pageUrl)) {
+    videos = await extractONE($, pageUrl);
+  }
+  else if (/jkanime.net/i.test(pageUrl)) {
+    videos = await extractJK($, pageUrl);
+  }
+  else {
+    videos = await extractGeneric($, pageUrl);
   }
 
-  // 3. Guardar en caché antes de retornar (Convertimos a string para TextCache)
+  // Guardar cache
   if (videos.length > 0) {
     linksCache.save(pageKey, JSON.stringify(videos));
   }
@@ -153,11 +484,14 @@ async function extractAllVideoLinks(pageUrl) {
 }
 
 // ================== IMPORT EXTRACTORS ==================
-const sw  = require('./resolvers/sw');
-const voe = require('./resolvers/voe');
-const bc  = require('./resolvers/bc');
-const yu  = require('./resolvers/yu');
-const st  = require('./resolvers/st');
+const sw = require('./models/sw');
+const voe = require('./models/voe');
+const bc = require('./models/bc');
+const yu = require('./models/yu');
+const st = require('./models/st');
+const uq = require('./models/uq');
+const mp4 = require('./models/mp4');
+const jkum = require('./models/jkum');
 
 // ================== NORMALIZER ==================
 function normalizeExtractor(mod) {
@@ -166,6 +500,9 @@ function normalizeExtractor(mod) {
   if (typeof mod?.extractST === 'function') return mod.extractST;
   if (typeof mod?.extractVoe === 'function') return mod.extractVoe;
   if (typeof mod?.extractM3u8 === 'function') return mod.extractM3u8;
+  if (typeof mod?.uq === 'function') return mod.uq;
+  if (typeof mod?.mp4 === 'function') return mod.mp4;
+  if (typeof mod?.jkum === 'function') return mod.jkum;
   throw new Error('Extractor inválido');
 }
 
@@ -180,7 +517,10 @@ const extractorMap = {
   bc: bc,
   yourupload: yu,
   yu: yu,
-  stape: st
+  stape: st,
+  uqload: uq,
+  mp4upload: mp4,
+  jkum: jkum,
 };
 
 function getExtractor(name) {

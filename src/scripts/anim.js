@@ -1,4 +1,3 @@
-// anim.js
 const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
@@ -7,234 +6,391 @@ const PQueue = require("p-queue").default;
 const { last } = require("./lastep");
 
 // --------------------------------------------
-// Configuración general
+// Configuración
 // --------------------------------------------
 const CONFIG = {
   FLV_BASE_URL: "https://www4.animeflv.net",
+  ONE_BASE_URL: "https://vww.animeflv.one",
   TIO_BASE_URL: "https://tioanime.com",
-  FLV_MAX_PAGES: 173,
+  FLV_MAX_PAGES: 155,
+  ONE_MAX_PAGES: 295,
   TIO_TOTAL_PAGES: 209,
-  ANIMEYTX_TOTAL_PAGES: 34,
-  CONCURRENT_REQUESTS: 50,
-  CONCURRENT_ANIMEYTX: 40,
+  JK_TOTAL_PAGES: 155,
+  ANIYAE_TOTAL_PAGES: 96,
+  HENTAILA_TOTAL_PAGES: 50,
+  TIOHENTAI_TOTAL_PAGES: 44,
+  CONCURRENT_REQUESTS: 10, // ⚡ menos concurrencia para RAM
 };
 
 const erroresReportados = [];
 
 // --------------------------------------------
-// Utilidades
+// Utils
 // --------------------------------------------
 const registrarError = (origen, contexto, mensaje, url = null) => {
   erroresReportados.push({ origen, contexto, mensaje, url, timestamp: new Date().toISOString() });
 };
 
-const eliminarArchivo = (filePath, log = console.log) => {
-  const fullPath = path.resolve(filePath);
+const limpiarDirectorio = (dir) => {
   try {
-    if (fs.existsSync(fullPath)) {
-      fs.unlinkSync(fullPath);
-      log(`🗑️ Eliminado: ${fullPath}`);
-    }
-  } catch (err) { log(`❌ Error al eliminar ${fullPath}: ${err.message}`); }
-};
-
-const generarUnitIDExistenteOUnico = (slug, usados, unitIDsExistentes) => {
-  if (unitIDsExistentes[slug]) return unitIDsExistentes[slug];
-  let newId = Math.floor(Math.random() * 10000);
-  while (usados.has(newId)) newId = Math.floor(Math.random() * 10000);
-  usados.add(newId);
-  unitIDsExistentes[slug] = newId;
-  return newId;
-};
-
-const normalizarTituloConTemporada = (titulo) => {
-  if (!titulo) return "";
-  let norm = titulo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const match = norm.match(/\s*(?:temporada|season|saison|part)\s*(\d+)/) || norm.match(/\s*(\d+)$/);
-  const num = match ? parseInt(match[1], 10) : 1;
-  norm = norm.replace(/\s*(?:temporada|season|saison|part)\s*\d+/, "").replace(/\s*\d+$/, "").replace(/[^a-z0-9]/g, "");
-  return norm.trim() + "-" + num;
-};
-
-const slugSimplificado = (slugOrTitle) => {
-  if (!slugOrTitle) return "";
-  return slugOrTitle.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+  } catch (err) { console.log(`❌ Error limpiando ${dir}: ${err.message}`); }
 };
 
 // --------------------------------------------
-// Función principal para combinar datos
+// DESCARGAR + PARSEAR CON STREAM
 // --------------------------------------------
-const UnityJsonsV4 = (datosTio, datosFlv, outputPath, log = console.log) => {
-  log("🔗 Combinando datos de directorios...");
+async function descargarYParsear({ totalPages, tmpDir, getPageUrl, parseFn, log, label, outputPath, concurrency, inter }) {
+  fs.mkdirSync(tmpDir, { recursive: true });
+  const queue = new PQueue({ concurrency: concurrency ?? CONFIG.CONCURRENT_REQUESTS, interval: inter ?? 0 });
+  log(`[DOWNLOAD] Descargando ${label}...`);
 
+  const writeStream = fs.createWriteStream(outputPath, { flags: "w" });
+  writeStream.write("[\n");
+  let first = true;
+
+  for (let i = 0; i < totalPages; i++) {
+    const page = i + 1;
+    queue.add(async () => {
+      const url = getPageUrl(page);
+      const maxRetries = 3;
+
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          // Si es reintento, usa el proxy
+          const fetchUrl = attempt > 0
+            ? `https://anim-ext-vc.vercel.app/api/req?url=${encodeURIComponent(url)}`
+            : url;
+
+          const { data } = await axios.get(fetchUrl, { timeout: 10000 });
+          fs.writeFileSync(path.join(tmpDir, `page_${page}.html`), data);
+
+          const $ = cheerio.load(data);
+          const parsed = parseFn($, data);
+
+          if (parsed.length > 0) {
+            for (const item of parsed) {
+              if (!first) writeStream.write(",\n");
+              writeStream.write(JSON.stringify(item));
+              first = false;
+            }
+          }
+          
+          $.root().remove(); // 🔥 Liberar Cheerio
+
+
+          log(`[DOWNLOAD] [${label}] Página ${page} procesada${attempt > 0 ? " (via proxy)" : ""}`);
+          break;
+
+        } catch (err) {
+          const is429 = err?.response?.status === 429;
+
+          if (is429 && attempt < maxRetries) {
+            log(`[RETRY] [${label}] Página ${page} - 429, usando proxy...`);
+          } else {
+            registrarError(`${label}_DOWNLOAD`, page, err.message, url);
+            log(`[ERROR] [${label}] Página ${page}: ${err.message}`);
+            break;
+          }
+        }
+      }
+    });
+  }
+
+  await queue.onIdle();
+
+  // Esperar a que el stream cierre completamente antes de continuar
+  await new Promise((resolve, reject) => {
+    writeStream.write("\n]");
+    writeStream.end();
+    writeStream.on("finish", resolve);
+    writeStream.on("error", reject);
+  });
+
+  limpiarDirectorio(tmpDir);
+  log(`[SUCCESS] [${label}] guardado en ${outputPath}`);
+}
+// --------------------------------------------
+// SCRAPERS
+// --------------------------------------------
+const scrapeFLV = async (log, outputPath) => descargarYParsear({
+  totalPages: CONFIG.FLV_MAX_PAGES,
+  tmpDir: path.join(__dirname, "tmp_flv"),
+  label: "FLV",
+  log,
+  outputPath,
+  getPageUrl: (p) => `${CONFIG.FLV_BASE_URL}/browse?page=${p}`,
+  parseFn: ($) => {
+    const arr = [];
+    $("li").each((_, el) => {
+      const a = $(el).find("a[href]");
+      const img = $(el).find("img");
+      const href = a.attr("href") || "";
+      if (!href.includes("/anime/")) return;
+      const slug = href.replace("/anime/", "").replace(/\/$/, "");
+      arr.push({ slug, title: img.attr("alt") || "", url: CONFIG.FLV_BASE_URL + href, image: img.attr("src") });
+    });
+    return arr;
+  }
+});
+
+const scrapeONE = async (log, outputPath) => descargarYParsear({
+  totalPages: CONFIG.ONE_MAX_PAGES,
+  tmpDir: path.join(__dirname, "tmp_one"),
+  label: "ONE",
+  log,
+  outputPath,
+  getPageUrl: (p) => `${CONFIG.ONE_BASE_URL}/animes?pag=${p}`,
+  parseFn: ($) => {
+    const arr = [];
+    $("article.li").each((_, el) => {
+      const a = $(el).find("figure a");
+      const h3 = $(el).find("h3 a");
+      const img = $(el).find("img");
+      const href = a.attr("href") || "";
+      if (!href.includes("/anime/")) return;
+      const slug = href.replace("./anime/", "").replace("/anime/", "").replace(/\/$/, "");
+      arr.push({ slug, title: h3.text().trim(), url: CONFIG.ONE_BASE_URL + "/anime/" + slug, image: img.attr("data-src") || img.attr("src") });
+    });
+    return arr;
+  }
+});
+
+const scrapeTioAnime = async (log, outputPath) => descargarYParsear({
+  totalPages: CONFIG.TIO_TOTAL_PAGES,
+  tmpDir: path.join(__dirname, "tmp_tio"),
+  label: "TIO",
+  log,
+  outputPath,
+  getPageUrl: (p) => `${CONFIG.TIO_BASE_URL}/directorio?p=${p}`,
+  parseFn: ($) => {
+    const arr = [];
+    $("article.anime").each((_, el) => {
+      const link = $(el).find("a");
+      const href = link.attr("href") || "";
+      if (!href.includes("/anime/")) return;
+      let img = link.find("img").attr("src") || "";
+      if (img && !img.startsWith("http")) img = CONFIG.TIO_BASE_URL + img;
+      arr.push({ slug: href.replace("/anime/", "").replace(/\/$/, ""), title: link.find("h3.title").text().trim(), url: CONFIG.TIO_BASE_URL + href, image: img });
+    });
+    return arr;
+  }
+});
+
+const scrapeJKAnime = async (log, outputPath) => descargarYParsear({
+  totalPages: CONFIG.JK_TOTAL_PAGES,
+  tmpDir: path.join(__dirname, "tmp_jk"),
+  label: "JK",
+  log,
+  outputPath,
+  concurrency: 3, // 👈 limita solo JK
+  inter: 1000,
+  getPageUrl: (p) => `https://jkanime.net/directorio?p=${p}`,
+  parseFn: ($, html) => {
+    const arr = [];
+    try {
+      const match = html.match(/var\s+animes\s*=\s*(\{.*?\});/s);
+      if (!match) return arr;
+      const data = JSON.parse(match[1]);
+      if (!data?.data) return arr;
+      for (const anime of data.data) {
+        if ((anime.estado || "").toLowerCase().includes("estrenar")) continue;
+        arr.push({ slug: anime.slug, title: anime.title, url: anime.url, image: anime.image, status: anime.estado, type: anime.tipo });
+      }
+    } catch (err) { log(`[FAIL] Error parseando JSON JK: ${err.message}`); }
+    return arr;
+  }
+});
+
+const scrapeAniyae = async (log, outputPath) => descargarYParsear({
+  totalPages: CONFIG.ANIYAE_TOTAL_PAGES,
+  tmpDir: path.join(__dirname, "tmp_aniyae"),
+  label: "ANIYAE",
+  log,
+  outputPath,
+  getPageUrl: (p) => `https://open.aniyae.net/directorio/page/${p}`,
+  parseFn: ($) => {
+    const arr = [];
+    $(".grid-card").each((_, el) => {
+      const card = $(el);
+      const href = card.find('a[href*="/ah/"]').attr("href") || "";
+      if (!href) return;
+      const title = card.find(".stack span").first().text().trim();
+      let img = card.find("img").attr("src") || null;
+      const slug = href.replace("https://open.aniyae.net/ah/", "").replace(/\/$/, "");
+      const tipo = card.find(".absolute.top-0.right-0 div").first().text().trim().toLowerCase();
+      const rawText = card.text().toLowerCase();
+      if (rawText.includes("not yet aired")) return;
+      arr.push({ slug, title, url: href, image: img, type: tipo, status: rawText });
+    });
+    return arr;
+  }
+});
+
+const scrapeHentaila = async (log, outputPath) => descargarYParsear({
+  totalPages: CONFIG.HENTAILA_TOTAL_PAGES,
+  tmpDir: path.join(__dirname, "tmp_hentaila"),
+  label: "HENTAILA",
+  log,
+  outputPath,
+  getPageUrl: (p) => `https://hentaila.com/catalogo?page=${p}`,
+  parseFn: ($) => {
+    const arr = [];
+    $("article.group\\/item").each((_, el) => {
+      const card = $(el);
+      const a = card.find("a[href]").first();
+      const href = a.attr("href") || "";
+      if (!href.includes("/media/")) return;
+      const slug = href.replace("/media/", "").replace(/\/$/, "");
+      const title = card.find("h3").text().trim() || a.attr("title") || "";
+      let image = card.find("img").attr("data-src") || card.find("img").attr("src") || null;
+      const type = card.find(".text-xs").first().text().trim().toLowerCase();
+      arr.push({ slug, title, url: "https://hentaila.com" + href, image, type, isHentai: true });
+    });
+    return arr;
+  }
+});
+
+const scrapeTioHentai = async (log, outputPath) => descargarYParsear({
+  totalPages: CONFIG.TIOHENTAI_TOTAL_PAGES,
+  tmpDir: path.join(__dirname, "tmp_tiohentai"),
+  label: "TIOHENTAI",
+  log,
+  outputPath,
+  getPageUrl: (p) => `https://tiohentai.com/directorio?p=${p}`,
+  parseFn: ($) => {
+    const arr = [];
+    $("ul.animes li article.anime").each((_, el) => {
+      const card = $(el);
+      const a = card.find("a").first();
+      const href = a.attr("href") || "";
+      if (!href.startsWith("/hentai/")) return;
+      const title = card.find("h3.title").text().trim();
+      let image = card.find("img").attr("src") || null;
+      if (image?.startsWith("/")) image = "https://tiohentai.com" + image;
+      const slug = href.replace("/hentai/", "").replace(/\/$/, "");
+      arr.push({ slug, title, url: "https://tiohentai.com" + href, image, source: "tiohentai", isHentai: true });
+    });
+    return arr;
+  }
+});
+
+// --------------------------------------------
+// COMBINAR DESDE JSONS
+// --------------------------------------------
+const UnityJsonsV4 = (sourcesPaths, outputPath, log = console.log) => {
+  const mapa = new Map();
   const unitIDPath = path.join(__dirname, "..", "..", "data", "UnitID.json");
   let unitIDsExistentes = {};
   if (fs.existsSync(unitIDPath)) {
     try { unitIDsExistentes = JSON.parse(fs.readFileSync(unitIDPath, "utf-8")); }
-    catch (err) { log(`⚠️ Error al leer UnitID.json: ${err.message}`); }
+    catch { log("[WARNING] Error leyendo UnitID.json"); }
   }
-
   const usados = new Set(Object.values(unitIDsExistentes));
-  const mapa = new Map();
 
-  const agregarDatos = (anime, fuente) => {
-    const clave = normalizarTituloConTemporada(anime.title || anime.titulo);
-    const claveSlug = slugSimplificado(anime.slug || anime.title || anime.titulo);
-    let existingKey = null;
-
-    for (let [k, v] of mapa.entries()) {
-      if (k === clave || slugSimplificado(v.slug || v.title) === claveSlug) {
-        existingKey = k;
-        break;
-      }
-    }
-
-    if (existingKey) {
-      const existing = mapa.get(existingKey);
-      existing.sources[fuente] = anime.url || null;
-      if (!existing.image && anime.image) existing.image = anime.image;
-      if ((anime.title?.length || 0) > (existing.title?.length || 0) || fuente === "FLV") existing.title = anime.title;
-      if (fuente === "FLV" && anime.slug) existing.slug = anime.slug;
-    } else {
-      const sources = { FLV: null, TIO: null, ANIMEYTX: null };
-      sources[fuente] = anime.url || null;
-      mapa.set(clave, {
-        title: anime.title || anime.titulo,
-        slug: anime.slug || null,
-        image: anime.image || null,
-        sources,
-      });
-    }
+  const generarUnitID = (slug) => {
+    if (unitIDsExistentes[slug]) return unitIDsExistentes[slug];
+    let id;
+    do { id = Math.floor(Math.random() * 1_000_000) + 1; } while (usados.has(id));
+    usados.add(id);
+    unitIDsExistentes[slug] = id;
+    return id;
   };
 
-  [datosFlv, datosTio].forEach((dataset, i) => {
-    const fuente = i === 0 ? "FLV" : i === 1 ? "TIO" : "ANIMEYTX";
-    dataset.forEach(a => agregarDatos(a, fuente));
-  });
+  const normalizarTitulo = (title) => title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
 
-  const combinado = [...mapa.values()];
-  const idsUsados = new Set();
+  const add = (anime, src) => {
+    if (!anime?.title) return;
+    const key = normalizarTitulo(anime.title);
+    if (!mapa.has(key)) mapa.set(key, { title: anime.title, slug: anime.slug || null, image: anime.image || null, sources: { FLV: null, ONE: null, TIO: null, JK: null, ANIYAE: null, HENTAILA: null, TIOHENTAI: null } });
+    const existing = mapa.get(key);
+    if (anime.url) existing.sources[src] = anime.url;
+    if ((anime.title?.length || 0) > (existing.title?.length || 0)) existing.title = anime.title;
+    if (!existing.image && anime.image) existing.image = anime.image;
+    if (!existing.slug && anime.slug) existing.slug = anime.slug;
+  };
 
-  combinado.forEach((anime, index) => {
-    // Generar ID aleatorio único
-    let newId;
-    do {
-      newId = Math.floor(Math.random() * 1_000_000) + 1;
-    } while (idsUsados.has(newId));
-    idsUsados.add(newId);
-    anime.id = newId;
+  for (const { path: p, src } of sourcesPaths) {
+    if (!fs.existsSync(p)) continue;
 
-    // Generar unit_id persistente
-    anime.unit_id = generarUnitIDExistenteOUnico(anime.slug || anime.title, idsUsados, unitIDsExistentes);
-  });
+    // ✅ Agrega esta validación
+    const content = fs.readFileSync(p, "utf-8").trim();
+    if (!content || content === "[]" || content.length < 3) {
+      log(`[WARNING] Archivo vacío o inválido, omitiendo: ${p}`);
+      continue;
+    }
 
-
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, JSON.stringify({
-    metadata: { creado_en: new Date().toISOString(), total_animes: combinado.length },
-    animes: combinado
-  }, null, 2), "utf-8");
-
-  fs.writeFileSync(unitIDPath, JSON.stringify(unitIDsExistentes, null, 2), "utf-8");
-  log(`✅ JSON combinado guardado en: ${outputPath}`);
-  log(`🔒 UnitID.json actualizado con ${Object.keys(unitIDsExistentes).length} unit_ids.`);
-};
-
-// --------------------------------------------
-// Funciones de scraping
-// --------------------------------------------
-const extraerPagina = async (url, selector, mapFn, log, timeout = 10000) => {
-  try {
-    const { data } = await axios.get(url, { timeout });
-    const $ = cheerio.load(data);
-    const resultados = $(selector).map((_, el) => mapFn($(el))).get();
-    $.root().remove();
-    return resultados;
-  } catch (err) {
-    registrarError("Scraper", url, err.message, url);
-    return [];
+    try {
+      const data = JSON.parse(content);
+      for (const anime of data) add(anime, src);
+      // 🔥 Liberar memoria
+      data.length = 0;
+    } catch (err) {
+      log(`[FAIL] Error parseando ${p}: ${err.message}`);
+    }
   }
-};
 
-const scrapeAnimeFLV = async (log = console.log) => {
-  const queue = new PQueue({ concurrency: CONFIG.CONCURRENT_REQUESTS });
-  const pages = Array.from({ length: CONFIG.FLV_MAX_PAGES }, (_, i) =>
-    queue.add(async () => {
-      const url = `${CONFIG.FLV_BASE_URL}/browse?page=${i + 1}`;
-      log(`[FLV] Procesando página ${i + 1}`);
-      return extraerPagina(url, "ul.ListAnimes.AX.Rows.A03.C02.D02 li", el => {
-        const a = el.find("a[href]").first();
-        const img = el.find("figure img");
-        const href = a.attr("href") || "";
-        const imgUrl = img.attr("src") || "";
-        const titulo = img.attr("alt") || "";
-        if (href.includes("/anime/")) {
-          const slug = href.replace("/anime/", "").replace(/\/$/, "");
-          return { slug, titulo, url: CONFIG.FLV_BASE_URL + href, image: imgUrl };
-        }
-        return null;
-      }, log);
-    })
-  );
-  const resultados = await Promise.allSettled(pages);
-  return resultados.filter(p => p.status === "fulfilled").flatMap(p => p.value).filter(Boolean);
-};
+  const out = [...mapa.values()];
+  mapa.clear(); // 🔥 Liberar mapa
 
-const scrapeTioAnime = async (log = console.log) => {
-  const queue = new PQueue({ concurrency: CONFIG.CONCURRENT_REQUESTS });
-  const pages = Array.from({ length: CONFIG.TIO_TOTAL_PAGES }, (_, i) =>
-    queue.add(async () => {
-      const url = `${CONFIG.TIO_BASE_URL}/directorio?p=${i + 1}`;
-      log(`[TioAnime] Procesando página ${i + 1}`);
-      return extraerPagina(url, "ul.animes.list-unstyled.row article.anime", el => {
-        const link = el.find("a");
-        const href = link.attr("href") || "";
-        if (!href.includes("/anime/")) return null;
-        const slug = href.replace("/anime/", "").replace(/\/$/, "");
-        let img = link.find("img").attr("src") || "";
-        if (img && !img.startsWith("http")) img = CONFIG.TIO_BASE_URL + img;
-        const titulo = link.find("h3.title").text().trim();
-        return { slug, titulo, image: img, url: CONFIG.TIO_BASE_URL + href };
-      }, log);
-    })
-  );
-  const resultados = await Promise.allSettled(pages);
-  return resultados.filter(p => p.status === "fulfilled").flatMap(p => p.value).filter(Boolean);
+
+  const idsUsados = new Set();
+  for (const anime of out) {
+    let randomId;
+    do { randomId = Math.floor(Math.random() * 1_000_000) + 1; } while (idsUsados.has(randomId));
+    idsUsados.add(randomId);
+    anime.id = randomId;
+    const base = anime.slug || anime.title;
+    anime.unit_id = generarUnitID(base);
+  }
+
+  try {
+    fs.writeFileSync(outputPath, JSON.stringify({ metadata: { creado_en: new Date().toISOString(), total_animes: out.length }, animes: out }, null, 2));
+    fs.writeFileSync(unitIDPath, JSON.stringify(unitIDsExistentes, null, 2));
+    log(`[SAVE] Guardado en ${outputPath} | Total animes: ${out.length}`);
+  } catch (err) { log("[FAIL] Error guardando archivo final:", err); }
 };
 
 // --------------------------------------------
-// Filtrado
-// --------------------------------------------
-const filtrarAnimesValidos = (animes) => animes.filter(a => a && (a.title || a.titulo));
-
-// --------------------------------------------
-// Main
+// MAIN
 // --------------------------------------------
 const main = async ({ log = console.log } = {}) => {
-  log("📡 Iniciando scraping...");
+  log("🚀 Iniciando scraping...");
 
-  const outputPath = path.join(__dirname, "..", "..", "data", "anime_list.json");
+  const dataDir = path.join(__dirname, "..", "..", "data");
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-  const tio = await scrapeTioAnime(log);
-  log(`TioAnime: obtenidos ${tio.length} animes.`);
+  const sources = [
+    { func: scrapeFLV, path: path.join(dataDir, "tmp_flv.json"), src: "FLV" },
+    { func: scrapeONE, path: path.join(dataDir, "tmp_one.json"), src: "ONE" },
+    { func: scrapeTioAnime, path: path.join(dataDir, "tmp_tio.json"), src: "TIO" },
+    { func: scrapeJKAnime, path: path.join(dataDir, "tmp_jk.json"), src: "JK" },
+    { func: scrapeAniyae, path: path.join(dataDir, "tmp_aniyae.json"), src: "ANIYAE" },
+    { func: scrapeHentaila, path: path.join(dataDir, "tmp_hentaila.json"), src: "HENTAILA" },
+    { func: scrapeTioHentai, path: path.join(dataDir, "tmp_tiohentai.json"), src: "TIOHENTAI" }
+  ];
 
-  const flv = await scrapeAnimeFLV(log);
-  log(`AnimeFLV: obtenidos ${flv.length} animes.`);
+  for (const s of sources) await s.func(log, s.path);
 
-  UnityJsonsV4(tio, flv, outputPath, log);
+  const sourcesPaths = sources.map(s => ({ path: s.path, src: s.src }));
+  const outputPath = path.join(dataDir, "anime_list.json");
 
-  const outReporte = path.join(__dirname, "..", "..", "data", "report_error.json");
-  if (erroresReportados.length > 0) {
-    fs.writeFileSync(outReporte, JSON.stringify(erroresReportados, null, 2), "utf-8");
-    log(`⚠️ Errores registrados en: ${outReporte}`);
-  } else {
-    eliminarArchivo(outReporte, log);
+  UnityJsonsV4(sourcesPaths, outputPath, log);
+  for (const s of sources) {
+    if (fs.existsSync(s.path)) {
+      fs.unlinkSync(s.path);
+      log(`🗑️ Eliminado: ${s.path}`);
+    }
   }
-
   await last();
-  log("✅ Scraping y combinación completados.");
-  process.exit(0);
+  log("[SUCCESS] Todo completado");
+
+  // 🔥 Limpiar globales
+  erroresReportados.length = 0;
+  
+  if (global.gc) global.gc();
 };
+
 
 module.exports = { main };
 if (require.main === module) main();

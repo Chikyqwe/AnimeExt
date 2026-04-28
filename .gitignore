@@ -3,3 +3,4 @@ list.js
 node_modules
 src/core/tmp/*
 python
+about/plan.rest

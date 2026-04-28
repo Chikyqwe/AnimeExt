@@ -7,9 +7,9 @@ const express = require('express');
 module.exports = (app) => {
   // ⚡ EXPLICACIÓN: Para que el router soporte .ws, 
   // debemos usar la extensión que express-ws añade a la app.
-  const expressWs = require('express-ws')(app); 
+  const expressWs = require('express-ws')(app);
   const router = express.Router();
-  
+
   // Aplicar el handler de websockets al router
   expressWs.applyTo(router);
 
@@ -36,10 +36,9 @@ module.exports = (app) => {
       github_url: 'https://github.com/Chikyqwe/AnimeExt',
       author: packageJson.author,
       websites: [
-        'https://animeext.infy.uk',
         'https://animeext-m5lt.onrender.com'
       ],
-      express_version: packageJson.dependencies?.express || 'not installed',
+      express_version: packageJson.devDependencies?.express || 'not installed',
       uptime: `${Math.floor(uptimeSec)} seconds`,
       server_start_time: new Date(Date.now() - uptimeSec * 1000).toISOString(),
       memory: memoryMB,
@@ -51,8 +50,16 @@ module.exports = (app) => {
       hostname: os.hostname(),
       license: packageJson.license,
       timestamp,
-      dependencies: packageJson.dependencies || {},
+      dependencies: packageJson.devDependencies || {},
       message: '🎉 Server is running and ready to handle requests.',
+    });
+  });
+
+  router.get("/ping", (req, res) => {
+    res.status(200).json({
+      status: "pong",
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
     });
   });
 

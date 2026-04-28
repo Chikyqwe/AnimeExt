@@ -1,0 +1,34 @@
+{"time":"2026-04-26T05:11:28.004Z","level":"important","message":["[INFO] Versión de AnimeExt: 17.0.0"]}
+{"time":"2026-04-26T05:11:28.005Z","level":"log","message":["[INFO] Iniciando servidor AnimeExt..."]}
+{"time":"2026-04-26T05:11:28.006Z","level":"log","message":["[INFO] Iniciando aplicación AnimeExt..."]}
+{"time":"2026-04-26T05:11:28.139Z","level":"log","message":["[INFO] WebSocket configurado"]}
+{"time":"2026-04-26T05:11:28.142Z","level":"log","message":["[INFO] Registrando rutas..."]}
+{"time":"2026-04-26T05:11:28.367Z","level":"log","message":["[R]: /home/chiky/AnimeExt/src/routes/api.js"]}
+{"time":"2026-04-26T05:11:28.367Z","level":"log","message":["[ROUTE] Cargado estándar: api.js"]}
+{"time":"2026-04-26T05:11:28.368Z","level":"log","message":["[R]: /home/chiky/AnimeExt/src/routes/index.js"]}
+{"time":"2026-04-26T05:11:28.368Z","level":"log","message":["[ROUTE] Cargado estándar: index.js"]}
+{"time":"2026-04-26T05:11:28.373Z","level":"log","message":["[dotenv@17.2.1] injecting env (0) from .env \u001b[2m-- tip: ⚙️  enable debug logging with { debug: true }\u001b[0m"]}
+{"time":"2026-04-26T05:11:28.521Z","level":"log","message":["[R]: /home/chiky/AnimeExt/src/routes/login.js"]}
+{"time":"2026-04-26T05:11:28.521Z","level":"log","message":["[ROUTE] Cargado estándar: login.js"]}
+{"time":"2026-04-26T05:11:28.522Z","level":"log","message":["[R]: /home/chiky/AnimeExt/src/routes/maintenance.js"]}
+{"time":"2026-04-26T05:11:28.522Z","level":"log","message":["[ROUTE] Cargado estándar: maintenance.js"]}
+{"time":"2026-04-26T05:11:28.523Z","level":"log","message":["[R]: /home/chiky/AnimeExt/src/routes/notificationRoute.js"]}
+{"time":"2026-04-26T05:11:28.523Z","level":"log","message":["[ROUTE] Cargado estándar: notificationRoute.js"]}
+{"time":"2026-04-26T05:11:28.524Z","level":"log","message":["[R]: /home/chiky/AnimeExt/src/routes/player.js"]}
+{"time":"2026-04-26T05:11:28.524Z","level":"log","message":["[ROUTE] Cargado estándar: player.js"]}
+{"time":"2026-04-26T05:11:28.525Z","level":"log","message":["[CACHE] HTML cargado: index.html"]}
+{"time":"2026-04-26T05:11:28.525Z","level":"log","message":["[CACHE] HTML cargado: player.html"]}
+{"time":"2026-04-26T05:11:28.525Z","level":"log","message":["[CACHE] HTML cargado: app.html"]}
+{"time":"2026-04-26T05:11:28.525Z","level":"log","message":["[CACHE] HTML cargado: app_redir.html"]}
+{"time":"2026-04-26T05:11:28.525Z","level":"log","message":["[CACHE] HTML cargado: privacy-policy.html"]}
+{"time":"2026-04-26T05:11:28.525Z","level":"log","message":["[R]: /home/chiky/AnimeExt/src/routes/views.js"]}
+{"time":"2026-04-26T05:11:28.525Z","level":"log","message":["[ROUTE] Cargado estándar: views.js"]}
+{"time":"2026-04-26T05:11:28.527Z","level":"log","message":["[R]: /home/chiky/AnimeExt/src/utils/status.js"]}
+{"time":"2026-04-26T05:11:28.528Z","level":"log","message":["[WS-ROUTE] Detectado y cargado: status.js"]}
+{"time":"2026-04-26T05:11:28.574Z","level":"log","message":["[MANTENIMIENTO] Metadata vigente."]}
+{"time":"2026-04-26T05:11:28.574Z","level":"log","message":["[INFO] App lista para recibir conexiones."]}
+{"time":"2026-04-26T05:11:28.650Z","level":"log","message":["[Main] Worker de episodios iniciado"]}
+{"time":"2026-04-26T05:11:28.958Z","level":"log","message":["[Worker]","Revisión de episodios iniciada"]}
+{"time":"2026-04-26T05:11:29.680Z","level":"log","message":["[Worker]","Usuarios a revisar: 0"]}
+{"time":"2026-04-26T05:11:29.696Z","level":"log","message":["[Worker]","Revisión finalizada"]}
+{"time":"2026-04-26T05:11:29.704Z","level":"log","message":["[Main] Worker finalizó correctamente, reprogramando en 15 min"]}
