@@ -134,6 +134,18 @@ exports.info = asyncHandler(async (req, res) => {
   });
 });
 
+exports.basicInfo = asyncHandler(async (req, res) => {
+  const uid = parseInt(req.query.uid);
+  const anime = getAnimeByUnitId(uid);
+  if (!anime) return res.status(404).json({ error: `No se encontró anime con uid=${uid}` });
+  res.json({
+    type: 'anime',
+    title: anime.title,
+    slug: anime.slug,
+    uid,
+  });
+});
+
 // ─────────────────────────────────────────────
 // POST /anime/img
 // Body case 1: { Did, uid, type: "cover" }

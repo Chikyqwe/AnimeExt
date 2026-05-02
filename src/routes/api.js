@@ -57,6 +57,8 @@ router.post('/anime/search', anime.search);
 router.post('/anime/img', anime.img);
 
 router.get('/api', anime.initmjs)
+
+router.get('/api/basic/info', anime.basicInfo)
 // ──────────────────────────────────────────────
 //  IMAGES
 // ──────────────────────────────────────────────

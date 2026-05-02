@@ -13,5 +13,185 @@
         "type": "mem",
         "file": "RAM",
         "exp": 1777338191817
+    },
+    "animeUnitId:145073": {
+        "type": "key",
+        "file": "animeUnitId:145073.json.gz",
+        "size": 242,
+        "create": 1777755926626,
+        "exp": 1777756526626
+    },
+    "animeUnitId:506972": {
+        "type": "key",
+        "file": "animeUnitId:506972.json.gz",
+        "size": 246,
+        "create": 1777755926804,
+        "exp": 1777756526804
+    },
+    "animeUnitId:240870": {
+        "type": "key",
+        "file": "animeUnitId:240870.json.gz",
+        "size": 239,
+        "create": 1777755926839,
+        "exp": 1777756526839
+    },
+    "animeUnitId:556917": {
+        "type": "key",
+        "file": "animeUnitId:556917.json.gz",
+        "size": 292,
+        "create": 1777755926946,
+        "exp": 1777756526946
+    },
+    "animeUnitId:786373": {
+        "type": "key",
+        "file": "animeUnitId:786373.json.gz",
+        "size": 311,
+        "create": 1777755926987,
+        "exp": 1777756526987
+    },
+    "animeUnitId:228194": {
+        "type": "key",
+        "file": "animeUnitId:228194.json.gz",
+        "size": 258,
+        "create": 1777755927099,
+        "exp": 1777756527099
+    },
+    "animeUnitId:63080": {
+        "type": "key",
+        "file": "animeUnitId:63080.json.gz",
+        "size": 262,
+        "create": 1777755927702,
+        "exp": 1777756527702
+    },
+    "animeUnitId:322492": {
+        "type": "key",
+        "file": "animeUnitId:322492.json.gz",
+        "size": 263,
+        "create": 1777755927978,
+        "exp": 1777756527978
+    },
+    "animeUnitId:792954": {
+        "type": "key",
+        "file": "animeUnitId:792954.json.gz",
+        "size": 243,
+        "create": 1777755928014,
+        "exp": 1777756528014
+    },
+    "animeUnitId:164818": {
+        "type": "key",
+        "file": "animeUnitId:164818.json.gz",
+        "size": 243,
+        "create": 1777755928040,
+        "exp": 1777756528040
+    },
+    "animeUnitId:348604": {
+        "type": "key",
+        "file": "animeUnitId:348604.json.gz",
+        "size": 262,
+        "create": 1777755928053,
+        "exp": 1777756528053
+    },
+    "animeUnitId:227598": {
+        "type": "key",
+        "file": "animeUnitId:227598.json.gz",
+        "size": 250,
+        "create": 1777755928060,
+        "exp": 1777756528060
+    },
+    "animeUnitId:278522": {
+        "type": "key",
+        "file": "animeUnitId:278522.json.gz",
+        "size": 223,
+        "create": 1777755928223,
+        "exp": 1777756528223
+    },
+    "animeUnitId:25508": {
+        "type": "key",
+        "file": "animeUnitId:25508.json.gz",
+        "size": 265,
+        "create": 1777755928298,
+        "exp": 1777756528298
+    },
+    "animeUnitId:104120": {
+        "type": "key",
+        "file": "animeUnitId:104120.json.gz",
+        "size": 245,
+        "create": 1777755928363,
+        "exp": 1777756528363
+    },
+    "animeUnitId:984042": {
+        "type": "key",
+        "file": "animeUnitId:984042.json.gz",
+        "size": 241,
+        "create": 1777755928409,
+        "exp": 1777756528409
+    },
+    "animeUnitId:741770": {
+        "type": "key",
+        "file": "animeUnitId:741770.json.gz",
+        "size": 267,
+        "create": 1777755928425,
+        "exp": 1777756528425
+    },
+    "animeUnitId:365390": {
+        "type": "key",
+        "file": "animeUnitId:365390.json.gz",
+        "size": 304,
+        "create": 1777755928441,
+        "exp": 1777756528441
+    },
+    "animeUnitId:752498": {
+        "type": "key",
+        "file": "animeUnitId:752498.json.gz",
+        "size": 268,
+        "create": 1777755928587,
+        "exp": 1777756528587
+    },
+    "animeUnitId:575858": {
+        "type": "key",
+        "file": "animeUnitId:575858.json.gz",
+        "size": 241,
+        "create": 1777755928661,
+        "exp": 1777756528661
+    },
+    "animeUnitId:671818": {
+        "type": "key",
+        "file": "animeUnitId:671818.json.gz",
+        "size": 302,
+        "create": 1777755928699,
+        "exp": 1777756528699
+    },
+    "animeUnitId:817157": {
+        "type": "key",
+        "file": "animeUnitId:817157.json.gz",
+        "size": 281,
+        "create": 1777755928808,
+        "exp": 1777756528808
+    },
+    "animeUnitId:521998": {
+        "type": "key",
+        "file": "animeUnitId:521998.json.gz",
+        "size": 253,
+        "create": 1777755928838,
+        "exp": 1777756528838
+    },
+    "animeUnitId:153948": {
+        "type": "key",
+        "file": "animeUnitId:153948.json.gz",
+        "size": 247,
+        "create": 1777755928878,
+        "exp": 1777756528878
+    },
+    "rawJson": {
+        "type": "mem",
+        "file": "RAM",
+        "exp": 1777756003558
+    },
+    "animeUnitId:2932": {
+        "type": "key",
+        "file": "animeUnitId:2932.json.gz",
+        "size": 250,
+        "create": 1777755998732,
+        "exp": 1777756598732
     }
 }
